@@ -20,11 +20,14 @@ async function saveClients() {
 		updated_at: new Date().toISOString()
 	}));
 	rows.forEach((row, index) => {
-		if (isUuid(clients[index].id)) row.id = clients[index].id;
+		row.id = isUuid(clients[index].id) ? clients[index].id : crypto.randomUUID();
 	});
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
-	if (data?.length) clients = data.map((row) => ({ ...row, id: row.id }));
+	if (data?.length) {
+		clients = data.map((row) => ({ ...row, id: row.id }));
+		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+	}
 }
 function isUuid(value) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function selectedClient() { return clients.find((client) => client.id === selectedId); }
