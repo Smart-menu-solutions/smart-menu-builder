@@ -14,6 +14,17 @@ Digital QR Menu Management System
 
 Created by Smart Menu Solutions
 
+## Local preview
+
+From this folder, run:
+
+```powershell
+.\start-local-preview.ps1
+```
+
+Then open `http://localhost:8000/`. The menu preview is available at
+`http://localhost:8000/menu.html?client=taverna-athens`.
+
 ## Private builder access
 
 The public menus can remain on GitHub Pages, while `admin.html` is protected by
