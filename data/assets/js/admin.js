@@ -9,7 +9,6 @@ async function saveClients() {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	if (typeof supabaseClient === 'undefined') return;
 	const rows = clients.map((client) => ({
-		id: isUuid(client.id) ? client.id : undefined,
 		slug: client.slug,
 		name: client.name,
 		phone: client.phone || null,
@@ -20,6 +19,9 @@ async function saveClients() {
 		is_published: true,
 		updated_at: new Date().toISOString()
 	}));
+	rows.forEach((row, index) => {
+		if (isUuid(clients[index].id)) row.id = clients[index].id;
+	});
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
 	if (data?.length) clients = data.map((row) => ({ ...row, id: row.id }));
@@ -47,7 +49,7 @@ function render() {
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
 async function readForm() { const client = selectedClient(); client.name = $('#businessName').value.trim(); client.slug = $('#slug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); try { await saveClients(); render(); $('#savedState').textContent = 'Saved just now'; notify(`${client.name} saved`); } catch (error) { notify(error.message); } }
-function addClient() { const number = clients.length + 1; const client = { id: `client-${Date.now()}`, name: `New venue ${number}`, slug: `new-venue-${number}`, phone: '', whatsapp: '', address: '', currency: '€', categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }] }; clients.push(client); selectedId = client.id; saveClients(); render(); notify('New client created'); }
+async function addClient() { const number = clients.length + 1; const client = { id: `client-${Date.now()}`, name: `New venue ${number}`, slug: `new-venue-${number}`, phone: '', whatsapp: '', address: '', currency: '€', categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }] }; clients.push(client); selectedId = client.id; try { await saveClients(); render(); notify('New client created'); } catch (error) { notify(error.message); } }
 
 $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); }); $('#deleteClient').addEventListener('click', () => { if (clients.length === 1) return notify('Keep at least one client in the workspace'); if (!confirm('Delete this client and their menu?')) return; clients = clients.filter((client) => client.id !== selectedId); selectedId = clients[0].id; saveClients().then(render).catch((error) => notify(error.message)); notify('Client deleted'); }); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); $('#downloadQr').addEventListener('click', () => { const link = document.createElement('a'); link.href = $('#qrImage').src; link.download = `${selectedClient().slug}-qr.png`; link.target = '_blank'; link.click(); });
 async function syncFromSupabase() {
