@@ -29,6 +29,7 @@ body{
 
 .sidebar h2{
     margin-bottom:30px;
+    line-height:1.3;
 }
 
 .sidebar ul{
@@ -49,29 +50,32 @@ body{
     padding:30px;
 }
 
+.main h1{
+    margin-bottom:25px;
+}
+
 .cards{
     display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
     gap:20px;
-    margin-top:25px;
 }
 
 .card{
     background:white;
     padding:25px;
     border-radius:16px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
 .card h3{
     margin-bottom:10px;
-    color:#666;
+    color:#555;
 }
 
 .card p{
-    font-size:28px;
-    font-weight:bold;
+    font-size:32px;
     color:#0f766e;
+    font-weight:bold;
 }
 
 .restaurant-card{
@@ -79,15 +83,15 @@ body{
     background:white;
     padding:25px;
     border-radius:16px;
-    box-shadow:0 5px 15px rgba(0,0,0,.08);
+    box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
-.restaurant-card h3{
+.restaurant-card h2{
     margin-bottom:15px;
 }
 
 .restaurant-card p{
-    margin-bottom:8px;
+    margin-bottom:10px;
 }
 
 .btn{
@@ -101,7 +105,7 @@ body{
 }
 
 .btn:hover{
-    background:#0b5d57;
+    background:#0a5f59;
 }
 
 @media(max-width:768px){
@@ -167,7 +171,7 @@ body{
 
     <div class="restaurant-card">
 
-        <h3>Taverna Athens</h3>
+        <h2>🏢 Taverna Athens</h2>
 
         <p><strong>ID:</strong> customer-001</p>
 
