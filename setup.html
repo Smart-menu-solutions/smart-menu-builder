@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Einrichtung — Smart Menu Builder</title>
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="login.html">
+      <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
+    </a>
+    <a class="header-link" href="login.html">← Zur Anmeldung</a>
+  </div>
+</header>
+<main class="auth-main">
+  <div class="auth-card">
+    <h1><span class="accent">Einrichtung</span></h1>
+    <p class="auth-sub">Die Anmeldung wird sicher über Supabase verwaltet.</p>
+    <div class="form-notice">Erstelle zuerst dein Konto in Supabase unter <strong>Authentication → Users → Add user</strong>. Melde dich danach hier einmal an, um deine Authenticator-App zu registrieren.</div>
+    <div class="form-error" id="error" role="alert"></div>
+    <div class="field"><label for="email">E-Mail-Adresse</label><input id="email" type="email" required></div>
+    <div class="field"><label for="password">Passwort</label><input id="password" type="password" required></div>
+    <button class="btn btn--block" id="start" type="button">Authenticator einrichten</button>
+    <div id="enroll" hidden>
+      <p>Scanne diesen QR-Code mit deiner Authenticator-App. Der Eintrag heißt <strong>Smart Menu Builder</strong>.</p>
+      <div class="qr-box"><img id="qr" alt="Authenticator QR-Code"><div><strong>Manueller Schlüssel</strong><div class="secret-key" id="secret"></div></div></div>
+      <div class="field"><label for="code">6-stelliger Code</label><input id="code" class="code-input" inputmode="numeric" maxlength="6" required></div>
+      <button class="btn btn--block" id="verify" type="button">Code bestätigen</button>
+    </div>
+    <p class="auth-alt"><a href="login.html">Zur Anmeldung</a></p>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="container"><div class="footer-inner">
+    <span class="footer-note">Smart Menu Builder — Powered by Smart Menu Solutions</span>
+  </div></div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data/assets/js/auth-config.js"></script>
+<script>
+const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
+const error = document.getElementById('error');
+let factorId;
+function showError(message) { error.textContent = message; error.classList.add('show'); }
+
+document.getElementById('start').addEventListener('click', async () => {
+  error.classList.remove('show');
+  const { error: signInError } = await client.auth.signInWithPassword({
+    email: document.getElementById('email').value.trim(),
+    password: document.getElementById('password').value
+  });
+  if (signInError) return showError('E-Mail-Adresse oder Passwort ist falsch.');
+  const { data, error: enrollError } = await client.auth.mfa.enroll({
+    factorType: 'totp',
+    friendlyName: 'Smart Menu Builder'
+  });
+  if (enrollError) return showError('Die Authenticator-Einrichtung konnte nicht gestartet werden.');
+  factorId = data.id;
+  document.getElementById('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=' + encodeURIComponent(data.totp.uri);
+  document.getElementById('secret').textContent = data.totp.secret;
+  document.getElementById('enroll').hidden = false;
+  document.getElementById('start').disabled = true;
+});
+
+document.getElementById('verify').addEventListener('click', async () => {
+  const { data: challenge, error: challengeError } = await client.auth.mfa.challenge({ factorId });
+  if (challengeError) return showError('Die MFA-Prüfung konnte nicht gestartet werden.');
+  const { error: verifyError } = await client.auth.mfa.verify({
+    factorId, challengeId: challenge.id, code: document.getElementById('code').value.trim()
+  });
+  if (verifyError) return showError('Der Code ist falsch oder abgelaufen.');
+  await client.auth.signOut();
+  error.classList.remove('show');
+  alert('Authenticator erfolgreich eingerichtet. Du kannst dich jetzt anmelden.');
+  location.replace('login.html');
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Sign in — Smart Menu Builder</title>
+<link rel="icon" type="image/png" href="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;enable=upscale&amp;height=64">
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="login.html">
+      <img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;enable=upscale&amp;height=70" alt="">
+      <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
+    </a>
+    <a class="header-link" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">← Back to website</a>
+  </div>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1><span class="accent">Sign in</span></h1>
+    <p class="auth-sub">Melde dich mit deiner E-Mail-Adresse, deinem Passwort und dem 6-stelligen Code deiner Authenticator-App an.</p>
+    <div class="form-error" id="formError" role="alert"></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="username">E-Mail-Adresse</label>
+        <input id="username" name="username" type="email" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="field">
+        <label for="code">Authenticator code</label>
+        <input id="code" name="code" class="code-input" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="••••••" autocomplete="one-time-code" required>
+        <p class="field-hint">6-digit code from Google Authenticator, Microsoft Authenticator, Authy, etc.</p>
+      </div>
+      <button class="btn btn--block" id="signInBtn" type="submit">Sign in</button>
+    </form>
+
+    <p class="auth-alt">Die Einrichtung erfolgt einmalig im Supabase-Dashboard.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <a class="footer-brand" href="login.html">
+        <img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;width=157" alt="">
+        <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
+      </a>
+      <span class="footer-note">© 2026 Smart Menu Builder — Powered by <a href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">Smart Menu Solutions</a></span>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data/assets/js/auth-config.js"></script>
+<script src="data/assets/js/auth.js"></script>
+<script>
+	redirectIfAuthed();
+
+	const form = document.getElementById('loginForm');
+	const errorBox = document.getElementById('formError');
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		errorBox.classList.remove('show');
+		const button = document.getElementById('signInBtn');
+		button.disabled = true;
+		button.textContent = 'Checking…';
+		const result = await attemptLogin(
+			document.getElementById('username').value,
+			document.getElementById('password').value,
+			document.getElementById('code').value
+		);
+		if (result.ok) {
+			location.replace('admin.html');
+			return;
+		}
+		errorBox.textContent = result.error;
+		errorBox.classList.add('show');
+		button.disabled = false;
+		button.textContent = 'Sign in';
+	});
+</script>
+
+</body>
+</html>
