@@ -15,9 +15,7 @@ async function saveClients() {
 		whatsapp: client.whatsapp || null,
 		address: client.address || null,
 		currency: client.currency || '€',
-		categories: client.categories || [],
-		is_published: true,
-		updated_at: new Date().toISOString()
+		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	rows.forEach((row, index) => {
 		row.id = isUuid(clients[index].id) ? clients[index].id : crypto.randomUUID();
