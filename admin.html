@@ -43,6 +43,10 @@ body{
     padding:30px;
 }
 
+.main h1{
+    margin-bottom:25px;
+}
+
 .cards{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -63,8 +67,8 @@ body{
 
 .card p{
     font-size:32px;
-    color:#0f766e;
     font-weight:bold;
+    color:#0f766e;
 }
 
 .restaurant-card{
@@ -75,18 +79,22 @@ body{
     box-shadow:0 4px 12px rgba(0,0,0,.08);
 }
 
+.restaurant-card h2{
+    margin-bottom:15px;
+}
+
 .restaurant-card p{
     margin-bottom:10px;
 }
 
 .btn{
-    display:inline-block;
-    margin-top:15px;
     background:#0f766e;
     color:white;
+    border:none;
     text-decoration:none;
     padding:12px 20px;
     border-radius:8px;
+    cursor:pointer;
     font-weight:bold;
 }
 
@@ -95,6 +103,7 @@ body{
 }
 
 @media(max-width:768px){
+
     body{
         flex-direction:column;
     }
@@ -102,6 +111,7 @@ body{
     .sidebar{
         width:100%;
     }
+
 }
 </style>
 
@@ -110,6 +120,7 @@ body{
 <body>
 
 <div class="sidebar">
+
     <h2>Smart Menu Builder</h2>
 
     <ul>
@@ -120,6 +131,7 @@ body{
         <li>🖼 Galerie</li>
         <li>⚙ Einstellungen</li>
     </ul>
+
 </div>
 
 <div class="main">
@@ -152,16 +164,23 @@ body{
 
     <div class="restaurant-card">
 
-    <h2>🏢 Taverna Athens</h2>
+        <h2>🏢 Taverna Athens</h2>
 
-    <p><strong>ID:</strong> customer-001</p>
-    <p><strong>Status:</strong> Aktiv</p>
-    <p><strong>Telefon:</strong> +30 123456789</p>
-    <p><strong>Paket:</strong> Premium</p>
+        <p><strong>ID:</strong> customer-001</p>
 
-    <anu.htmlMenü Vorschau</a>
+        <p><strong>Status:</strong> Aktiv</p>
 
-</div>
+        <p><strong>Telefon:</strong> +30 123456789</p>
+
+        <p><strong>Paket:</strong> Premium</p>
+
+        <button
+            class="btn"
+            onclick="window.location.href='menu.html'">
+            Menü Vorschau
+        </button>
+
+    </div>
 
 </div>
 
