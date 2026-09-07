@@ -8,73 +8,93 @@
 <style>
 
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+margin:0;
+padding:0;
+box-sizing:border-box;
 }
 
 body{
-    font-family:Arial,sans-serif;
-    background:#f5f7fa;
+font-family:Arial,sans-serif;
+background:#f5f7fa;
 }
 
 .hero{
-    background:#0f766e;
-    color:white;
-    text-align:center;
-    padding:80px 20px;
+background:#0f766e;
+color:white;
+text-align:center;
+padding:80px 20px;
 }
 
 .hero h1{
-    font-size:48px;
-    margin-bottom:10px;
+font-size:42px;
+margin-bottom:10px;
 }
 
-.contact{
-    display:flex;
-    justify-content:center;
-    gap:15px;
-    flex-wrap:wrap;
-    margin-top:20px;
+.hero p{
+font-size:18px;
+opacity:.9;
 }
 
-.contact a{
-    text-decoration:none;
-    background:white;
-    color:#0f766e;
-    padding:10px 15px;
-    border-radius:8px;
-    font-weight:bold;
+.actions{
+display:flex;
+justify-content:center;
+gap:15px;
+flex-wrap:wrap;
+margin-top:25px;
 }
 
-.section{
-    max-width:1200px;
-    margin:auto;
-    padding:40px 20px;
+.btn{
+background:white;
+color:#0f766e;
+padding:12px 18px;
+text-decoration:none;
+border-radius:10px;
+font-weight:bold;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:30px 20px;
 }
 
 .category{
-    margin-bottom:40px;
+margin-bottom:40px;
 }
 
 .category h2{
-    margin-bottom:20px;
-    color:#0f766e;
+color:#0f766e;
+margin-bottom:20px;
+border-bottom:2px solid #0f766e;
+padding-bottom:10px;
 }
 
 .item{
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,.08);
-    margin-bottom:15px;
+background:white;
+padding:20px;
+border-radius:14px;
+margin-bottom:15px;
+box-shadow:0 4px 12px rgba(0,0,0,.08);
+}
+
+.item-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:10px;
 }
 
 .price{
-    color:#0f766e;
-    font-weight:bold;
-    font-size:20px;
-    margin-top:10px;
+font-weight:bold;
+color:#0f766e;
+}
+
+.footer{
+background:#0f766e;
+color:white;
+text-align:center;
+padding:30px;
+margin-top:50px;
 }
 
 </style>
@@ -88,28 +108,38 @@ body{
 
 <p>Authentische griechische Küche</p>
 
-<div class="contact">
+<div class="actions">
 
-<a href="tel:+30123456789n</a>
+<a :+30123456789
+📞 Anrufen
+</a>
 
-<a href/wa.me/30123456789
-💬 WhatsApp
+<a class="btn" href="https://waatsApp
+</a>
+
+#
+📍 Route
 </a>
 
 </div>
 
 </section>
 
-<section class="section">
+<div class="container">
 
 <div class="category">
 
 <h2>🥗 Vorspeisen</h2>
 
 <div class="item">
+
+<div class="item-header">
 <h3>Tzatziki</h3>
+<span class="price">5,90 €</span>
+</div>
+
 <p>Hausgemachter Joghurt mit Gurke und Knoblauch</p>
-<div class="price">5,90 €</div>
+
 </div>
 
 </div>
@@ -119,9 +149,14 @@ body{
 <h2>🍖 Hauptgerichte</h2>
 
 <div class="item">
+
+<div class="item-header">
 <h3>Gyros Teller</h3>
+<span class="price">14,90 €</span>
+</div>
+
 <p>Mit Pommes und Tzatziki</p>
-<div class="price">14,90 €</div>
+
 </div>
 
 </div>
@@ -131,14 +166,25 @@ body{
 <h2>🥤 Getränke</h2>
 
 <div class="item">
+
+<div class="item-header">
 <h3>Coca Cola</h3>
+<span class="price">3,50 €</span>
+</div>
+
 <p>0.33L</p>
-<div class="price">3,50 €</div>
+
+</div>
+
 </div>
 
 </div>
 
-</section>
+<div class="footer">
+
+Smart Menu Builder
+
+</div>
 
 </body>
 </html>
