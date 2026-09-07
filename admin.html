@@ -1,55 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Menu Builder | Client QR builder</title>
 <meta name="robots" content="noindex, nofollow">
+<title>Sign in — Smart Menu Builder</title>
+<link rel="icon" type="image/png" href="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;enable=upscale&amp;height=64">
+<link rel="stylesheet" href="assets/css/auth.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a class="brand" href="login.html">
+      <img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;enable=upscale&amp;height=70" alt="">
+      <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
+    </a>
+    <a class="header-link" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">← Back to website</a>
+  </div>
+</header>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1><span class="accent">Sign in</span></h1>
+    <p class="auth-sub">Melde dich mit deiner E-Mail-Adresse, deinem Passwort und dem 6-stelligen Code deiner Authenticator-App an.</p>
+    <div class="form-error" id="formError" role="alert"></div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <label for="username">E-Mail-Adresse</label>
+        <input id="username" name="username" type="email" autocomplete="username" required="">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required="">
+      </div>
+      <div class="field">
+        <label for="code">Authenticator code</label>
+        <input id="code" name="code" class="code-input" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="••••••" autocomplete="one-time-code" required="">
+        <p class="field-hint">6-digit code from Google Authenticator, Microsoft Authenticator, Authy, etc.</p>
+      </div>
+      <button class="btn btn--block" id="signInBtn" type="submit">Sign in</button>
+    </form>
+
+    <p class="auth-alt">Die Einrichtung erfolgt einmalig im Supabase-Dashboard.</p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <a class="footer-brand" href="login.html">
+        <img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;width=157" alt="">
+        <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
+      </a>
+      <span class="footer-note">© 2026 Smart Menu Builder — Powered by <a href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">Smart Menu Solutions</a></span>
+    </div>
+  </div>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/assets/js/auth-config.js"></script>
 <script src="data/assets/js/auth.js"></script>
-<script>requireAuth();</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=teal-buttons-2">
-<style>.language-panel label{display:flex!important;align-items:center!important;width:max-content!important;gap:6px!important;margin:.55rem 0!important}.language-panel input[type=checkbox]{display:inline-block!important;width:13px!important;min-width:13px!important;height:13px!important;margin:0!important}</style><style id="website-button-style">.button,.icon-button,.remove-button,.add-item,.language-panel button,.import-panel button{transition:background-color .15s ease,color .15s ease,border-color .15s ease,transform .12s ease;cursor:pointer}.button{border-radius:12px;padding:14px 30px;font-weight:700}.button-primary{background:#0f766e!important;border-color:#0f766e!important;color:#fff!important}.button-primary:hover{background:#e9f7f6!important;border-color:#0f766e!important;color:#0f766e!important;transform:translateY(-1px)}.button-ghost,.button-danger{background:#fff!important;border-color:#0f766e!important;color:#0f766e!important}.button-ghost:hover,.button-danger:hover{background:#e9f7f6!important;transform:translateY(-1px)}.icon-button{border-radius:12px;background:#fff;color:#0f766e;border-color:#0f766e}.remove-button{border:1px solid #0f766e;background:#fff;color:#0f766e;border-radius:8px}.add-item{color:#0f766e;border-radius:8px;padding:8px 12px}.add-item:hover{background:#e9f7f6}.language-panel button,.import-panel button{border-radius:12px!important;border-color:#0f766e!important;color:#0f766e!important;background:#fff!important}.language-panel button:hover,.import-panel button:hover{background:#e9f7f6!important;transform:translateY(-1px)}.form-actions .button,.qr-actions .button{min-height:48px}@media(max-width:720px){.button{padding:12px 18px}}</style></head>
-<body>orange-buttons-2admin.css?v=orange-buttons-2    
-<aside class="sidebar">
-    <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Smart Menu Builder</span></a>
-    <p class="eyebrow">Workspace</p>
-    <nav>
-        <a class="nav-link active" href="#dashboard"><span>▦</span> Overview</a>
-        <a class="nav-link" href="#clients"><span>◉</span> Clients <b id="navClientCount">1</b></a>
-        <a class="nav-link" href="#builder"><span>✦</span> Menu builder</a>
-        <a class="nav-link" href="#qr"><span>⌗</span> QR codes</a>
-    </nav>
-    <div class="sidebar-note"><span class="status-dot"></span><div><strong>Local workspace</strong><small>Your client data stays in this browser.</small></div></div>
-</aside>
-<main class="main" id="dashboard">
-    <header class="topbar"><div><p class="eyebrow">Monday, September 7</p><h1>Your menu workspace</h1></div><div style="display:flex;gap:8px"><button class="button button-ghost" type="button" onclick="logout()">Log out</button><button class="button button-primary" id="addClientTop">＋ Add client</button></div></header>
-    <section class="stats" aria-label="Workspace summary">
-        <article class="stat-card"><span class="stat-icon coral">◉</span><div><p>Active clients</p><strong id="clientCount">0</strong></div></article>
-        <article class="stat-card"><span class="stat-icon teal">☷</span><div><p>Menu sections</p><strong id="sectionCount">0</strong></div></article>
-        <article class="stat-card"><span class="stat-icon yellow">⌗</span><div><p>Live QR links</p><strong id="qrCount">0</strong></div></article>
-    </section>
-    <section class="workspace-grid" id="clients">
-        <div class="panel client-panel"><div class="panel-heading"><div><p class="eyebrow">Portfolio</p><h2>Your clients</h2></div><button class="icon-button" id="addClient" title="Add a client">＋</button></div><div id="clientList" class="client-list"></div></div>
-        <div class="panel editor-panel" id="builder"><div class="panel-heading"><div><p class="eyebrow">Selected client</p><h2 id="editorTitle">Client details</h2></div><span class="saved-state" id="savedState">Saved locally</span></div>
-            <form id="clientForm">
-                <div class="form-grid"><label>Business name<input id="businessName" required placeholder="e.g. The Olive Room"></label><label>URL slug<input id="slug" required placeholder="the-olive-room"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
-                <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span></div>
-                <div class="language-panel"><strong>Menu languages</strong><label><input type="checkbox" name="language" value="en" checked> English (main)</label><label><input type="checkbox" name="language" value="de" checked> Deutsch</label><label><input type="checkbox" name="language" value="el" checked> Ελληνικά</label><label><input type="checkbox" name="language" value="it"> Italiano</label><label><input type="checkbox" name="language" value="es"> Español</label><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
-                <div class="menu-heading"><div><p class="eyebrow">Menu content</p><h3>Sections & dishes</h3></div><button type="button" class="button button-ghost" id="addCategory">＋ Add section</button></div>
-                <div id="categoryEditor" class="category-editor"></div>
-                <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
-            </form>
-        </div>
-        <aside class="panel qr-panel" id="qr"><div class="panel-heading"><div><p class="eyebrow">Ready to print</p><h2>Client QR code</h2></div><span class="qr-badge">LIVE</span></div><div class="qr-frame"><img id="qrImage" alt="QR code for the selected client's menu"></div><p class="qr-url" id="qrUrl"></p><div class="qr-actions"><button class="button button-primary" id="downloadQr">Download QR</button><button class="button button-ghost" id="copyUrl">Copy link</button></div><p class="helper">Scan to open this client’s live digital menu. Save the QR on table cards, windows, or receipts.</p></aside>
-    </section>
-</main>
-<div class="toast" id="toast" role="status"></div>
-<script src="data/assets/js/admin.js?v=no-images-1"></script>
-</body>
-                                                                                                                                                                                                                                                                                              </html>
+<script>
+	redirectIfAuthed();
+
+	const form = document.getElementById('loginForm');
+	const errorBox = document.getElementById('formError');
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		errorBox.classList.remove('show');
+		const button = document.getElementById('signInBtn');
+		button.disabled = true;
+		button.textContent = 'Checking…';
+		const result = await attemptLogin(
+			document.getElementById('username').value,
+			document.getElementById('password').value,
+			document.getElementById('code').value
+		);
+		if (result.ok) {
+			location.replace('admin.html');
+			return;
+		}
+		errorBox.textContent = result.error;
+		errorBox.classList.add('show');
+		button.disabled = false;
+		button.textContent = 'Sign in';
+	});
+</script>
+
+
+
+</body></html>
