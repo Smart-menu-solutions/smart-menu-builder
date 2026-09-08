@@ -76,6 +76,10 @@ a:focus-visible, button:focus-visible{
   text-decoration: none; font-weight: 500; font-size: .96rem; color: var(--ink);
 }
 .header-link:hover{ color: var(--orange); }
+.header-actions{ display:flex; align-items:center; gap:1rem; }
+.language-switcher{ display:flex; gap:6px; }
+.language-button{ min-width:36px; padding:8px 10px; border:1px solid var(--line); border-radius:6px; background:var(--paper); color:var(--ink); font:600 .78rem 'Open Sans',sans-serif; cursor:pointer; }
+.language-button.active,.language-button:hover{ background:var(--orange); border-color:var(--orange); color:#fff; }
 
 /* ---------- Buttons ---------- */
 .btn{
@@ -99,6 +103,7 @@ a:focus-visible, button:focus-visible{
 .btn--outline{ background: transparent; color: var(--ink); border-color: var(--line); box-shadow: none; }
 .btn--outline:hover{ border-color: var(--orange); color: var(--orange); background: transparent; }
 .btn--block{ width: 100%; }
+.btn{ border-radius:6px; }
 
 /* ---------- Auth layout ---------- */
 .auth-main{
@@ -122,6 +127,7 @@ a:focus-visible, button:focus-visible{
 .auth-card h1{ text-align: center; }
 .auth-card h1 .accent{ color: var(--orange); }
 .auth-sub{ text-align: center; margin: 0 auto 1.8rem; max-width: 40ch; font-size: .95rem; }
+.access-notice{ text-align:center; color:var(--grey); font-size:.88rem; margin:-.8rem auto 1.8rem; }
 
 /* ---------- Fields ---------- */
 .field{ margin-bottom: 1.2rem; }
