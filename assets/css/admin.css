@@ -1,3 +1,4 @@
+.language-panel{display:grid;grid-template-columns:1fr;gap:8px}.language-panel strong{margin-bottom:2px}.language-panel label{display:flex;align-items:center;justify-content:space-between;min-height:30px;margin:0;padding:4px 0}.language-panel input[type="checkbox"]{width:16px;height:16px;margin:0;accent-color:#f66a09}.language-panel button,.language-panel span{margin-top:4px}
 .client-search{width:100%;margin:0 0 16px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}.client-search:focus{outline:3px solid var(--yellow);border-color:var(--teal)}.client-empty{padding:16px;color:var(--muted);font-size:13px}
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
 
