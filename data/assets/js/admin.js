@@ -61,8 +61,9 @@ async function importPdf() {
 	if (!file) return notify('Choose a PDF first');
 	$('#importStatus').textContent = 'Reading PDF…';
 	try {
-		const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+		const pdfjs = window.pdfjsLib;
+		if (!pdfjs) throw new Error('PDF reader could not be loaded.');
+		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
 		let text = '';
 		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
