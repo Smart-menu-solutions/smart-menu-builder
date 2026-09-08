@@ -43,7 +43,7 @@
             <form id="clientForm">
                 <div class="form-grid"><label>Business name<input id="businessName" required placeholder="e.g. The Olive Room"></label><label>URL slug<input id="slug" required placeholder="the-olive-room"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
                 <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span></div>
-                <div class="language-panel"><strong>Menu languages</strong><label><input type="checkbox" name="language" value="en" checked> English (main)</label><label><input type="checkbox" name="language" value="de" checked> Deutsch</label><label><input type="checkbox" name="language" value="el" checked> Ελληνικά</label><label><input type="checkbox" name="language" value="it"> Italiano</label><label><input type="checkbox" name="language" value="es"> Español</label><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
+                <div class="language-panel"><strong>Menu languages</strong><label>Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><label><input type="checkbox" name="language" value="en" checked> English (main)</label><label><input type="checkbox" name="language" value="de" checked> Deutsch</label><label><input type="checkbox" name="language" value="el" checked> Ελληνικά</label><label><input type="checkbox" name="language" value="it"> Italiano</label><label><input type="checkbox" name="language" value="es"> Español</label><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
                 <div class="menu-heading"><div><p class="eyebrow">Menu content</p><h3>Sections & dishes</h3></div><button type="button" class="button button-ghost" id="addCategory">＋ Add section</button></div>
                 <div id="categoryEditor" class="category-editor"></div>
                 <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
@@ -53,6 +53,6 @@
     </section>
 </main>
 <div class="toast" id="toast" role="status"></div>
-<script src="data/assets/js/admin.js?v=client-search-1"></script>
+<script src="data/assets/js/admin.js?v=source-language-1"></script>
 </body>
 </html>

@@ -109,9 +109,11 @@ function updateLanguageState() {
 	$('#translationStatus').textContent = `${client.languages.length} language(s) selected.`;
 }
 
-async function translateText(text, target) {
+
+async function translateText(text, source, target) {
 	if (!text) return '';
-	const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${target}`);
+	if (source === target) return text;
+	const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
 	if (!response.ok) throw new Error('Translation service unavailable.');
 	const result = await response.json();
 	return result.responseData?.translatedText || text;
@@ -119,6 +121,8 @@ async function translateText(text, target) {
 
 async function translateMenu() {
 	const client = selectedClient();
+	client.sourceLanguage = $('#sourceLanguage').value;
+	const source = client.sourceLanguage;
 	const targets = selectedLanguages().filter((language) => language !== 'en');
 	if (!targets.length) return notify('Select at least one target language.');
 	$('#translationStatus').textContent = 'Translating menu…';
@@ -127,9 +131,9 @@ async function translateMenu() {
 		for (const language of targets) {
 			client.translations[language] = { categories: {}, items: {} };
 			for (const category of client.categories) {
-				client.translations[language].categories[category.name] = { name: await translateText(category.name, language) };
+				client.translations[language].categories[category.name] = { name: await translateText(category.name, source, language) };
 				for (const item of category.items || []) {
-					client.translations[language].items[item.name] = { name: await translateText(item.name, language), description: await translateText(item.description, language) };
+					client.translations[language].items[item.name] = { name: await translateText(item.name, source, language), description: await translateText(item.description, source, language) };
 				}
 			}
 		}
@@ -151,6 +155,7 @@ function render() {
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	document.querySelectorAll('input[name="language"]').forEach((input) => { input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value); });
+	$('#sourceLanguage').value = client.sourceLanguage || 'de';
 	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div><div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
 	document.querySelectorAll('[data-remove-category]').forEach((button) => button.addEventListener('click', () => { client.categories.splice(Number(button.dataset.removeCategory), 1); saveClients(); render(); }));
 	document.querySelectorAll('[data-move-category]').forEach((button) => button.addEventListener('click', () => { const [direction, indexText] = button.dataset.moveCategory.split('-'); const index = Number(indexText); const target = direction === 'up' ? index - 1 : index + 1; if (target < 0 || target >= client.categories.length) return; [client.categories[index], client.categories[target]] = [client.categories[target], client.categories[index]]; saveClients().then(render).catch((error) => notify(error.message)); }));
