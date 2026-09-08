@@ -33,7 +33,7 @@ function renderMenu(client) {
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 		</header>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
-		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><p>Digital menu by Smart Menu Solutions</p></footer>`;
+		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>`;
 }
 
 async function loadMenu() {
