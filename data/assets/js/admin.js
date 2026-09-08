@@ -113,10 +113,18 @@ function updateLanguageState() {
 async function translateText(text, source, target) {
 	if (!text) return '';
 	if (source === target) return text;
-	const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
-	if (!response.ok) throw new Error('Translation service unavailable.');
-	const result = await response.json();
-	return result.responseData?.translatedText || text;
+	for (let attempt = 0; attempt < 3; attempt += 1) {
+		try {
+			const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
+			if (!response.ok) throw new Error(`HTTP ${response.status}`);
+			const result = await response.json();
+			if (result.responseStatus && result.responseStatus !== 200) throw new Error(`Translation status ${result.responseStatus}`);
+			return result.responseData?.translatedText || text;
+		} catch (error) {
+			if (attempt === 2) throw error;
+			await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
+		}
+	}
 }
 
 async function translateMenu() {
@@ -128,17 +136,21 @@ async function translateMenu() {
 	$('#translationStatus').textContent = 'Translating menu…';
 	try {
 		client.translations = client.translations || {};
+		let failures = 0;
 		for (const language of targets) {
 			client.translations[language] = { categories: {}, items: {} };
 			for (const category of client.categories) {
-				client.translations[language].categories[category.name] = { name: await translateText(category.name, source, language) };
+				try { client.translations[language].categories[category.name] = { name: await translateText(category.name, source, language) }; } catch { failures += 1; client.translations[language].categories[category.name] = { name: category.name }; }
 				for (const item of category.items || []) {
-					client.translations[language].items[item.name] = { name: await translateText(item.name, source, language), description: await translateText(item.description, source, language) };
+					let name = item.name; let description = item.description;
+					try { name = await translateText(item.name, source, language); } catch { failures += 1; }
+					try { description = await translateText(item.description, source, language); } catch { failures += 1; }
+					client.translations[language].items[item.name] = { name, description };
 				}
 			}
 		}
 		await saveClients();
-		$('#translationStatus').textContent = `Translated to ${targets.join(', ')}.`;
+		$('#translationStatus').textContent = failures ? `Translated to ${targets.join(', ')} with ${failures} item(s) left unchanged.` : `Translated to ${targets.join(', ')}.`;
 	} catch (error) {
 		$('#translationStatus').textContent = 'Translation failed.';
 		notify(error.message);
