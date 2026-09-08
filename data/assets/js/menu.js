@@ -24,7 +24,7 @@ function renderMenu(client) {
 	const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}">WhatsApp</a>` : '';
 	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}">Directions</a>` : '';
 	const categories = (client.categories || []).map((category) => `
-		<section class="category">
+		<section class="category" id="category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">
 			<h2>${escapeHtml(client.translations?.[requestedLanguage]?.categories?.[category.name]?.name || category.name)}</h2>
 			${(category.items || []).map((item) => `
 				<article class="item">
@@ -38,6 +38,7 @@ function renderMenu(client) {
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 		</header>
+		<nav class="category-nav" aria-label="Menu categories">${(client.categories || []).map((category) => `<a href="#category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${escapeHtml(category.name)}</a>`).join('')}</nav>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>`;
 }
