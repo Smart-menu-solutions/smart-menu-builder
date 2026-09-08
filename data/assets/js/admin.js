@@ -62,6 +62,7 @@ async function importPdf() {
 	$('#importStatus').textContent = 'Reading PDF…';
 	try {
 		const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
 		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
 		let text = '';
 		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
@@ -69,6 +70,7 @@ async function importPdf() {
 			const content = await page.getTextContent();
 			text += `${content.items.map((item) => item.str).join(' ')}\n`;
 		}
+		if (!text.trim()) throw new Error('This PDF contains no selectable text. A scanned PDF needs OCR before it can be digitized.');
 		const client = selectedClient();
 		client.categories = parsePdfText(text);
 		await saveClients();
