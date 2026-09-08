@@ -3,6 +3,7 @@ const seedClients = [{ id: 'customer-001', name: 'Taverna Athens', slug: 'tavern
 const $ = (selector) => document.querySelector(selector);
 let clients = loadClients();
 let selectedId = clients[0]?.id;
+let clientSearch = '';
 
 function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved : structuredClone(seedClients); } catch { return structuredClone(seedClients); } }
 async function saveClients() {
@@ -145,7 +146,8 @@ function render() {
 	selectedId = client.id;
 	$('#clientCount').textContent = clients.length; $('#navClientCount').textContent = clients.length;
 	$('#sectionCount').textContent = clients.reduce((total, item) => total + item.categories.length, 0); $('#qrCount').textContent = clients.length;
-	$('#clientList').innerHTML = clients.map((item) => `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections</small></span><i class="client-status"></i></div>`).join('');
+	const visibleClients = clients.filter((item) => `${item.name} ${item.slug}`.toLowerCase().includes(clientSearch.toLowerCase()));
+	$('#clientList').innerHTML = visibleClients.map((item) => `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections</small></span><i class="client-status"></i></div>`).join('') || '<p class="client-empty">No clients found.</p>';
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	document.querySelectorAll('input[name="language"]').forEach((input) => { input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value); });
@@ -181,3 +183,4 @@ syncFromSupabase();
 document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => { updateLanguageState(); saveClients().catch((error) => notify(error.message)); }));
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);
+$('#clientSearch').addEventListener('input', (event) => { clientSearch = event.target.value; render(); });

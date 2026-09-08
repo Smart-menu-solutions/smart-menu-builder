@@ -1,3 +1,4 @@
+.client-search{width:100%;margin:0 0 16px;padding:11px 13px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}.client-search:focus{outline:3px solid var(--yellow);border-color:var(--teal)}.client-empty{padding:16px;color:var(--muted);font-size:13px}
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
 
 :root{--ink:#262421;--muted:#737373;--line:#e7e5e1;--paper:#fff;--alt:#fafaf9;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--shadow:0 14px 30px -18px rgba(38,36,33,.35)}
