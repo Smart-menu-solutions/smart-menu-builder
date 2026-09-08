@@ -62,7 +62,8 @@ async function importPdf() {
 	$('#importStatus').textContent = 'Reading PDF…';
 	try {
 		const pdfjs = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
-		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer(), disableWorker: true }).promise;
+		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
 		let text = '';
 		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
 			const page = await pdf.getPage(pageNumber);
