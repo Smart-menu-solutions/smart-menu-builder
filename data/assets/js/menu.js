@@ -21,8 +21,8 @@ function languageMarkup(client) {
 function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
 	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
-	const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}">WhatsApp</a>` : '';
-	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}">Directions</a>` : '';
+		const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp</a>` : '';
+		const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">Directions</a>` : '';
 	const categories = (client.categories || []).map((category) => `
 		<section class="category" id="category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">
 			<h2>${escapeHtml(client.translations?.[requestedLanguage]?.categories?.[category.name]?.name || category.name)}</h2>
@@ -33,7 +33,7 @@ function renderMenu(client) {
 				</article>`).join('')}
 		</section>`).join('');
 	app.innerHTML = `
-		<header class="menu-hero">${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
+		<header class="menu-hero" id="menu-top"><a class="menu-back" href="#menu-top">← Back to menu</a>${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
