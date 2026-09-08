@@ -7,6 +7,12 @@ function escapeHtml(value) {
 	}[character]));
 }
 
+function logoMarkup(client) {
+	const source = client.logo_url || client.logoUrl || client.logo;
+	if (!source || !/^https?:\/\//i.test(source)) return '';
+	return `<img class="menu-logo" src="${escapeHtml(source)}" alt="${escapeHtml(client.name)} logo">`;
+}
+
 function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
 	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
@@ -22,7 +28,7 @@ function renderMenu(client) {
 				</article>`).join('')}
 		</section>`).join('');
 	app.innerHTML = `
-		<header class="menu-hero"><h1>${escapeHtml(client.name)}</h1>
+		<header class="menu-hero">${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 		</header>
