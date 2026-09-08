@@ -25,11 +25,11 @@ function renderMenu(client) {
 	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}">Directions</a>` : '';
 	const categories = (client.categories || []).map((category) => `
 		<section class="category">
-			<h2>${escapeHtml(category.translations?.[requestedLanguage]?.name || category.name)}</h2>
+			<h2>${escapeHtml(client.translations?.[requestedLanguage]?.categories?.[category.name]?.name || category.name)}</h2>
 			${(category.items || []).map((item) => `
 				<article class="item">
-					<div class="item-header"><h3>${escapeHtml(item.translations?.[requestedLanguage]?.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
-					${item.description ? `<p>${escapeHtml(item.translations?.[requestedLanguage]?.description || item.description)}</p>` : ''}
+					<div class="item-header"><h3>${escapeHtml(client.translations?.[requestedLanguage]?.items?.[item.name]?.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
+					${item.description ? `<p>${escapeHtml(client.translations?.[requestedLanguage]?.items?.[item.name]?.description || item.description)}</p>` : ''}
 				</article>`).join('')}
 		</section>`).join('');
 	app.innerHTML = `

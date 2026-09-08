@@ -16,6 +16,7 @@ async function saveClients() {
 		address: client.address || null,
 		currency: client.currency || '€',
 		languages: client.languages || ['en', 'de', 'el'],
+		translations: client.translations || {},
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	rows.forEach((row, index) => {
@@ -101,13 +102,12 @@ async function translateMenu() {
 	try {
 		client.translations = client.translations || {};
 		for (const language of targets) {
-			client.translations[language] = [];
+			client.translations[language] = { categories: {}, items: {} };
 			for (const category of client.categories) {
-				const translatedCategory = { name: await translateText(category.name, language), items: [] };
+				client.translations[language].categories[category.name] = { name: await translateText(category.name, language) };
 				for (const item of category.items || []) {
-					translatedCategory.items.push({ name: await translateText(item.name, language), description: await translateText(item.description, language), price: item.price });
+					client.translations[language].items[item.name] = { name: await translateText(item.name, language), description: await translateText(item.description, language) };
 				}
-				client.translations[language].push(translatedCategory);
 			}
 		}
 		await saveClients();
