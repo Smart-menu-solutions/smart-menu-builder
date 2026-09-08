@@ -35,8 +35,8 @@ function renderMenu(client) {
 	app.innerHTML = `
 		<header class="menu-hero">${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
-			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
+			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
 		<nav class="category-nav" aria-label="Menu categories">${(client.categories || []).map((category) => `<a href="#category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${escapeHtml(category.name)}</a>`).join('')}</nav>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
