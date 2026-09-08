@@ -69,7 +69,23 @@ async function importPdf() {
 			const content = await page.getTextContent();
 			text += `${content.items.map((item) => item.str).join(' ')}\n`;
 		}
-		if (!text.trim()) throw new Error('This PDF contains no selectable text. A scanned PDF needs OCR before it can be digitized.');
+		if (!text.trim()) {
+			$('#importStatus').textContent = 'No text layer found. Running OCR…';
+			const tesseract = await import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js');
+			const worker = await tesseract.createWorker('eng');
+			for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+				const page = await pdf.getPage(pageNumber);
+				const viewport = page.getViewport({ scale: 1.5 });
+				const canvas = document.createElement('canvas');
+				canvas.width = viewport.width;
+				canvas.height = viewport.height;
+				await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+				const result = await worker.recognize(canvas);
+				text += `${result.data.text}\n`;
+			}
+			await worker.terminate();
+		}
+		if (!text.trim()) throw new Error('No readable text found in this PDF.');
 		const client = selectedClient();
 		client.categories = parsePdfText(text);
 		await saveClients();
