@@ -8,6 +8,7 @@ function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STO
 async function saveClients() {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	if (typeof supabaseClient === 'undefined') return;
+	const selectedSlug = selectedClient()?.slug;
 	const rows = clients.map((client) => ({
 		slug: client.slug,
 		name: client.name,
@@ -26,6 +27,7 @@ async function saveClients() {
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
 	if (data?.length) {
 		clients = data.map((row) => ({ ...row, id: row.id }));
+		selectedId = clients.find((client) => client.slug === selectedSlug)?.id || clients[0]?.id;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	}
 }
