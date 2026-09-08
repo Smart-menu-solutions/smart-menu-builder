@@ -1,5 +1,6 @@
 const app = document.querySelector('#app');
 const slug = new URLSearchParams(location.search).get('client');
+const requestedLanguage = new URLSearchParams(location.search).get('lang');
 
 function escapeHtml(value) {
 	return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -13,6 +14,10 @@ function logoMarkup(client) {
 	return `<img class="menu-logo" src="${escapeHtml(source)}" alt="${escapeHtml(client.name)} logo">`;
 }
 
+function languageMarkup(client) {
+	return (client.languages || ['en']).map((language) => `<a href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(language)}" aria-current="${language === requestedLanguage ? 'page' : 'false'}">${escapeHtml(language.toUpperCase())}</a>`).join('');
+}
+
 function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
 	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
@@ -20,16 +25,17 @@ function renderMenu(client) {
 	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}">Directions</a>` : '';
 	const categories = (client.categories || []).map((category) => `
 		<section class="category">
-			<h2>${escapeHtml(category.name)}</h2>
+			<h2>${escapeHtml(category.translations?.[requestedLanguage]?.name || category.name)}</h2>
 			${(category.items || []).map((item) => `
 				<article class="item">
-					<div class="item-header"><h3>${escapeHtml(item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
-					${item.description ? `<p>${escapeHtml(item.description)}</p>` : ''}
+					<div class="item-header"><h3>${escapeHtml(item.translations?.[requestedLanguage]?.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
+					${item.description ? `<p>${escapeHtml(item.translations?.[requestedLanguage]?.description || item.description)}</p>` : ''}
 				</article>`).join('')}
 		</section>`).join('');
 	app.innerHTML = `
 		<header class="menu-hero">${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
+			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 		</header>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>

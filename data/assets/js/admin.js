@@ -85,6 +85,39 @@ function updateLanguageState() {
 	$('#translationStatus').textContent = `${client.languages.length} language(s) selected.`;
 }
 
+async function translateText(text, target) {
+	if (!text) return '';
+	const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${target}`);
+	if (!response.ok) throw new Error('Translation service unavailable.');
+	const result = await response.json();
+	return result.responseData?.translatedText || text;
+}
+
+async function translateMenu() {
+	const client = selectedClient();
+	const targets = selectedLanguages().filter((language) => language !== 'en');
+	if (!targets.length) return notify('Select at least one target language.');
+	$('#translationStatus').textContent = 'Translating menu…';
+	try {
+		client.translations = client.translations || {};
+		for (const language of targets) {
+			client.translations[language] = [];
+			for (const category of client.categories) {
+				const translatedCategory = { name: await translateText(category.name, language), items: [] };
+				for (const item of category.items || []) {
+					translatedCategory.items.push({ name: await translateText(item.name, language), description: await translateText(item.description, language), price: item.price });
+				}
+				client.translations[language].push(translatedCategory);
+			}
+		}
+		await saveClients();
+		$('#translationStatus').textContent = `Translated to ${targets.join(', ')}.`;
+	} catch (error) {
+		$('#translationStatus').textContent = 'Translation failed.';
+		notify(error.message);
+	}
+}
+
 function render() {
 	const client = selectedClient() || clients[0]; if (!client) return;
 	selectedId = client.id;
@@ -125,4 +158,4 @@ syncFromSupabase();
 
 document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => { updateLanguageState(); saveClients().catch((error) => notify(error.message)); }));
 $('#importPdf').addEventListener('click', importPdf);
-$('#translateMenu').addEventListener('click', () => { updateLanguageState(); $('#translationStatus').textContent = 'Languages saved. Add a translation provider to translate dish text automatically.'; saveClients().catch((error) => notify(error.message)); });
+$('#translateMenu').addEventListener('click', translateMenu);
