@@ -73,8 +73,7 @@ async function importPdf() {
 		}
 		if (!text.trim()) {
 			$('#importStatus').textContent = 'No text layer found. Running OCR…';
-			const tesseractModule = await import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.esm.min.js');
-			const tesseract = tesseractModule.default || tesseractModule;
+			const tesseract = window.Tesseract;
 			if (typeof tesseract.createWorker !== 'function') throw new Error('OCR reader could not be loaded.');
 			const worker = await tesseract.createWorker('eng');
 			for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
