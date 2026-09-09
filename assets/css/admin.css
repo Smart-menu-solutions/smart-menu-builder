@@ -25,3 +25,5 @@
 	.category-top{min-width:0}
 	.category-top input{min-width:0}
 }
+
+.backup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
