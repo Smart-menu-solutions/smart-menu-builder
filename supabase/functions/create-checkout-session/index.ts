@@ -33,6 +33,9 @@ Deno.serve(async (request) => {
       mode: 'payment',
       line_items: [{ price_data: { currency: 'eur', unit_amount: amountCents, product_data: { name: `Smart Menu Solutions - ${plan}` } }, quantity: 1 }],
       customer_email: email,
+      payment_intent_data: {
+        receipt_email: email
+      },
       success_url: `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel.html`,
       metadata: {
