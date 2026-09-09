@@ -5,7 +5,26 @@ let clients = loadClients();
 let selectedId = clients[0]?.id;
 let clientSearch = '';
 
-function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved : structuredClone(seedClients); } catch { return structuredClone(seedClients); } }
+function slugifyName(value) {
+	return String(value || '').trim().toLowerCase()
+		.replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
+		.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+		.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-+/g, '-');
+}
+function normalizeClient(client) {
+	return {
+		...client,
+		name: client.name || 'Unnamed customer',
+		slug: client.slug || slugifyName(client.name) || `menu-${Date.now()}`,
+		categories: Array.isArray(client.categories) ? client.categories.map((category) => ({
+			name: category.name || 'Menu',
+			items: Array.isArray(category.items) ? category.items.map((item) => ({ name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '' })) : []
+		})) : [],
+		languages: Array.isArray(client.languages) && client.languages.length ? client.languages : ['en'],
+		translations: client.translations || {}
+	};
+}
+function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved.map(normalizeClient) : structuredClone(seedClients).map(normalizeClient); } catch { return structuredClone(seedClients).map(normalizeClient); } }
 async function saveClients() {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	if (typeof supabaseClient === 'undefined') return;
@@ -42,21 +61,42 @@ function selectedLanguages() { return [...document.querySelectorAll('input[name=
 
 function parsePdfText(text) {
 	const categories = [];
-	let category = { name: 'Imported menu', items: [] };
+	let category = null;
 	const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-	const pricePattern = /(?:€|EUR|\$|USD|£|GBP)?\s*\d+[.,]\d{2}\s*$/i;
+	const pricePattern = /(?:\d+[.,]\d{2}\s*(?:€|EUR|\$|USD|£|GBP)?|(?:€|EUR|\$|USD|£|GBP)\s*\d+[.,]\d{2})\s*$/i;
+	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getränke|kalte\s+getränke|frühstück\s*(?:&|und)\s+snacks?|kuchen\s*(?:&|und)\s+desserts?|spezialitäten|hot\s+drinks?|cold\s+drinks?|breakfast\s*(?:&|and)\s+snacks?|desserts?)$/i;
+	const looksLikeCategory = (line) => line.length <= 42 && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
 	lines.forEach((line) => {
 		const match = line.match(pricePattern);
 		if (!match) {
-			if (line.length < 42 && category.items.length && !/[.!?]$/.test(line)) { categories.push(category); category = { name: line, items: [] }; }
+			if (looksLikeCategory(line)) {
+				if (category?.items.length) categories.push(category);
+				category = { name: line, items: [] };
+			}
 			return;
 		}
 		const price = match[0].replace(/[^0-9.,]/g, '').replace(',', '.');
 		const name = line.slice(0, match.index).trim();
-		if (name) category.items.push({ name, description: '', price });
+		if (name) {
+			if (!category) category = { name: 'Imported menu', items: [] };
+			category.items.push({ name, description: '', price });
+		}
 	});
-	if (category.items.length) categories.push(category);
+	if (category?.items.length) categories.push(category);
 	return categories.length ? categories : [{ name: 'Imported menu', items: [{ name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
+}
+
+function pdfPageText(content) {
+	const rows = new Map();
+	content.items.forEach((item) => {
+		const value = String(item.str || '').trim();
+		if (!value) return;
+		const y = Math.round((item.transform?.[5] || 0) / 2) * 2;
+		const row = rows.get(y) || [];
+		row.push({ x: item.transform?.[4] || 0, value });
+		rows.set(y, row);
+	});
+	return [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => row.sort((a, b) => a.x - b.x).map((item) => item.value).join(' ')).join('\n');
 }
 
 async function importPdf() {
@@ -72,7 +112,7 @@ async function importPdf() {
 		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
 			const page = await pdf.getPage(pageNumber);
 			const content = await page.getTextContent();
-			text += `${content.items.map((item) => item.str).join(' ')}\n`;
+			text += `${pdfPageText(content)}\n`;
 		}
 		if (!text.trim()) {
 			$('#importStatus').textContent = 'No text layer found. Running OCR…';
@@ -173,7 +213,7 @@ function render() {
 	const visibleClients = clients.filter((item) => `${item.name} ${item.slug}`.toLowerCase().includes(clientSearch.toLowerCase()));
 	$('#clientList').innerHTML = visibleClients.map((item) => `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections</small></span><i class="client-status"></i></div>`).join('') || '<p class="client-empty">No clients found.</p>';
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
-	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
+	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = slugifyName(client.name) !== client.slug ? 'true' : 'false'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	document.querySelectorAll('input[name="language"]').forEach((input) => { input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value); });
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
 	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div><div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
@@ -185,10 +225,10 @@ function render() {
 }
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
-async function readForm() { const client = selectedClient(); client.name = $('#businessName').value.trim(); client.slug = $('#slug').value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); try { await saveClients(); render(); $('#savedState').textContent = 'Saved just now'; notify(`${client.name} saved`); } catch (error) { notify(error.message); } }
-async function addClient() { const usedNumbers = clients.map((client) => Number(client.slug.match(/^customer-(\d+)$/i)?.[1] || 0)); const number = String(Math.max(0, ...usedNumbers) + 1).padStart(4, '0'); const client = { id: `client-${Date.now()}`, name: `Customer ${number}`, slug: `customer-${number}`, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }] }; clients.push(client); selectedId = client.id; try { await saveClients(); render(); notify(`Customer ${number} created`); } catch (error) { notify(error.message); } }
+async function readForm() { const client = selectedClient(); client.name = $('#businessName').value.trim() || 'Unnamed customer'; client.slug = slugifyName($('#slug').value) || slugifyName(client.name) || `menu-${Date.now()}`; client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); try { await saveClients(); render(); $('#savedState').textContent = 'Saved just now'; notify(`${client.name} saved`); } catch (error) { notify(error.message); } }
+async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }] }; clients.push(client); selectedId = client.id; try { await saveClients(); render(); notify('New customer created'); } catch (error) { notify(error.message); } }
 
-$('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); }); $('#deleteClient').addEventListener('click', () => { if (clients.length === 1) return notify('Keep at least one client in the workspace'); if (!confirm('Delete this client and their menu?')) return; clients = clients.filter((client) => client.id !== selectedId); selectedId = clients[0].id; saveClients().then(render).catch((error) => notify(error.message)); notify('Client deleted'); }); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); $('#downloadQr').addEventListener('click', () => { const link = document.createElement('a'); link.href = $('#qrImage').src; link.download = `${selectedClient().slug}-qr.png`; link.target = '_blank'; link.click(); });
+$('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); }); $('#deleteClient').addEventListener('click', () => { if (clients.length === 1) return notify('Keep at least one client in the workspace'); if (!confirm('Delete this client and their menu?')) return; clients = clients.filter((client) => client.id !== selectedId); selectedId = clients[0].id; saveClients().then(render).catch((error) => notify(error.message)); notify('Client deleted'); }); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); $('#downloadQr').addEventListener('click', () => { const link = document.createElement('a'); link.href = $('#qrImage').src; link.download = `${selectedClient().slug}-qr.png`; link.target = '_blank'; link.click(); });
 async function syncFromSupabase() {
 	if (typeof supabaseClient === 'undefined') return;
 	const { data, error } = await supabaseClient.from('menus').select('*').order('created_at');
