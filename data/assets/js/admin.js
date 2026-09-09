@@ -29,7 +29,8 @@ async function saveClients() {
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	if (typeof supabaseClient === 'undefined') return;
 	const selectedSlug = selectedClient()?.slug;
-	const rows = clients.map((client) => ({
+	const uniqueClients = [...new Map(clients.map((client) => [client.slug, client])).values()];
+	const rows = uniqueClients.map((client) => ({
 		slug: client.slug,
 		name: client.name,
 		phone: client.phone || null,
@@ -41,7 +42,7 @@ async function saveClients() {
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	rows.forEach((row, index) => {
-		row.id = isUuid(clients[index].id) ? clients[index].id : crypto.randomUUID();
+		if (isUuid(uniqueClients[index].id)) row.id = uniqueClients[index].id;
 	});
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
