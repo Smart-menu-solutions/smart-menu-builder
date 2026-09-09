@@ -40,7 +40,7 @@
     <section class="workspace-grid" id="clients">
         <div class="panel client-panel"><div class="panel-heading"><div><p class="eyebrow">Portfolio</p><h2>Your clients</h2></div><button class="icon-button" id="addClient" title="Add a client">＋</button></div><input class="client-search" id="clientSearch" type="search" placeholder="Search clients..." aria-label="Search clients"><div id="clientList" class="client-list"></div></div>
         <div class="panel editor-panel" id="builder"><div class="panel-heading"><div><p class="eyebrow">Selected client</p><h2 id="editorTitle">Client details</h2></div><span class="saved-state" id="savedState">Saved locally</span></div>
-            <form id="clientForm">
+            <form id="clientForm" novalidate>
                 <div class="form-grid"><label>Customer name<input id="businessName" required placeholder="e.g. Café Ole"></label><label>URL slug<input id="slug" required placeholder="cafe-ole"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
                 <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
                 <div class="language-panel"><strong>Menu languages</strong><label class="source-language">Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><label class="language-option"><span>English (main)</span><input type="checkbox" name="language" value="en" checked></label><label class="language-option"><span>Deutsch</span><input type="checkbox" name="language" value="de" checked></label><label class="language-option"><span>Ελληνικά</span><input type="checkbox" name="language" value="el" checked></label><label class="language-option"><span>Italiano</span><input type="checkbox" name="language" value="it"></label><label class="language-option"><span>Español</span><input type="checkbox" name="language" value="es"></label><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
@@ -54,6 +54,6 @@
 </main>
 <div class="toast" id="toast" role="status"></div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=save-ids-1"></script>
+<script src="data/assets/js/admin.js?v=save-form-1"></script>
 </body>
 </html>
