@@ -41,8 +41,13 @@ async function saveClients() {
 		translations: client.translations || {},
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
+	const usedIds = new Set();
 	rows.forEach((row, index) => {
-		if (isUuid(uniqueClients[index].id)) row.id = uniqueClients[index].id;
+		const id = uniqueClients[index].id;
+		if (isUuid(id) && !usedIds.has(id)) {
+			row.id = id;
+			usedIds.add(id);
+		}
 	});
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
