@@ -11,12 +11,6 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS'
 };
 
-const priceIds: Record<string, string | undefined> = {
-  start: Deno.env.get('STRIPE_PRICE_START'),
-  pro: Deno.env.get('STRIPE_PRICE_PRO'),
-  premium: Deno.env.get('STRIPE_PRICE_PREMIUM')
-};
-
 Deno.serve(async (request) => {
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
@@ -24,19 +18,20 @@ Deno.serve(async (request) => {
   try {
     const body = await request.json();
     const plan = String(body.plan || '');
-    const price = priceIds[plan];
+    const amount = Number(body.amount);
+    const amountCents = Math.round(amount * 100);
     const email = String(body.email || '').trim();
     const firstName = String(body.firstName || '').trim();
     const lastName = String(body.lastName || '').trim();
 
-    if (!price || !email || !firstName || !lastName) {
-      return json({ error: 'Missing checkout data or configured Stripe price.' }, 400);
+    if (!['start', 'pro', 'premium'].includes(plan) || !Number.isFinite(amount) || amountCents < 11900 || amountCents > 1000000 || !email || !firstName || !lastName) {
+      return json({ error: 'Enter a valid amount between EUR 119 and EUR 10,000.' }, 400);
     }
 
     const origin = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      line_items: [{ price, quantity: 1 }],
+      line_items: [{ price_data: { currency: 'eur', unit_amount: amountCents, product_data: { name: `Smart Menu Solutions - ${plan}` } }, quantity: 1 }],
       customer_email: email,
       success_url: `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel.html`,
