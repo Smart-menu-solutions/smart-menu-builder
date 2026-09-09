@@ -46,8 +46,9 @@ async function saveClients() {
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
 	if (data?.length) {
-		clients = data.map((row) => ({ ...row, id: row.id }));
-		selectedId = clients.find((client) => client.slug === selectedSlug)?.id || clients[0]?.id;
+		const savedBySlug = new Map(data.map((row) => [row.slug, normalizeClient({ ...row, id: row.id })]));
+		clients = clients.map((client) => savedBySlug.get(client.slug) || client);
+		selectedId = clients.find((client) => client.slug === selectedSlug)?.id || selectedId;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	}
 }
@@ -234,10 +235,13 @@ $('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEven
 async function syncFromSupabase() {
 	if (typeof supabaseClient === 'undefined') return;
 	const { data, error } = await supabaseClient.from('menus').select('*').order('created_at');
-	if (error) { notify(`Could not load menus: ${error.message}`); return; }
+	if (error) { notify(`Cloud sync unavailable; local customer data kept`); return; }
 	if (data?.length) {
-		clients = data.filter((client) => client.slug !== 'new-venue-3');
-		selectedId = clients[0].id;
+		const remoteClients = data.filter((client) => client.slug !== 'new-venue-3').map(normalizeClient);
+		const remoteSlugs = new Set(remoteClients.map((client) => client.slug));
+		const localOnlyClients = clients.filter((client) => !remoteSlugs.has(client.slug));
+		clients = [...remoteClients, ...localOnlyClients];
+		selectedId = clients.find((client) => client.id === selectedId)?.id || clients[0]?.id;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 		render();
 	} else if (clients.length) {
