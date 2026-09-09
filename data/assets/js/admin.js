@@ -113,6 +113,11 @@ function updateLanguageState() {
 async function translateText(text, source, target) {
 	if (!text) return '';
 	if (source === target) return text;
+	const fallback = window.MENU_TRANSLATION_FALLBACKS?.[selectedClient()?.slug]?.[target];
+	const categoryTranslation = fallback?.categories?.[text];
+	const itemTranslation = fallback?.items?.[text];
+	if (categoryTranslation) return categoryTranslation;
+	if (itemTranslation) return itemTranslation[0];
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		try {
 			const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
@@ -131,7 +136,7 @@ async function translateMenu() {
 	const client = selectedClient();
 	client.sourceLanguage = $('#sourceLanguage').value;
 	const source = client.sourceLanguage;
-	const targets = selectedLanguages().filter((language) => language !== 'en');
+	const targets = selectedLanguages().filter((language) => language !== source);
 	if (!targets.length) return notify('Select at least one target language.');
 	$('#translationStatus').textContent = 'Translating menu…';
 	try {
@@ -142,9 +147,12 @@ async function translateMenu() {
 			for (const category of client.categories) {
 				try { client.translations[language].categories[category.name] = { name: await translateText(category.name, source, language) }; } catch { failures += 1; client.translations[language].categories[category.name] = { name: category.name }; }
 				for (const item of category.items || []) {
-					let name = item.name; let description = item.description;
-					try { name = await translateText(item.name, source, language); } catch { failures += 1; }
-					try { description = await translateText(item.description, source, language); } catch { failures += 1; }
+					const fallbackItem = window.MENU_TRANSLATION_FALLBACKS?.[client.slug]?.[language]?.items?.[item.name];
+					let name = fallbackItem?.[0] || item.name; let description = fallbackItem?.[1] || item.description;
+					if (!fallbackItem) {
+						try { name = await translateText(item.name, source, language); } catch { failures += 1; }
+						try { description = await translateText(item.description, source, language); } catch { failures += 1; }
+					}
 					client.translations[language].items[item.name] = { name, description };
 				}
 			}

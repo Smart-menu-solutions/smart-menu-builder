@@ -18,6 +18,26 @@ function languageMarkup(client) {
 	return (client.languages || ['en']).map((language) => `<a href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(language)}" aria-current="${language === requestedLanguage ? 'page' : 'false'}">${escapeHtml(language.toUpperCase())}</a>`).join('');
 }
 
+function fallbackTranslation(client, language, type, sourceText) {
+	const fallback = window.MENU_TRANSLATION_FALLBACKS?.[client.slug]?.[language];
+	if (!fallback) return null;
+	if (type === 'category') return fallback.categories?.[sourceText] || null;
+	const item = fallback.items?.[sourceText];
+	return item ? { name: item[0], description: item[1] } : null;
+}
+
+function categoryName(client, category) {
+	return client.translations?.[requestedLanguage]?.categories?.[category.name]?.name
+		|| fallbackTranslation(client, requestedLanguage, 'category', category.name)
+		|| category.name;
+}
+
+function itemTranslation(client, item) {
+	return client.translations?.[requestedLanguage]?.items?.[item.name]
+		|| fallbackTranslation(client, requestedLanguage, 'item', item.name)
+		|| {};
+}
+
 function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
 	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
@@ -25,11 +45,11 @@ function renderMenu(client) {
 		const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">Directions</a>` : '';
 	const categories = (client.categories || []).map((category) => `
 		<section class="category" id="category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">
-			<h2>${escapeHtml(client.translations?.[requestedLanguage]?.categories?.[category.name]?.name || category.name)}</h2>
+			<h2>${escapeHtml(categoryName(client, category))}</h2>
 			${(category.items || []).map((item) => `
 				<article class="item">
-					<div class="item-header"><h3>${escapeHtml(client.translations?.[requestedLanguage]?.items?.[item.name]?.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
-					${item.description ? `<p>${escapeHtml(client.translations?.[requestedLanguage]?.items?.[item.name]?.description || item.description)}</p>` : ''}
+					<div class="item-header"><h3>${escapeHtml(itemTranslation(client, item).name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
+					${item.description || itemTranslation(client, item).description ? `<p>${escapeHtml(itemTranslation(client, item).description || item.description)}</p>` : ''}
 				</article>`).join('')}
 		</section>`).join('');
 	app.innerHTML = `
@@ -38,7 +58,7 @@ function renderMenu(client) {
 			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
-		<nav class="category-nav" aria-label="Menu categories">${(client.categories || []).map((category) => `<a href="#category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${escapeHtml(client.translations?.[requestedLanguage]?.categories?.[category.name]?.name || category.name)}</a>`).join('')}</nav>
+		<nav class="category-nav" aria-label="Menu categories">${(client.categories || []).map((category) => `<a href="#category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>`;
 }
