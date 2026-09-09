@@ -47,7 +47,7 @@ async function saveClients() {
 		if (isUuid(id) && !usedIds.has(id)) {
 			row.id = id;
 			usedIds.add(id);
-		}
+		} else row.id = crypto.randomUUID();
 	});
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(`Could not save menus: ${error.message}`);
@@ -160,7 +160,10 @@ function updateLanguageState() {
 async function translateText(text, source, target) {
 	if (!text) return '';
 	if (source === target) return text;
-	const fallback = window.MENU_TRANSLATION_FALLBACKS?.[selectedClient()?.slug]?.[target];
+	const catalogs = window.MENU_TRANSLATION_FALLBACKS || {};
+	const clientSlug = selectedClient()?.slug;
+	const fallback = catalogs?.[clientSlug]?.[target]
+		|| catalogs?.['restaurant-zum-dorfkrug']?.[clientSlug]?.[target];
 	const categoryTranslation = fallback?.categories?.[text];
 	const itemTranslation = fallback?.items?.[text];
 	if (categoryTranslation) return categoryTranslation;

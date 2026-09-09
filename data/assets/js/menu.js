@@ -19,7 +19,9 @@ function languageMarkup(client) {
 }
 
 function fallbackTranslation(client, language, type, sourceText) {
-	const fallback = window.MENU_TRANSLATION_FALLBACKS?.[client.slug]?.[language];
+	const catalogs = window.MENU_TRANSLATION_FALLBACKS || {};
+	const fallback = catalogs?.[client.slug]?.[language]
+		|| catalogs?.['restaurant-zum-dorfkrug']?.[client.slug]?.[language];
 	if (!fallback) return null;
 	if (type === 'category') return fallback.categories?.[sourceText] || null;
 	const item = fallback.items?.[sourceText];
