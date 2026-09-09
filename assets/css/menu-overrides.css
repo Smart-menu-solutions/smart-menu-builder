@@ -3,3 +3,17 @@
 .menu-back{display:inline-block;margin-bottom:1rem;color:#fff;text-decoration:none;font-size:.85rem;font-weight:700}.menu-back:hover{text-decoration:underline}
 .category-nav{position:sticky;top:0;z-index:5;display:flex;gap:.6rem;overflow-x:auto;padding:.8rem 1.5rem;background:#fff7ef;border-bottom:1px solid var(--line);scrollbar-width:thin}.category-nav a{flex:0 0 auto;color:var(--ink);padding:.45rem .8rem;border:1px solid var(--line);border-radius:6px;background:#fff;text-decoration:none;font-size:.88rem;font-weight:700;white-space:nowrap}.category-nav a:hover{border-color:var(--orange);color:var(--orange)}
 body{background:#fff7ef}.menu-container{background:#fff7ef}
+
+@media (max-width: 640px){
+	.menu-hero{padding:3rem 1rem 2.5rem}
+	.menu-hero h1{font-size:clamp(1.8rem,9vw,2.6rem);overflow-wrap:anywhere}
+	.actions,.menu-languages{display:flex;flex-wrap:wrap;justify-content:center;gap:.55rem}
+	.actions a,.menu-languages a{max-width:100%;overflow-wrap:anywhere}
+	.menu-container{padding:2rem 1rem 3rem}
+	.item{padding:.95rem}
+	.item-header{align-items:flex-start;flex-wrap:wrap;gap:.35rem .75rem}
+	.item-header h3{min-width:0;flex:1 1 12rem;overflow-wrap:anywhere}
+	.price{margin-left:auto}
+	.category h2{font-size:1.4rem;overflow-wrap:anywhere}
+	.footer-brand{max-width:100%;flex-wrap:wrap;justify-content:center}
+}

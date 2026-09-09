@@ -12,3 +12,16 @@
 
 /* Orange Smart Menu Solutions buttons */
 .button-primary{background:#f66a09!important;border-color:#f66a09!important;color:#fff!important}.button-primary:hover{background:#d85d06!important;color:#fff!important}.button-ghost,.button-danger,.icon-button,.remove-button,.language-panel button,.import-panel button{background:#fff!important;border-color:#f66a09!important;color:#f66a09!important}.button-ghost:hover,.button-danger:hover,.icon-button:hover,.remove-button:hover,.language-panel button:hover,.import-panel button:hover{background:#fff1e4!important;color:#d85d06!important}.qr-badge,.saved-state,.stat-icon.coral,.stat-icon.yellow,.client-avatar{color:#d85d06!important;background:#fff1e4!important}.add-item{color:#f66a09!important}.add-item:hover{background:#fff1e4!important}.nav-link b{background:#f66a09!important}
+
+@media (max-width: 720px){
+	.sidebar{padding-left:14px;padding-right:14px}
+	.sidebar nav{scrollbar-width:thin;padding-bottom:3px}
+	.nav-link{padding:10px 9px}
+	.main{padding-left:14px;padding-right:14px}
+	.form-actions{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+	.form-actions .button{min-width:0;white-space:normal;text-align:center}
+	.item-row{grid-template-columns:minmax(0,1fr) 65px 27px}
+	.item-row input{min-width:0}
+	.category-top{min-width:0}
+	.category-top input{min-width:0}
+}
