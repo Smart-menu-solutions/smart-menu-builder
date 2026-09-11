@@ -191,7 +191,11 @@ async function translateText(text, source, target) {
 	if (itemTranslation) return itemTranslation[0];
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		try {
-			const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`);
+			// Supplying a contact email raises MyMemory's free daily quota
+			// from 5,000 to 50,000 words (their documented anti-abuse trade-off,
+			// no signup needed) — without it we hit HTTP 429 well before a
+			// full menu across 4 languages finishes translating.
+			const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}&de=smartmenusolutions@outlook.com`);
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 			const result = await response.json();
 			if (result.responseStatus && result.responseStatus !== 200) throw new Error(`Translation status ${result.responseStatus}`);
