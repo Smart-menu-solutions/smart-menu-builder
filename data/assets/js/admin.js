@@ -74,17 +74,29 @@ function selectedLanguages() { return [...document.querySelectorAll('input[name=
 
 function parsePdfText(text) {
 	const categories = [];
+	const categoryByName = new Map();
 	let category = null;
 	const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 	const pricePattern = /(?:\d+[.,]\d{2}\s*(?:€|EUR|\$|USD|£|GBP)?|(?:€|EUR|\$|USD|£|GBP)\s*\d+[.,]\d{2})\s*$/i;
-	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getränke|kalte\s+getränke|frühstück\s*(?:&|und)\s+snacks?|kuchen\s*(?:&|und)\s+desserts?|spezialitäten|hot\s+drinks?|cold\s+drinks?|breakfast\s*(?:&|and)\s+snacks?|desserts?)$/i;
-	const looksLikeCategory = (line) => line.length <= 42 && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
+	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getränke|kalte\s+getränke|frühstück\s*(?:&|und)\s+snacks?|kuchen\s*(?:&|und)\s+desserts?|spezialitäten|vorspeisen|hauptgerichte|hauptspeisen|nachspeisen|salate|snacks?|beilagen|suppen|pizza|pasta|burger|desserts?|starters?|mains?|sides?|soups?|salads?|hot\s+drinks?|cold\s+drinks?|breakfast\s*(?:&|and)\s+snacks?)$/i;
+	// Table headers from a PDF's column labels (e.g. "Produkt Preis") — never
+	// real menu categories, but they otherwise pass the generic heuristic
+	// below and, repeated on every page, used to create one duplicate
+	// category per page instead of being ignored.
+	const headerLinePattern = /^(produkt|preis|price|artikel|bezeichnung|men[uü]|item|name|beschreibung|description|qty|anzahl|product)(\s*(preis|price))?$/i;
+	const looksLikeCategory = (line) => line.length <= 42 && !headerLinePattern.test(line) && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
 	lines.forEach((line) => {
 		const match = line.match(pricePattern);
 		if (!match) {
 			if (looksLikeCategory(line)) {
-				if (category?.items.length) categories.push(category);
-				category = { name: line, items: [] };
+				const existing = categoryByName.get(line);
+				if (existing) {
+					category = existing;
+				} else {
+					category = { name: line, items: [] };
+					categoryByName.set(line, category);
+					categories.push(category);
+				}
 			}
 			return;
 		}
@@ -94,12 +106,12 @@ function parsePdfText(text) {
 			.replace(/[.·‧… ]{2,}$/, '')
 			.trim();
 		if (name) {
-			if (!category) category = { name: 'Imported menu', items: [] };
+			if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
 			category.items.push({ name, description: '', price });
 		}
 	});
-	if (category?.items.length) categories.push(category);
-	return categories.length ? categories : [{ name: 'Imported menu', items: [{ name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
+	const nonEmptyCategories = categories.filter((c) => c.items.length);
+	return nonEmptyCategories.length ? nonEmptyCategories : [{ name: 'Imported menu', items: [{ name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
 }
 
 function pdfPageText(content) {
