@@ -20,6 +20,7 @@ function normalizeClient(client) {
 		...client,
 		name: client.name || 'Unnamed customer',
 		slug: client.slug || slugifyName(client.name) || `menu-${Date.now()}`,
+		slugManual: client.slugManual !== undefined ? client.slugManual : true,
 		categories: Array.isArray(client.categories) ? client.categories.map((category) => ({
 			name: category.name || 'Menu',
 			image: category.image || '',
@@ -270,7 +271,7 @@ function render() {
 		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small></span><i class="client-status ${statusClass}" title="${escapeAttr(statusTitle)}"></i></div>`;
 	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
-	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = slugifyName(client.name) !== client.slug ? 'true' : 'false'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
+	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	const clientSubscription = subscriptionsBySlug[client.slug];
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
@@ -328,9 +329,9 @@ function render() {
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
 async function readForm() { const client = selectedClient(); const name = $('#businessName').value.trim(); const slug = slugifyName($('#slug').value) || slugifyName(name); if (!name) return notify('Customer name is required'); if (!slug) return notify('URL slug is required'); if (clients.some((item) => item.id !== client.id && item.slug === slug)) return notify('This URL slug is already in use'); client.name = name; client.slug = slug; client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); render(); $('#savedState').textContent = 'Saved locally just now'; notify(`${client.name} saved locally`); try { await saveClients(); $('#savedState').textContent = 'Saved to cloud'; } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
-async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }], localCreatedAt: Date.now() }; clients.push(client); selectedId = client.id; render(); notify('New customer created'); try { await saveClients(); } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
+async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, slugManual: false, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }], localCreatedAt: Date.now() }; clients.push(client); selectedId = client.id; render(); notify('New customer created'); try { await saveClients(); } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
 
-$('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); });
+$('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; const client = selectedClient(); if (client) client.slugManual = true; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); });
 async function deleteClient() {
 	if (clients.length === 1) return notify('Keep at least one client in the workspace');
 	if (!confirm('Delete this client and their menu?')) return;
@@ -385,6 +386,11 @@ document.querySelectorAll('input[name="language"]').forEach((input) => input.add
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);
 $('#clientSearch').addEventListener('input', (event) => { clientSearch = event.target.value; render(); });
+document.querySelectorAll('.editor-tab').forEach((tab) => tab.addEventListener('click', () => {
+	document.querySelectorAll('.editor-tab').forEach((otherTab) => { otherTab.classList.remove('active'); otherTab.setAttribute('aria-selected', 'false'); });
+	tab.classList.add('active'); tab.setAttribute('aria-selected', 'true');
+	document.querySelectorAll('.editor-tab-panel').forEach((panel) => { panel.hidden = panel.dataset.tabPanel !== tab.dataset.tab; });
+}));
 const renewalFilterCard = $('#renewalFilterCard');
 if (renewalFilterCard) {
 	renewalFilterCard.addEventListener('click', () => { showOnlyNeedsRenewal = !showOnlyNeedsRenewal; renewalFilterCard.classList.toggle('active-filter', showOnlyNeedsRenewal); render(); });

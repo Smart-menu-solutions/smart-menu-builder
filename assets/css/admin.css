@@ -40,6 +40,11 @@
 .image-upload-btn{cursor:pointer;color:var(--orange);font-weight:700;font-size:11px}
 .image-upload-btn:hover{color:var(--orange-dark)}
 #renewalFilterCard.active-filter{border-color:var(--orange);box-shadow:0 0 0 2px var(--tint)}
+.editor-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
+.editor-tab{padding:10px 16px;border:0;background:none;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
+.editor-tab:hover{color:var(--orange)}
+.editor-tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+.editor-tab-panel[hidden]{display:none}
 
 /* Match the rectangular button shape used across smart-menu-solutions.github.io */
 .button{border-radius:6px!important}
