@@ -207,28 +207,40 @@ async function translateText(text, source, target) {
 	}
 }
 
+function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+// MyMemory throttles by requests-per-second, separately from its daily word
+// quota — a real menu across several categories/items/languages easily fires
+// dozens of calls back-to-back with no delay between them, which the API
+// answers with 429s far before the daily quota is anywhere near used. A
+// small gap between requests keeps the whole run under that limit.
+const TRANSLATE_REQUEST_DELAY_MS = 250;
 async function translateMenu() {
 	const client = selectedClient();
 	client.sourceLanguage = $('#sourceLanguage').value;
 	const source = client.sourceLanguage;
 	const targets = selectedLanguages().filter((language) => language !== source);
 	if (!targets.length) return notify('Select at least one target language.');
-	$('#translationStatus').textContent = 'Translating menu…';
 	try {
 		client.translations = client.translations || {};
 		let failures = 0;
+		const totalItems = client.categories.reduce((sum, category) => sum + (category.items?.length || 0), 0) * targets.length;
+		let done = 0;
 		for (const language of targets) {
 			client.translations[language] = { categories: {}, items: {} };
 			for (const category of client.categories) {
 				try { client.translations[language].categories[category.name] = { name: await translateText(category.name, source, language) }; } catch { failures += 1; client.translations[language].categories[category.name] = { name: category.name }; }
+				await wait(TRANSLATE_REQUEST_DELAY_MS);
 				for (const item of category.items || []) {
 					const fallbackItem = window.MENU_TRANSLATION_FALLBACKS?.[client.slug]?.[language]?.items?.[item.name];
 					let name = fallbackItem?.[0] || item.name; let description = fallbackItem?.[1] || item.description;
 					if (!fallbackItem) {
 						try { name = await translateText(item.name, source, language); } catch { failures += 1; }
-						try { description = await translateText(item.description, source, language); } catch { failures += 1; }
+						await wait(TRANSLATE_REQUEST_DELAY_MS);
+						if (item.description) { try { description = await translateText(item.description, source, language); } catch { failures += 1; } await wait(TRANSLATE_REQUEST_DELAY_MS); }
 					}
 					client.translations[language].items[item.name] = { name, description };
+					done += 1;
+					$('#translationStatus').textContent = `Translating menu… (${done}/${totalItems}, currently ${language})`;
 				}
 			}
 		}
