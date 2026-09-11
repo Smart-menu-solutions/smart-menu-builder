@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.renewal]
 verify_jwt = false
+
+[functions.check-subscriptions]
+verify_jwt = false
