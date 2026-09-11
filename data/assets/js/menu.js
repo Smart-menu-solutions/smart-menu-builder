@@ -1,6 +1,9 @@
-const app = document.querySelector('#app');
-const slug = new URLSearchParams(location.search).get('client');
-const requestedLanguage = new URLSearchParams(location.search).get('lang');
+const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
+const app = isBrowser ? document.querySelector('#app') : null;
+const slug = isBrowser ? new URLSearchParams(location.search).get('client') : null;
+const requestedLanguage = isBrowser
+	? (new URLSearchParams(location.search).get('lang') || 'en').toLowerCase()
+	: 'en';
 
 function escapeHtml(value) {
 	return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -15,17 +18,26 @@ function logoMarkup(client) {
 }
 
 function languageMarkup(client) {
-	return (client.languages || ['en']).map((language) => `<a href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(language)}" aria-current="${language === requestedLanguage ? 'page' : 'false'}">${escapeHtml(language.toUpperCase())}</a>`).join('');
+	return (client.languages || ['en']).map((language) => {
+		const current = language === requestedLanguage ? ' aria-current="page"' : '';
+		return `<a href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(language)}"${current}>${escapeHtml(language.toUpperCase())}</a>`;
+	}).join('');
 }
 
 function fallbackTranslation(client, language, type, sourceText) {
-	const catalogs = window.MENU_TRANSLATION_FALLBACKS || {};
-	const fallback = catalogs?.[client.slug]?.[language]
-		|| catalogs?.['restaurant-zum-dorfkrug']?.[client.slug]?.[language];
-	if (!fallback) return null;
-	if (type === 'category') return fallback.categories?.[sourceText] || null;
-	const item = fallback.items?.[sourceText];
-	return item ? { name: item[0], description: item[1] } : null;
+	const catalogs = window.MENU_TRANSLATION_FALLBACKS;
+	if (!catalogs || typeof catalogs !== 'object') return null;
+	const fallback = catalogs?.[client.slug]?.[language];
+	if (!fallback || typeof fallback !== 'object') return null;
+	if (type === 'category') {
+		if (!fallback.categories || typeof fallback.categories !== 'object') return null;
+		const category = fallback.categories[sourceText];
+		return typeof category === 'string' && category ? category : null;
+	}
+	if (!fallback.items || typeof fallback.items !== 'object') return null;
+	const item = fallback.items[sourceText];
+	if (!Array.isArray(item) || typeof item[0] !== 'string') return null;
+	return { name: item[0], description: typeof item[1] === 'string' ? item[1] : '' };
 }
 
 function categoryName(client, category) {
@@ -40,28 +52,50 @@ function itemTranslation(client, item) {
 		|| {};
 }
 
+function buildContactLinks(client) {
+	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
+	const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp</a>` : '';
+	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">Directions</a>` : '';
+	return `${phone}${whatsapp}${map}`;
+}
+
+function categoryId(name) {
+	return encodeURIComponent(name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
+}
+
+function buildCategory(client, category) {
+	const categoryImage = category.image && /^https?:\/\//i.test(category.image) ? `<img class="category-image" src="${escapeHtml(category.image)}" alt="">` : '';
+	return `
+		<section class="category" id="category-${categoryId(category.name)}">
+			<h2>${escapeHtml(categoryName(client, category))}</h2>
+			${categoryImage}
+			${(category.items || []).map((item) => {
+				const translation = itemTranslation(client, item);
+				const description = translation.description || item.description;
+				const itemImage = item.image && /^https?:\/\//i.test(item.image) ? `<img class="item-image" src="${escapeHtml(item.image)}" alt="">` : '';
+				return `
+				<article class="item">
+					${itemImage}
+					<div class="item-body">
+						<div class="item-header"><h3>${escapeHtml(translation.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
+						${description ? `<p>${escapeHtml(description)}</p>` : ''}
+					</div>
+				</article>`;
+			}).join('')}
+		</section>`;
+}
+
 function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
-	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
-		const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp</a>` : '';
-		const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">Directions</a>` : '';
 	const visibleCategories = (client.categories || []).filter((category) => Array.isArray(category.items) && category.items.length);
-	const categories = visibleCategories.map((category) => `
-		<section class="category" id="category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">
-			<h2>${escapeHtml(categoryName(client, category))}</h2>
-			${(category.items || []).map((item) => `
-				<article class="item">
-					<div class="item-header"><h3>${escapeHtml(itemTranslation(client, item).name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
-					${item.description || itemTranslation(client, item).description ? `<p>${escapeHtml(itemTranslation(client, item).description || item.description)}</p>` : ''}
-				</article>`).join('')}
-		</section>`).join('');
+	const categories = visibleCategories.map((category) => buildCategory(client, category)).join('');
 	app.innerHTML = `
 		<header class="menu-hero" id="menu-top"><a class="menu-back" href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(requestedLanguage)}#menu-top">← Back to menu</a>${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
-			<nav class="actions" aria-label="Contact">${phone}${whatsapp}${map}</nav>
+			<nav class="actions" aria-label="Contact">${buildContactLinks(client)}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
-		<nav class="category-nav" aria-label="Menu categories">${visibleCategories.map((category) => `<a href="#category-${encodeURIComponent(category.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'))}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
+		<nav class="category-nav" aria-label="Menu categories">${visibleCategories.map((category) => `<a href="#category-${categoryId(category.name)}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>`;
 }
@@ -85,13 +119,46 @@ async function loadMenu() {
 		renderMenu(FALLBACK_CLIENTS[slug]);
 		return;
 	}
-	const response = await fetch(`${AUTH_CONFIG.supabaseUrl}/rest/v1/menus?slug=eq.${encodeURIComponent(slug)}&is_published=eq.true&select=*`, {
-		headers: { apikey: AUTH_CONFIG.supabasePublishableKey, Accept: 'application/json' }
-	});
-	if (!response.ok) throw new Error('The menu could not be loaded.');
-	const menus = await response.json();
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 10000);
+	let response;
+	try {
+		response = await fetch(`${AUTH_CONFIG.supabaseUrl}/rest/v1/menus?slug=eq.${encodeURIComponent(slug)}&is_published=eq.true&select=*`, {
+			headers: { apikey: AUTH_CONFIG.supabasePublishableKey, Accept: 'application/json' },
+			signal: controller.signal
+		});
+	} finally {
+		clearTimeout(timeoutId);
+	}
+	if (!response.ok) throw new Error('The menu could not be loaded. Please try again later.');
+	let menus;
+	try {
+		menus = await response.json();
+	} catch {
+		throw new Error('The menu could not be loaded. Please try again later.');
+	}
 	if (!menus.length) throw new Error('This menu is not available.');
 	renderMenu(menus[0]);
 }
 
-loadMenu().catch((error) => { app.innerHTML = `<p class="message error">${escapeHtml(error.message)}</p>`; });
+	if (isBrowser) {
+		loadMenu().catch((error) => {
+			const friendly = error.name === 'AbortError'
+				? 'Loading the menu is taking too long. Please check your connection and try again.'
+				: (error instanceof TypeError
+					? 'The menu could not be loaded. Please check your connection and try again.'
+					: error.message);
+			app.innerHTML = `<p class="message error">${escapeHtml(friendly)}</p>`;
+		});
+	}
+
+const menuHelpers = { escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation };
+
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = menuHelpers;
+}
+if (typeof window !== 'undefined') {
+	window.__menuHelpers = menuHelpers;
+}
+export default menuHelpers;
+export { escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation };

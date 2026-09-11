@@ -4,6 +4,10 @@ const $ = (selector) => document.querySelector(selector);
 let clients = loadClients();
 let selectedId = clients[0]?.id;
 let clientSearch = '';
+let subscriptionsBySlug = {};
+let showOnlyNeedsRenewal = false;
+const SUBSCRIPTION_STATUS_LABELS = { active: 'Active', expired: 'Renewal needed', deactivated: 'Deactivated', cancelled: 'Cancelled' };
+const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
 
 function slugifyName(value) {
 	return String(value || '').trim().toLowerCase()
@@ -18,7 +22,8 @@ function normalizeClient(client) {
 		slug: client.slug || slugifyName(client.name) || `menu-${Date.now()}`,
 		categories: Array.isArray(client.categories) ? client.categories.map((category) => ({
 			name: category.name || 'Menu',
-			items: Array.isArray(category.items) ? category.items.map((item) => ({ name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '' })) : []
+			image: category.image || '',
+			items: Array.isArray(category.items) ? category.items.map((item) => ({ name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '', image: item.image || '' })) : []
 		})) : [],
 		languages: Array.isArray(client.languages) && client.languages.length ? client.languages : ['en'],
 		translations: client.translations || {}
@@ -53,6 +58,15 @@ async function saveClients() {
 function isUuid(value) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function selectedClient() { return clients.find((client) => client.id === selectedId); }
 function menuUrl(client) { return `${window.location.href.replace(/admin\.html.*$/, '')}menu.html?client=${encodeURIComponent(client.slug)}`; }
+async function uploadImage(file, pathHint) {
+	if (typeof supabaseClient === 'undefined') throw new Error('Cloud storage is not available.');
+	const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
+	const path = `${pathHint}-${Date.now()}.${extension}`;
+	const { error } = await supabaseClient.storage.from('menu-images').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: true });
+	if (error) throw new Error(`Image upload failed: ${error.message}`);
+	const { data } = supabaseClient.storage.from('menu-images').getPublicUrl(path);
+	return data.publicUrl;
+}
 function notify(message) { const toast = $('#toast'); toast.textContent = message; toast.classList.add('show'); setTimeout(() => toast.classList.remove('show'), 2200); }
 function initials(name) { return name.split(/\s+/).map((word) => word[0]).join('').slice(0, 2).toUpperCase(); }
 
@@ -75,7 +89,10 @@ function parsePdfText(text) {
 			return;
 		}
 		const price = match[0].replace(/[^0-9.,]/g, '').replace(',', '.');
-		const name = line.slice(0, match.index).trim();
+		const name = line.slice(0, match.index)
+			.replace(/^[\s•*\-–—▪◦]+/, '')
+			.replace(/[.·‧… ]{2,}$/, '')
+			.trim();
 		if (name) {
 			if (!category) category = { name: 'Imported menu', items: [] };
 			category.items.push({ name, description: '', price });
@@ -212,25 +229,92 @@ function render() {
 	selectedId = client.id;
 	$('#clientCount').textContent = clients.length; $('#navClientCount').textContent = clients.length;
 	$('#sectionCount').textContent = clients.reduce((total, item) => total + item.categories.length, 0); $('#qrCount').textContent = clients.length;
-	const visibleClients = clients.filter((item) => `${item.name} ${item.slug}`.toLowerCase().includes(clientSearch.toLowerCase()));
-	$('#clientList').innerHTML = visibleClients.map((item) => `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections</small></span><i class="client-status"></i></div>`).join('') || '<p class="client-empty">No clients found.</p>';
+	const needsRenewal = (sub) => sub && (sub.status === 'expired' || sub.status === 'deactivated');
+	const needsRenewalCount = Object.values(subscriptionsBySlug).filter(needsRenewal).length;
+	if ($('#renewalCount')) $('#renewalCount').textContent = needsRenewalCount;
+	const searched = clients.filter((item) => `${item.name} ${item.slug}`.toLowerCase().includes(clientSearch.toLowerCase()));
+	const visibleClients = showOnlyNeedsRenewal ? searched.filter((item) => needsRenewal(subscriptionsBySlug[item.slug])) : searched;
+	$('#clientList').innerHTML = visibleClients.map((item) => {
+		const sub = subscriptionsBySlug[item.slug];
+		const statusClass = sub && sub.status !== 'active' ? `status-${sub.status}` : '';
+		const statusTitle = sub ? SUBSCRIPTION_STATUS_LABELS[sub.status] || '' : '';
+		const subInfo = sub ? ` · ${escapeHtml(sub.plan)} · until ${escapeHtml(sub.current_period_end || '?')}` : '';
+		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small></span><i class="client-status ${statusClass}" title="${escapeAttr(statusTitle)}"></i></div>`;
+	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = slugifyName(client.name) !== client.slug ? 'true' : 'false'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
-	document.querySelectorAll('input[name="language"]').forEach((input) => { input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value); });
+	const clientSubscription = subscriptionsBySlug[client.slug];
+	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
+	const banner = $('#subscriptionBanner');
+	if (isLocked) {
+		const renewalUrl = `${RENEWAL_SITE}/renewal.html?token=${clientSubscription.renewal_token}`;
+		banner.innerHTML = `This client's subscription is <strong>${escapeHtml(SUBSCRIPTION_STATUS_LABELS[clientSubscription.status] || clientSubscription.status)}</strong>. Editing is locked until they renew. <a href="${renewalUrl}" target="_blank" rel="noopener">Renewal link</a>`;
+		banner.style.display = '';
+	} else {
+		banner.style.display = 'none';
+	}
+	document.querySelectorAll('input[name="language"]').forEach((input) => {
+		input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value);
+		const label = input.closest('.language-option');
+		if (!label) return;
+		const isSource = input.value === (client.sourceLanguage || 'de');
+		const translatedItemCount = Object.keys(client.translations?.[input.value]?.items || {}).length;
+		const hasTranslation = isSource || translatedItemCount > 0;
+		label.classList.toggle('lang-missing', input.checked && !hasTranslation);
+	});
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
-	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div><div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	function imageControl(kind, index, imageUrl) {
+		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? 'Change photo' : '＋ Add photo'}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
+	}
+	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	document.querySelectorAll('[data-image-input]').forEach((input) => input.addEventListener('change', async () => {
+		const file = input.files[0];
+		if (!file) return;
+		const [kind, ...rest] = input.dataset.imageInput.split('-');
+		const index = rest.join('-');
+		try {
+			const pathHint = `${client.slug}/${kind}-${index}`;
+			const url = await uploadImage(file, pathHint);
+			if (kind === 'category') client.categories[Number(index)].image = url;
+			else { const [categoryIndex, itemIndex] = index.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].image = url; }
+			await saveClients();
+			render();
+			notify('Photo uploaded');
+		} catch (error) { notify(error.message); }
+	}));
+	document.querySelectorAll('[data-remove-image]').forEach((button) => button.addEventListener('click', () => {
+		const [kind, ...rest] = button.dataset.removeImage.split('-');
+		const index = rest.join('-');
+		if (kind === 'category') client.categories[Number(index)].image = '';
+		else { const [categoryIndex, itemIndex] = index.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].image = ''; }
+		saveClients().then(render).catch((error) => notify(error.message));
+	}));
 	document.querySelectorAll('[data-remove-category]').forEach((button) => button.addEventListener('click', () => { client.categories.splice(Number(button.dataset.removeCategory), 1); saveClients(); render(); }));
 	document.querySelectorAll('[data-move-category]').forEach((button) => button.addEventListener('click', () => { const [direction, indexText] = button.dataset.moveCategory.split('-'); const index = Number(indexText); const target = direction === 'up' ? index - 1 : index + 1; if (target < 0 || target >= client.categories.length) return; [client.categories[index], client.categories[target]] = [client.categories[target], client.categories[index]]; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-remove-item]').forEach((button) => button.addEventListener('click', () => { const [categoryIndex, itemIndex] = button.dataset.removeItem.split('-').map(Number); client.categories[categoryIndex].items.splice(itemIndex, 1); saveClients(); render(); }));
 	document.querySelectorAll('[data-add-item]').forEach((button) => button.addEventListener('click', () => { client.categories[Number(button.dataset.addItem)].items.push({ name: 'New dish', description: '', price: '0.00' }); saveClients(); render(); }));
 	const url = menuUrl(client); $('#qrUrl').textContent = url; $('#previewMenu').href = url; $('#qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(url)}`;
+	document.querySelectorAll('#clientForm input, #clientForm select, #clientForm button, #clientForm textarea').forEach((element) => { if (element.id !== 'deleteClient') element.disabled = isLocked; });
 }
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
 async function readForm() { const client = selectedClient(); const name = $('#businessName').value.trim(); const slug = slugifyName($('#slug').value) || slugifyName(name); if (!name) return notify('Customer name is required'); if (!slug) return notify('URL slug is required'); if (clients.some((item) => item.id !== client.id && item.slug === slug)) return notify('This URL slug is already in use'); client.name = name; client.slug = slug; client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); render(); $('#savedState').textContent = 'Saved locally just now'; notify(`${client.name} saved locally`); try { await saveClients(); $('#savedState').textContent = 'Saved to cloud'; } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
 async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }] }; clients.push(client); selectedId = client.id; render(); notify('New customer created'); try { await saveClients(); } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
 
-$('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); }); $('#deleteClient').addEventListener('click', () => { if (clients.length === 1) return notify('Keep at least one client in the workspace'); if (!confirm('Delete this client and their menu?')) return; clients = clients.filter((client) => client.id !== selectedId); selectedId = clients[0].id; saveClients().then(render).catch((error) => notify(error.message)); notify('Client deleted'); }); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); $('#downloadQr').addEventListener('click', () => { const link = document.createElement('a'); link.href = $('#qrImage').src; link.download = `${selectedClient().slug}-qr.png`; link.target = '_blank'; link.click(); });
+$('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); }); $('#deleteClient').addEventListener('click', async () => {
+	if (clients.length === 1) return notify('Keep at least one client in the workspace');
+	if (!confirm('Delete this client and their menu?')) return;
+	const removed = selectedClient();
+	clients = clients.filter((client) => client.id !== selectedId);
+	selectedId = clients[0].id;
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+	render();
+	notify('Client deleted');
+	if (typeof supabaseClient !== 'undefined' && removed?.slug) {
+		const { error } = await supabaseClient.from('menus').delete().eq('slug', removed.slug);
+		if (error) notify(`Removed locally; cloud delete failed: ${error.message}`);
+	}
+}); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); $('#downloadQr').addEventListener('click', () => { const link = document.createElement('a'); link.href = $('#qrImage').src; link.download = `${selectedClient().slug}-qr.png`; link.target = '_blank'; link.click(); });
 function exportMenu() { const client = selectedClient(); const blob = new Blob([JSON.stringify({ name: client.name, slug: client.slug, categories: client.categories }, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${client.slug}-menu.json`; link.click(); URL.revokeObjectURL(link.href); }
 $('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEventListener('click', () => $('#menuJson').click()); $('#menuJson').addEventListener('change', async () => { const file = $('#menuJson').files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); const client = selectedClient(); client.categories = normalizeClient({ categories: imported.categories }).categories; if (imported.name) client.name = imported.name; if (imported.slug) client.slug = slugifyName(imported.slug); await saveClients(); render(); notify('Menu JSON imported'); } catch (error) { notify(`JSON import failed: ${error.message}`); } });
 async function syncFromSupabase() {
@@ -249,10 +333,24 @@ async function syncFromSupabase() {
 		try { await saveClients(); render(); } catch (error) { notify(error.message); }
 	}
 }
+async function syncSubscriptions() {
+	if (typeof supabaseClient === 'undefined') return;
+	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token').order('created_at', { ascending: false });
+	if (error) return;
+	subscriptionsBySlug = {};
+	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
+	render();
+}
+
 render();
 syncFromSupabase();
+syncSubscriptions();
 
 document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => { updateLanguageState(); saveClients().catch((error) => notify(error.message)); }));
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);
 $('#clientSearch').addEventListener('input', (event) => { clientSearch = event.target.value; render(); });
+const renewalFilterCard = $('#renewalFilterCard');
+if (renewalFilterCard) {
+	renewalFilterCard.addEventListener('click', () => { showOnlyNeedsRenewal = !showOnlyNeedsRenewal; renewalFilterCard.classList.toggle('active-filter', showOnlyNeedsRenewal); render(); });
+}
