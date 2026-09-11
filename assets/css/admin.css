@@ -45,6 +45,17 @@
 .editor-tab:hover{color:var(--orange)}
 .editor-tab.active{color:var(--orange);border-bottom-color:var(--orange)}
 .editor-tab-panel[hidden]{display:none}
+.activity-section{margin-top:24px}
+.activity-panel{padding:21px}
+.activity-list{display:grid;gap:2px}
+.activity-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--line)}
+.activity-row:last-child{border-bottom:none}
+.activity-row strong{font-size:13px;display:block}
+.activity-row small{color:var(--muted);font-size:11px}
+.activity-meta{text-align:right;display:grid;gap:2px}
+.activity-status{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;display:inline-block}
+.activity-status.sent{color:#1e6b3c;background:#e8f5ec}
+.activity-status.failed{color:#b3261e;background:#fdecea}
 
 /* Match the rectangular button shape used across smart-menu-solutions.github.io */
 .button{border-radius:6px!important}

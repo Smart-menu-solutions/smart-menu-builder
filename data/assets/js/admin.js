@@ -378,9 +378,29 @@ async function syncSubscriptions() {
 	render();
 }
 
+async function loadActivity() {
+	const list = $('#activityList');
+	if (!list) return;
+	if (typeof supabaseClient === 'undefined') { list.innerHTML = '<p class="client-empty">Cloud connection unavailable.</p>'; return; }
+	const { data, error } = await supabaseClient
+		.from('notifications_log')
+		.select('kind, sent_to, provider_message_id, created_at, subscriptions(menu_slug, customers(contact_name))')
+		.order('created_at', { ascending: false })
+		.limit(50);
+	if (error) { list.innerHTML = `<p class="client-empty">Could not load activity: ${escapeHtml(error.message)}</p>`; return; }
+	if (!data || !data.length) { list.innerHTML = '<p class="client-empty">No automated emails have gone out yet.</p>'; return; }
+	list.innerHTML = data.map((row) => {
+		const who = row.subscriptions?.customers?.contact_name || row.subscriptions?.menu_slug || 'Unknown';
+		const sent = !!row.provider_message_id;
+		const when = new Date(row.created_at).toLocaleString();
+		return `<div class="activity-row"><div><strong>${escapeHtml(row.kind)}</strong><small>${escapeHtml(who)} · to ${escapeHtml(row.sent_to)}</small></div><div class="activity-meta"><span class="activity-status ${sent ? 'sent' : 'failed'}">${sent ? 'Sent' : 'Failed'}</span><small>${escapeHtml(when)}</small></div></div>`;
+	}).join('');
+}
+
 render();
 syncFromSupabase();
 syncSubscriptions();
+loadActivity();
 
 document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => { updateLanguageState(); saveClients().catch((error) => notify(error.message)); }));
 $('#importPdf').addEventListener('click', importPdf);
