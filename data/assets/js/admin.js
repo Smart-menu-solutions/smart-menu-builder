@@ -86,10 +86,17 @@ function parsePdfText(text) {
 	// category per page instead of being ignored.
 	const headerLinePattern = /^(produkt|preis|price|artikel|bezeichnung|men[uü]|item|name|beschreibung|description|qty|anzahl|product)(\s*(preis|price))?$/i;
 	const looksLikeCategory = (line) => line.length <= 42 && !headerLinePattern.test(line) && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
+	// PDFs commonly print "1. Item name – 6,90 €" on one line and the
+	// description on the following line(s) (see the blank-line-separated
+	// layout this parser is built for). Track the most recently added item
+	// so the next non-price, non-category line(s) can be attached to it as
+	// its description instead of being silently dropped.
+	let lastItem = null;
 	lines.forEach((line) => {
 		const match = line.match(pricePattern);
 		if (!match) {
 			if (looksLikeCategory(line)) {
+				lastItem = null;
 				const existing = categoryByName.get(line);
 				if (existing) {
 					category = existing;
@@ -98,17 +105,23 @@ function parsePdfText(text) {
 					categoryByName.set(line, category);
 					categories.push(category);
 				}
+				return;
 			}
+			if (lastItem) lastItem.description = lastItem.description ? `${lastItem.description} ${line}` : line;
 			return;
 		}
 		const price = match[0].replace(/[^0-9.,]/g, '').replace(',', '.');
 		const name = line.slice(0, match.index)
 			.replace(/^[\s•*\-–—▪◦]+/, '')
 			.replace(/[.·‧… ]{2,}$/, '')
+			.replace(/[\s•*\-–—]+$/, '')
 			.trim();
 		if (name) {
 			if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
-			category.items.push({ name, description: '', price });
+			lastItem = { name, description: '', price };
+			category.items.push(lastItem);
+		} else {
+			lastItem = null;
 		}
 	});
 	const nonEmptyCategories = categories.filter((c) => c.items.length);
