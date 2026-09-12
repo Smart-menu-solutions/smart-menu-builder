@@ -25,6 +25,13 @@ const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions
 const NOTIFICATION_EMAIL = Deno.env.get('NOTIFICATION_EMAIL') ?? 'smartmenusolutions@outlook.com';
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onboarding@resend.dev>';
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const PLAN_LABELS: Record<string, string> = {
+	start: 'Smart Start',
+	pro: 'Smart Pro',
+	premium: 'Smart Premium'
+};
 
 function slugify(input: string): string {
 	return input
@@ -46,17 +53,13 @@ function escapeHtml(value: string): string {
 	}[character] as string));
 }
 
-async function sendNotification(subscriptionId: string | null, subject: string, lines: Record<string, string>) {
-	const html = `<h2>${escapeHtml(subject)}</h2><ul>${
-		Object.entries(lines).map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value ?? '-'))}</li>`).join('')
-	}</ul>`;
-
+async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string) {
 	let providerMessageId: string | null = null;
 	try {
 		const response = await fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ from: FROM_EMAIL, to: [NOTIFICATION_EMAIL], subject, html })
+			body: JSON.stringify({ from: FROM_EMAIL, to: [recipient], subject, html })
 		});
 		const data = await response.json().catch(() => ({}));
 		if (response.ok) providerMessageId = data.id ?? null;
@@ -67,11 +70,43 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 
 	const { error: logError } = await supabase.from('notifications_log').insert({
 		subscription_id: subscriptionId,
-		kind: subject,
-		sent_to: NOTIFICATION_EMAIL,
+		kind,
+		sent_to: recipient,
 		provider_message_id: providerMessageId
 	});
 	if (logError) console.error('Failed to write notifications_log', logError);
+}
+
+// Internal "something happened" alert to us, unchanged from before.
+async function sendNotification(subscriptionId: string | null, subject: string, lines: Record<string, string>) {
+	const html = `<h2>${escapeHtml(subject)}</h2><ul>${
+		Object.entries(lines).map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value ?? '-'))}</li>`).join('')
+	}</ul>`;
+	await sendEmail(NOTIFICATION_EMAIL, subscriptionId, subject, subject, html);
+}
+
+// Customer-facing confirmation. NOTE: until a custom domain is verified on
+// Resend, the onboarding@resend.dev sandbox sender can only deliver to the
+// single address verified on the Resend account — real customer inboxes
+// will silently fail (logged as a Resend API error in notifications_log,
+// provider_message_id stays null) until that domain verification is done.
+async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string) {
+	if (!EMAIL_PATTERN.test(to)) return;
+	const planLabel = PLAN_LABELS[plan] || plan;
+	const subject = kind === 'renewal'
+		? 'Ihre Verlängerung bei Smart Menu Solutions'
+		: 'Ihre Bestellung bei Smart Menu Solutions';
+	const intro = kind === 'renewal'
+		? 'vielen Dank für die Verlängerung Ihres Abos.'
+		: 'vielen Dank für Ihre Bestellung.';
+	const html = `
+		<p>Hallo ${escapeHtml(contactName || '')},</p>
+		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
+		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
+		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Smart Menu Solutions</p>
+	`;
+	await sendEmail(to, subscriptionId, `Kundenbestätigung: ${subject}`, subject, html);
 }
 
 Deno.serve(async (request) => {
@@ -151,6 +186,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		await sendNotification(subscriptionId, 'Verlängerung bestätigt', {
 			'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
 		});
+		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
+		await sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan);
 		return;
 	}
 
@@ -213,6 +250,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		'Menü-Slug': slug,
 		'PDF-Pfad': pdfPath
 	});
+	await sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan);
 }
 
 // Renewal invoices only — the very first invoice of a subscription is already
