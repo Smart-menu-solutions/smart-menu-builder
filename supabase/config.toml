@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.check-subscriptions]
 verify_jwt = false
+
+[functions.translate]
+verify_jwt = false

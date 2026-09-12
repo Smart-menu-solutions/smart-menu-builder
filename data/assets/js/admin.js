@@ -188,17 +188,28 @@ function normalizeTranslationCasing(text) {
 	return text.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (match, boundary, letter) => boundary + letter.toUpperCase());
 }
 
-async function translateText(text, source, target) {
-	if (!text) return '';
-	if (source === target) return text;
-	const catalogs = window.MENU_TRANSLATION_FALLBACKS || {};
-	const clientSlug = selectedClient()?.slug;
-	const fallback = catalogs?.[clientSlug]?.[target]
-		|| catalogs?.['restaurant-zum-dorfkrug']?.[clientSlug]?.[target];
-	const categoryTranslation = fallback?.categories?.[text];
-	const itemTranslation = fallback?.items?.[text];
-	if (categoryTranslation) return categoryTranslation;
-	if (itemTranslation) return itemTranslation[0];
+// DeepL is the primary translator (proxied through a Supabase Edge Function
+// — DeepL doesn't support direct browser calls, and its key can't be
+// exposed client-side). Much more reliable than MyMemory for short, ambiguous
+// menu category/item names, which MyMemory frequently mistranslates outright
+// rather than just mis-capitalizing.
+async function translateViaDeepL(text, source, target) {
+	const response = await fetch(`${AUTH_CONFIG.supabaseUrl}/functions/v1/translate`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', apikey: AUTH_CONFIG.supabasePublishableKey },
+		body: JSON.stringify({ text, source, target })
+	});
+	if (!response.ok) throw new Error(`HTTP ${response.status}`);
+	const result = await response.json();
+	if (result.error) throw new Error(result.error);
+	return result.translatedText || text;
+}
+
+// Fallback only — used when DeepL errors (e.g. an unsupported language, or
+// the proxy being briefly unavailable). Free and needs no key, but its
+// crowd-sourced translation memory frequently returns wrong words (not just
+// wrong casing) for short menu terms, so it's a last resort, not the default.
+async function translateViaMyMemory(text, source, target) {
 	for (let attempt = 0; attempt < 3; attempt += 1) {
 		try {
 			// Supplying a contact email raises MyMemory's free daily quota
@@ -214,6 +225,25 @@ async function translateText(text, source, target) {
 			if (attempt === 2) throw error;
 			await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
 		}
+	}
+}
+
+async function translateText(text, source, target) {
+	if (!text) return '';
+	if (source === target) return text;
+	const catalogs = window.MENU_TRANSLATION_FALLBACKS || {};
+	const clientSlug = selectedClient()?.slug;
+	const fallback = catalogs?.[clientSlug]?.[target]
+		|| catalogs?.['restaurant-zum-dorfkrug']?.[clientSlug]?.[target];
+	const categoryTranslation = fallback?.categories?.[text];
+	const itemTranslation = fallback?.items?.[text];
+	if (categoryTranslation) return categoryTranslation;
+	if (itemTranslation) return itemTranslation[0];
+	try {
+		return await translateViaDeepL(text, source, target);
+	} catch (error) {
+		console.error('DeepL translation failed, falling back to MyMemory', error);
+		return translateViaMyMemory(text, source, target);
 	}
 }
 
