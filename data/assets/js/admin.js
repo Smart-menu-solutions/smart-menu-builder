@@ -73,6 +73,31 @@ function initials(name) { return name.split(/\s+/).map((word) => word[0]).join('
 
 function selectedLanguages() { return [...document.querySelectorAll('input[name="language"]:checked')].map((input) => input.value); }
 
+// A PDF (re-)import replaces the whole categories array with fresh objects
+// that parsePdfText() has no way to attach images to, since photos only
+// ever get added afterwards through the admin UI (uploadImage). Without
+// this, importing a menu again to pick up a text edit would silently wipe
+// every category/dish photo already uploaded. Carries an existing image
+// over by matching category/item name (case-insensitive, trimmed) — an
+// exact-match heuristic on purpose, so a renamed dish just ends up without
+// its old photo rather than risking the wrong photo landing on it.
+function mergeImportedImages(existingCategories, importedCategories) {
+	const norm = (name) => String(name || '').trim().toLowerCase();
+	const existingItemsByName = new Map();
+	(existingCategories || []).forEach((category) => {
+		(category.items || []).forEach((item) => { if (item.image) existingItemsByName.set(norm(item.name), item.image); });
+	});
+	const existingCategoriesByName = new Map((existingCategories || []).map((category) => [norm(category.name), category]));
+	return importedCategories.map((category) => {
+		const matchedCategory = existingCategoriesByName.get(norm(category.name));
+		return {
+			...category,
+			image: matchedCategory?.image || '',
+			items: category.items.map((item) => ({ ...item, image: existingItemsByName.get(norm(item.name)) || '' }))
+		};
+	});
+}
+
 function parsePdfText(text) {
 	const categories = [];
 	const categoryByName = new Map();
@@ -175,7 +200,7 @@ async function importPdf() {
 		}
 		if (!text.trim()) throw new Error('No readable text found in this PDF.');
 		const client = selectedClient();
-		client.categories = parsePdfText(text);
+		client.categories = mergeImportedImages(client.categories, parsePdfText(text));
 		await saveClients();
 		render();
 		$('#importStatus').textContent = `Imported ${pdf.numPages} page(s). Check the draft before saving.`;
