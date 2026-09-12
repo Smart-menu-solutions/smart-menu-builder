@@ -58,7 +58,7 @@
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="languages" hidden>
-                    <div class="language-panel"><strong>Menu languages</strong><label class="source-language">Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><label class="language-option"><span>English (main)</span><input type="checkbox" name="language" value="en" checked></label><label class="language-option"><span>Deutsch</span><input type="checkbox" name="language" value="de" checked></label><label class="language-option"><span>Ελληνικά</span><input type="checkbox" name="language" value="el" checked></label><label class="language-option"><span>Italiano</span><input type="checkbox" name="language" value="it"></label><label class="language-option"><span>Español</span><input type="checkbox" name="language" value="es"></label><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
+                    <div class="language-panel"><strong>Menu languages</strong><p class="language-hint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language">Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
                 </div>
                 <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
             </form>
@@ -78,6 +78,6 @@
 </main>
 <div class="toast" id="toast" role="status"></div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=pdf-image-merge-1"></script>
+<script src="data/assets/js/admin.js?v=reorder-fix-1"></script>
 </body>
 </html>

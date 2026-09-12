@@ -8,6 +8,21 @@ let subscriptionsBySlug = {};
 let showOnlyNeedsRenewal = false;
 const SUBSCRIPTION_STATUS_LABELS = { active: 'Active', expired: 'Renewal needed', deactivated: 'Deactivated', cancelled: 'Cancelled' };
 const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+// menu.js renders the live menu's language switcher buttons in exactly the
+// order client.languages lists them, so this order is directly what a
+// customer sees, not just an admin-side convenience.
+const LANGUAGE_CATALOG = [
+	{ code: 'en', label: 'English' }, { code: 'de', label: 'Deutsch' }, { code: 'el', label: 'Ελληνικά' },
+	{ code: 'it', label: 'Italiano' }, { code: 'es', label: 'Español' }
+];
+// Enabled languages first, in the client's saved order, then any not-yet-
+// enabled catalog languages appended so they still show up (unchecked) to
+// be turned on.
+function languageDisplayOrder(client) {
+	const enabled = (client.languages || ['en', 'de', 'el']).filter((code) => LANGUAGE_CATALOG.some((entry) => entry.code === code));
+	const rest = LANGUAGE_CATALOG.map((entry) => entry.code).filter((code) => !enabled.includes(code));
+	return [...enabled, ...rest];
+}
 
 function slugifyName(value) {
 	return String(value || '').trim().toLowerCase()
@@ -359,21 +374,36 @@ function render() {
 	} else {
 		banner.style.display = 'none';
 	}
-	document.querySelectorAll('input[name="language"]').forEach((input) => {
-		input.checked = (client.languages || ['en', 'de', 'el']).includes(input.value);
-		const label = input.closest('.language-option');
-		if (!label) return;
-		const isSource = input.value === (client.sourceLanguage || 'de');
-		const translatedItemCount = Object.keys(client.translations?.[input.value]?.items || {}).length;
+	const languageOrder = languageDisplayOrder(client);
+	const enabledLanguages = client.languages || ['en', 'de', 'el'];
+	$('#languageEditor').innerHTML = languageOrder.map((code, index) => {
+		const entry = LANGUAGE_CATALOG.find((item) => item.code === code);
+		const checked = enabledLanguages.includes(code);
+		const isSource = code === (client.sourceLanguage || 'de');
+		const translatedItemCount = Object.keys(client.translations?.[code]?.items || {}).length;
 		const hasTranslation = isSource || translatedItemCount > 0;
-		label.classList.toggle('lang-missing', input.checked && !hasTranslation);
-	});
+		const isMain = checked && index === 0;
+		return `<div class="language-option${checked && !hasTranslation ? ' lang-missing' : ''}"><span class="language-move"><button type="button" class="move-language" data-move-language="up-${index}" title="Move language up" aria-label="Move language up" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" class="move-language" data-move-language="down-${index}" title="Move language down" aria-label="Move language down" ${index === languageOrder.length - 1 ? 'disabled' : ''}>↓</button></span><label><span>${escapeHtml(entry?.label || code)}${isMain ? ' (main)' : ''}</span><input type="checkbox" name="language" value="${code}"${checked ? ' checked' : ''}></label></div>`;
+	}).join('');
+	document.querySelectorAll('[data-move-language]').forEach((button) => button.addEventListener('click', () => {
+		const [direction, indexText] = button.dataset.moveLanguage.split('-');
+		const index = Number(indexText);
+		const target = direction === 'up' ? index - 1 : index + 1;
+		if (target < 0 || target >= languageOrder.length) return;
+		[languageOrder[index], languageOrder[target]] = [languageOrder[target], languageOrder[index]];
+		client.languages = languageOrder.filter((code) => enabledLanguages.includes(code));
+		saveClients().then(render).catch((error) => notify(error.message));
+	}));
+	document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => {
+		updateLanguageState();
+		saveClients().then(render).catch((error) => notify(error.message));
+	}));
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
 	function imageControl(kind, index, imageUrl) {
 		const noun = kind === 'category' ? 'section' : 'dish';
 		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
 	}
-	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
 	document.querySelectorAll('[data-image-input]').forEach((input) => input.addEventListener('change', async () => {
 		const file = input.files[0];
 		if (!file) return;
@@ -495,7 +525,6 @@ syncFromSupabase();
 syncSubscriptions();
 loadActivity();
 
-document.querySelectorAll('input[name="language"]').forEach((input) => input.addEventListener('change', () => { updateLanguageState(); saveClients().catch((error) => notify(error.message)); }));
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);
 $('#clientSearch').addEventListener('input', (event) => { clientSearch = event.target.value; render(); });
