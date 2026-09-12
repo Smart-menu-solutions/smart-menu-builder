@@ -404,6 +404,7 @@ function render() {
 		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
 	}
 	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	const uploadClientId = client.id;
 	document.querySelectorAll('[data-image-input]').forEach((input) => input.addEventListener('change', async () => {
 		const file = input.files[0];
 		if (!file) return;
@@ -412,8 +413,18 @@ function render() {
 		try {
 			const pathHint = `${client.slug}/${kind}-${index}`;
 			const url = await uploadImage(file, pathHint);
-			if (kind === 'category') client.categories[Number(index)].image = url;
-			else { const [categoryIndex, itemIndex] = index.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].image = url; }
+			// saveClients() replaces `clients` with fresh objects fetched back
+			// from Supabase after every save, so the `client` object captured
+			// when this listener was attached can go stale mid-upload. Two
+			// photos uploaded close together used to race: whichever upload
+			// finished second wrote its URL onto the now-orphaned old object,
+			// which the next saveClients() call never persisted - the photo
+			// silently vanished until re-uploaded. Re-resolving by the
+			// (stable) client id right before writing avoids that.
+			const target = clients.find((item) => item.id === uploadClientId);
+			if (!target) return;
+			if (kind === 'category') target.categories[Number(index)].image = url;
+			else { const [categoryIndex, itemIndex] = index.split('-').map(Number); target.categories[categoryIndex].items[itemIndex].image = url; }
 			await saveClients();
 			render();
 			notify('Photo uploaded');
