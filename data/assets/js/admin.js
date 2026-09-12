@@ -179,6 +179,15 @@ function updateLanguageState() {
 }
 
 
+// MyMemory's casing is inconsistent per target language — observed lower-
+// casing everything for Spanish and ALL CAPS for Greek, unrelated to how
+// the source text was capitalized. Normalize to Title Case so category/
+// item names look consistent regardless of which language they end up in.
+function normalizeTranslationCasing(text) {
+	if (!text) return text;
+	return text.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (match, boundary, letter) => boundary + letter.toUpperCase());
+}
+
 async function translateText(text, source, target) {
 	if (!text) return '';
 	if (source === target) return text;
@@ -200,7 +209,7 @@ async function translateText(text, source, target) {
 			if (!response.ok) throw new Error(`HTTP ${response.status}`);
 			const result = await response.json();
 			if (result.responseStatus && result.responseStatus !== 200) throw new Error(`Translation status ${result.responseStatus}`);
-			return result.responseData?.translatedText || text;
+			return normalizeTranslationCasing(result.responseData?.translatedText) || text;
 		} catch (error) {
 			if (attempt === 2) throw error;
 			await new Promise((resolve) => setTimeout(resolve, 700 * (attempt + 1)));
