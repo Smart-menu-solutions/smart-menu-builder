@@ -91,7 +91,16 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 // will silently fail (logged as a Resend API error in notifications_log,
 // provider_message_id stays null) until that domain verification is done.
 async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string) {
-	if (!EMAIL_PATTERN.test(to)) return;
+	if (!EMAIL_PATTERN.test(to)) {
+		console.error('Skipping customer confirmation: no valid email on file', subscriptionId);
+		await supabase.from('notifications_log').insert({
+			subscription_id: subscriptionId,
+			kind: `Kundenbestätigung übersprungen (ungültige E-Mail): ${kind}`,
+			sent_to: to || '(leer)',
+			provider_message_id: null
+		});
+		return;
+	}
 	const planLabel = PLAN_LABELS[plan] || plan;
 	const subject = kind === 'renewal'
 		? 'Ihre Verlängerung bei Smart Menu Solutions'
@@ -148,6 +157,22 @@ Deno.serve(async (request) => {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	if (session.mode !== 'subscription') return;
+
+	// Stripe redelivers webhook events at least once (e.g. if a slow Resend
+	// call pushes this handler past Stripe's response timeout), so the same
+	// checkout.session.completed can arrive twice. Without this guard a
+	// retry would insert a second customer/subscription/order row set and
+	// send the customer a duplicate confirmation email.
+	const { data: existingOrder } = await supabase
+		.from('orders')
+		.select('id')
+		.eq('stripe_checkout_session_id', session.id)
+		.maybeSingle();
+	if (existingOrder) {
+		console.log('Duplicate checkout.session.completed delivery, skipping', session.id);
+		return;
+	}
+
 	const metadata = session.metadata ?? {};
 	const type = metadata.type === 'renewal' ? 'renewal' : 'initial';
 	const plan = metadata.plan || 'start';
@@ -183,11 +208,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			pdf_path: pdfPath,
 			stripe_checkout_session_id: session.id
 		});
-		await sendNotification(subscriptionId, 'Verlängerung bestätigt', {
-			'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
-		});
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
-		await sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan);
+		await Promise.all([
+			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
+				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
+			}),
+			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan)
+		]);
 		return;
 	}
 
@@ -241,16 +268,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		stripe_checkout_session_id: session.id
 	});
 
-	await sendNotification(subscription.id, 'Neue Bestellung eingegangen', {
-		Kontakt: contactName,
-		Firma: metadata.companyName || '-',
-		Email: email,
-		Telefon: metadata.phone || '-',
-		Plan: plan,
-		'Menü-Slug': slug,
-		'PDF-Pfad': pdfPath
-	});
-	await sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan);
+	await Promise.all([
+		sendNotification(subscription.id, 'Neue Bestellung eingegangen', {
+			Kontakt: contactName,
+			Firma: metadata.companyName || '-',
+			Email: email,
+			Telefon: metadata.phone || '-',
+			Plan: plan,
+			'Menü-Slug': slug,
+			'PDF-Pfad': pdfPath
+		}),
+		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan)
+	]);
 }
 
 // Renewal invoices only — the very first invoice of a subscription is already
@@ -261,7 +290,11 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 	const stripeSubscriptionId = invoice.subscription as string;
 	if (!stripeSubscriptionId) return;
 
-	const { data: subscription } = await supabase.from('subscriptions').select('*').eq('stripe_subscription_id', stripeSubscriptionId).maybeSingle();
+	const { data: subscription } = await supabase
+		.from('subscriptions')
+		.select('*, customers(contact_name, email)')
+		.eq('stripe_subscription_id', stripeSubscriptionId)
+		.maybeSingle();
 	if (!subscription) return;
 
 	const today = new Date();
@@ -273,9 +306,12 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 		updated_at: new Date().toISOString()
 	}).eq('id', subscription.id);
 
-	await sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
-		'Subscription-ID': subscription.id, Plan: subscription.plan
-	});
+	await Promise.all([
+		sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
+			'Subscription-ID': subscription.id, Plan: subscription.plan
+		}),
+		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan)
+	]);
 }
 
 async function handleInvoiceFailed(invoice: Stripe.Invoice) {
