@@ -17,10 +17,10 @@
       <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
     </a>
     <div class="header-actions">
-      <a class="header-link" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">← Back to website</a>
+      <a class="header-link" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html" data-i18n="back_to_website">← Back to website</a>
       <div class="language-switcher" aria-label="Language selection">
         <button class="language-button" type="button" data-language="de">DE</button>
-        <button class="language-button active" type="button" data-language="en">EN</button>
+        <button class="language-button" type="button" data-language="en">EN</button>
       </div>
     </div>
   </div>
@@ -28,7 +28,7 @@
 
 <main class="auth-main">
   <div class="auth-card">
-    <h1><span class="accent">Sign in</span></h1>
+    <h1><span class="accent" data-i18n="sign_in">Sign in</span></h1>
     <p class="auth-sub" data-i18n="intro">Sign in with your email address, password, and the 6-digit code from your authenticator app.</p>
     <p class="access-notice" data-i18n="access">Access is restricted to the Smart Menu Solutions team.</p>
     <div class="form-error" id="formError" role="alert"></div>
@@ -47,10 +47,10 @@
         <input id="code" name="code" class="code-input" type="password" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="••••••" autocomplete="one-time-code" required>
         <p class="field-hint" data-i18n="hint">6-digit code from Google Authenticator, Microsoft Authenticator, Authy, etc.</p>
       </div>
-      <button class="btn btn--block" id="signInBtn" type="submit">Sign in</button>
+      <button class="btn btn--block" id="signInBtn" type="submit" data-i18n="sign_in">Sign in</button>
     </form>
 
-    <p class="auth-alt" data-i18n="setup">Die Einrichtung erfolgt einmalig im Supabase-Dashboard.</p>
+    <p class="auth-alt" data-i18n="setup">Setup is completed once in the Supabase dashboard.</p>
   </div>
 </main>
 
@@ -61,7 +61,7 @@
         <img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;width=157" alt="">
         <span class="brand-text"><span class="n-smart">Smart</span> <span class="n-rest">Menu Builder</span></span>
       </a>
-      <span class="footer-note">© 2026 Smart Menu Builder — Powered by <a href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">Smart Menu Solutions</a></span>
+      <span class="footer-note"><span data-i18n="footer_note">© 2026 Smart Menu Builder — Powered by</span> <a href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html">Smart Menu Solutions</a></span>
     </div>
   </div>
 </footer>
@@ -69,6 +69,26 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/assets/js/auth-config.js"></script>
 <script src="data/assets/js/auth.js"></script>
+<script>
+const loginLanguages = {
+  de: { sign_in: 'Anmelden', intro: 'Melde dich mit deiner E-Mail-Adresse, deinem Passwort und dem 6-stelligen Code deiner Authenticator-App an.', access: 'Zugang nur für das Smart Menu Solutions Team.', email: 'E-Mail-Adresse', password: 'Passwort', code: 'Authenticator-Code', hint: '6-stelliger Code von Google Authenticator, Microsoft Authenticator, Authy usw.', setup: 'Die Einrichtung erfolgt einmalig im Supabase-Dashboard.', back_to_website: '← Zurück zur Website', footer_note: '© 2026 Smart Menu Builder — Powered by', checking: 'Wird geprüft…' },
+  en: { sign_in: 'Sign in', intro: 'Sign in with your email address, password, and the 6-digit code from your authenticator app.', access: 'Access is restricted to the Smart Menu Solutions team.', email: 'Email address', password: 'Password', code: 'Authenticator code', hint: '6-digit code from Google Authenticator, Microsoft Authenticator, Authy, etc.', setup: 'Setup is completed once in the Supabase dashboard.', back_to_website: '← Back to website', footer_note: '© 2026 Smart Menu Builder — Powered by', checking: 'Checking…' }
+};
+
+function applyLoginLanguage(language) {
+  document.documentElement.lang = language;
+  document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = loginLanguages[language][element.dataset.i18n]; });
+  document.querySelectorAll('[data-language]').forEach((item) => item.classList.toggle('active', item.dataset.language === language));
+  localStorage.setItem('selectedLang', language);
+}
+
+document.querySelectorAll('[data-language]').forEach((button) => button.addEventListener('click', () => applyLoginLanguage(button.dataset.language)));
+
+// Shares the "selectedLang" key with the main marketing site, so a visitor
+// who picked German there and clicks through to Smart Builder lands here
+// already in German instead of resetting to English.
+applyLoginLanguage(localStorage.getItem('selectedLang') === 'de' ? 'de' : 'en');
+</script>
 <script>
 	redirectIfAuthed();
 
@@ -79,8 +99,9 @@
 		event.preventDefault();
 		errorBox.classList.remove('show');
 		const button = document.getElementById('signInBtn');
+		const lang = loginLanguages[document.documentElement.lang] ? document.documentElement.lang : 'en';
 		button.disabled = true;
-		button.textContent = 'Checking…';
+		button.textContent = loginLanguages[lang].checking;
 		const result = await attemptLogin(
 			document.getElementById('username').value,
 			document.getElementById('password').value,
@@ -93,20 +114,8 @@
 		errorBox.textContent = result.error;
 		errorBox.classList.add('show');
 		button.disabled = false;
-		button.textContent = 'Sign in';
+		button.textContent = loginLanguages[lang].sign_in;
 	});
-</script>
-<script>
-const loginLanguages = {
-  de: { intro: 'Melde dich mit deiner E-Mail-Adresse, deinem Passwort und dem 6-stelligen Code deiner Authenticator-App an.', access: 'Zugang nur für das Smart Menu Solutions Team.', email: 'E-Mail-Adresse', password: 'Passwort', code: 'Authenticator-Code', hint: '6-stelliger Code von Google Authenticator, Microsoft Authenticator, Authy usw.', setup: 'Die Einrichtung erfolgt einmalig im Supabase-Dashboard.' },
-  en: { intro: 'Sign in with your email address, password, and the 6-digit code from your authenticator app.', access: 'Access is restricted to the Smart Menu Solutions team.', email: 'Email address', password: 'Password', code: 'Authenticator code', hint: '6-digit code from Google Authenticator, Microsoft Authenticator, Authy, etc.', setup: 'Setup is completed once in the Supabase dashboard.' }
-};
-document.querySelectorAll('[data-language]').forEach((button) => button.addEventListener('click', () => {
-  const language = button.dataset.language;
-  document.documentElement.lang = language;
-  document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = loginLanguages[language][element.dataset.i18n]; });
-  document.querySelectorAll('[data-language]').forEach((item) => item.classList.toggle('active', item === button));
-}));
 </script>
 
 </body>
