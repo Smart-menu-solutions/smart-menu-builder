@@ -399,6 +399,8 @@ function render() {
 		saveClients().then(render).catch((error) => notify(error.message));
 	}));
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
+	const dishCount = client.categories.reduce((total, category) => total + category.items.length, 0);
+	if ($('#dishCountBadge')) $('#dishCountBadge').textContent = `${dishCount} dish${dishCount === 1 ? '' : 'es'} total`;
 	function imageControl(kind, index, imageUrl) {
 		const noun = kind === 'category' ? 'section' : 'dish';
 		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;

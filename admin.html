@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=language-row-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=dish-count-badge-1">
 </head>
 <body>
 <aside class="sidebar">
@@ -54,7 +54,7 @@
                     <div class="form-grid"><label>Customer name<input id="businessName" required placeholder="e.g. Café Ole"></label><label>URL slug<input id="slug" required placeholder="cafe-ole"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
-                    <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
+                    <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden><span class="qr-badge" id="dishCountBadge" title="Photo add-on tiers: Smart Start 50 / Smart Pro 150 / Smart Premium 450 dishes">0 dishes</span></div></div>
                     <div class="menu-heading"><div><p class="eyebrow">Menu content</p><h3>Sections & dishes</h3></div><button type="button" class="button button-ghost" id="addCategory">＋ Add section</button></div>
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
@@ -79,6 +79,6 @@
 </main>
 <div class="toast" id="toast" role="status"></div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=upload-race-fix-1"></script>
+<script src="data/assets/js/admin.js?v=dish-count-badge-1"></script>
 </body>
 </html>
