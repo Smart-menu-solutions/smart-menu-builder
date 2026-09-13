@@ -40,6 +40,10 @@ table.leads-table tr:hover td{background:var(--alt)}
 .leads-stage-count{background:rgba(0,0,0,.08);border-radius:999px;padding:1px 7px;font-size:11px}
 .leads-stage-tab.active .leads-stage-count{background:rgba(255,255,255,.25)}
 .leads-actions-cell .button:disabled{opacity:.4;cursor:not-allowed}
+/* This page's sidebar only has one nav link, so the note (normally
+   pushed to the bottom via margin-top:auto) would leave a huge empty
+   gap - keep it right under the nav instead. */
+.sidebar-note{margin-top:24px !important}
 </style>
 </head>
 <body>
