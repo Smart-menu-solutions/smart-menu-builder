@@ -304,17 +304,19 @@ function exportExcel() {
 	exportNotice(rows);
 }
 
-// Plain, standards-compliant CSV (comma-delimited, UTF-8 with a BOM) for
-// importing into external bulk-messaging tools (WATI, Zoko, Twilio, ...)
-// that parse CSV programmatically rather than guessing a Windows locale
-// delimiter the way Excel does - a real .csv is what those tools expect,
-// the .xls trick above wouldn't upload correctly there.
+// A real .csv for importing into external bulk-messaging tools (WATI,
+// Zoko, Twilio, ...), which is what they expect instead of the .xls trick
+// above. Semicolon-delimited (the default CSV convention on German/most
+// European Windows installs, since comma doubles as the decimal separator
+// there) plus a UTF-8 BOM, so double-clicking it also opens as a correctly
+// split, correctly encoded table in Excel - most CSV importers accept
+// either delimiter and auto-detect it regardless.
 function exportCsv() {
 	const rows = rowsToExport();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
 	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
-	const csv = [header.join(',')].concat(
-		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(','))
+	const csv = [header.join(';')].concat(
+		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(';'))
 	).join('\r\n');
 	const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
 	const link = document.createElement('a');
