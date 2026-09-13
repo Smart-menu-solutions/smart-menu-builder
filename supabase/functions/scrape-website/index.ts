@@ -22,12 +22,26 @@ Deno.serve(async (request) => {
 		const url = String(body.url || '').trim();
 		if (!url || !/^https?:\/\//i.test(url)) return json({ error: 'A valid http(s) URL is required.' }, 400);
 
-		const response = await fetch(url, {
-			signal: AbortSignal.timeout(8000),
-			headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SmartMenuLeadFinder/1.0)' }
-		});
-		if (!response.ok) return json({ error: `Site returned HTTP ${response.status}` }, 502);
-		const html = await response.text();
+		// A handful of small business sites still only serve plain http, or
+		// their https cert is broken - retry with the other scheme once
+		// before giving up, instead of failing on the first attempt.
+		const candidates = [url, url.startsWith('https://') ? url.replace('https://', 'http://') : url.replace('http://', 'https://')];
+		let html = '';
+		let lastError = '';
+		for (const candidate of candidates) {
+			try {
+				const response = await fetch(candidate, {
+					signal: AbortSignal.timeout(8000),
+					headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SmartMenuLeadFinder/1.0)' }
+				});
+				if (!response.ok) { lastError = `Site returned HTTP ${response.status}`; continue; }
+				html = await response.text();
+				break;
+			} catch (error) {
+				lastError = error instanceof Error && error.name === 'TimeoutError' ? 'Site took too long to respond' : `Could not reach ${candidate}`;
+			}
+		}
+		if (!html) return json({ error: lastError || 'Could not read that website' }, 502);
 
 		const email = html.match(EMAIL_PATTERN)?.[0] || '';
 		const whatsapp = html.match(WHATSAPP_PATTERN)?.[0] || '';

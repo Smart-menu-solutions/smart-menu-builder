@@ -146,6 +146,15 @@ function normalizeWhatsapp(raw) {
 	return String(raw).replace('https://wa.me/', '').replace('https://api.whatsapp.com/send?phone=', '').replace(/[^\d+]/g, '');
 }
 
+// OSM website tags frequently omit the protocol (e.g. "cafejubilee.com"),
+// which breaks both the table's link and the enrich fetch (relative URL,
+// or Deno's fetch rejects it outright).
+function normalizeWebsite(raw) {
+	if (!raw) return '';
+	const trimmed = raw.trim();
+	return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 function elementToLead(element) {
 	const tags = element.tags || {};
 	if (!tags.name) return null;
@@ -154,7 +163,7 @@ function elementToLead(element) {
 		name: tags.name,
 		address: buildAddress(tags),
 		phone: tags.phone || tags['contact:phone'] || '',
-		website: tags.website || tags['contact:website'] || '',
+		website: normalizeWebsite(tags.website || tags['contact:website'] || ''),
 		email: tags.email || tags['contact:email'] || '',
 		whatsapp: normalizeWhatsapp(tags['contact:whatsapp']),
 		selected: false,
