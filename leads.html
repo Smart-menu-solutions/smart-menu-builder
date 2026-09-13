@@ -27,6 +27,12 @@ table.leads-table tr:hover td{background:var(--alt)}
 .leads-actions-cell{display:flex;gap:6px;flex-wrap:wrap}
 .leads-actions-cell .button{padding:6px 10px;font-size:11px}
 .leads-count-badge{font-size:10px;font-weight:700;color:#1e6b3c;background:#e8f5ec;padding:5px 8px;border-radius:20px;white-space:nowrap}
+.leads-guide{background:var(--tint);border:1px solid #f8d3b3;border-radius:14px;padding:14px 18px;margin-bottom:16px}
+.leads-guide summary{cursor:pointer;font-weight:700;color:var(--ink);list-style:none}
+.leads-guide summary::-webkit-details-marker{display:none}
+.leads-guide summary::before{content:"▸ ";color:var(--orange)}
+.leads-guide[open] summary::before{content:"▾ "}
+.leads-guide ol{margin:10px 0 2px;padding-left:20px;color:var(--ink);font-size:13px;line-height:1.7}
 .leads-actions-cell .button:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
@@ -43,6 +49,19 @@ table.leads-table tr:hover td{background:var(--alt)}
 
 <main class="main">
     <header class="topbar"><div><p class="eyebrow">Outreach</p><h1>Find restaurant &amp; bar leads</h1></div><button class="button button-ghost" type="button" onclick="logout()">Log out</button></header>
+
+    <details class="leads-guide">
+        <summary>Lead-Finder in 7 Schritten</summary>
+        <ol>
+            <li>Land + Kategorie wählen → <strong>Search</strong></li>
+            <li><strong>Filter</strong> auf "Has any contact" stellen</li>
+            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen</li>
+            <li>Kontakte <strong>anhaken</strong></li>
+            <li><strong>Export Excel/CSV</strong> sichern</li>
+            <li>Pro Kontakt <strong>WhatsApp</strong> klicken → selbst senden</li>
+            <li><strong>Clear</strong> zum Zurücksetzen</li>
+        </ol>
+    </details>
 
     <section class="panel" style="padding:21px;margin-bottom:20px">
         <div class="leads-toolbar">
