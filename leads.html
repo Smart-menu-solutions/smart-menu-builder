@@ -44,6 +44,13 @@ table.leads-table tr:hover td{background:var(--alt)}
    pushed to the bottom via margin-top:auto) would leave a huge empty
    gap - keep it right under the nav instead. */
 .sidebar-note{margin-top:24px !important}
+/* Mirrors the same 4 stage tabs from the results panel here, stacked full
+   width like nav links, so the pipeline is visible without scrolling down
+   to the table - clicking either copy controls the same shared state. */
+.leads-stage-tabs--sidebar{flex-direction:column;margin-top:20px;padding-top:16px;border-top:1px solid #46433e;gap:8px}
+.leads-stage-tabs--sidebar .leads-stage-tab{width:100%;justify-content:space-between;background:transparent;border-color:#46433e;color:#e7e4df}
+.leads-stage-tabs--sidebar .leads-stage-tab:hover{border-color:var(--orange);color:var(--orange)}
+.leads-stage-tabs--sidebar .leads-stage-tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
 </style>
 </head>
 <body>
@@ -55,6 +62,12 @@ table.leads-table tr:hover td{background:var(--alt)}
         <a class="nav-link active" href="leads.html"><span>⌕</span> Lead finder</a>
     </nav>
     <div class="sidebar-note"><span class="status-dot"></span><div><strong>Free lead search</strong><small>Powered by OpenStreetMap - no API key, no cost.</small></div></div>
+    <div class="leads-stage-tabs leads-stage-tabs--sidebar">
+        <button type="button" class="leads-stage-tab active" data-stage="new">New List <span class="leads-stage-count">0</span></button>
+        <button type="button" class="leads-stage-tab" data-stage="sequence">Sequence <span class="leads-stage-count">0</span></button>
+        <button type="button" class="leads-stage-tab" data-stage="reminder">Reminder <span class="leads-stage-count">0</span></button>
+        <button type="button" class="leads-stage-tab" data-stage="final">Final <span class="leads-stage-count">0</span></button>
+    </div>
 </aside>
 
 <main class="main">
