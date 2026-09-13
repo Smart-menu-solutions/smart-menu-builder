@@ -11,7 +11,16 @@ const CORS_HEADERS = {
 
 const EMAIL_PATTERN = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
 const PHONE_PATTERN = /\+?\d[\d\s()\-]{7,}\d/;
-const WHATSAPP_PATTERN = /https:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?phone=)[\d+]+/;
+const WHATSAPP_LINK_PATTERN = /https:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?phone=)[\d+]+/;
+// Page builders (Elementor, Wix, ...) often wire a "WhatsApp" icon to a
+// plain tel: link instead of an actual wa.me deep link - technically not a
+// WhatsApp link at all, but it's the number the business wants used for
+// WhatsApp, so still worth surfacing. Matches an anchor tag whose
+// attributes mention "whatsapp" (class, aria-label, title, ...) and pulls
+// the tel: number out of that same tag, in whichever attribute order it
+// appears.
+const ANCHOR_TAG_PATTERN = /<a\b[^>]*>/gi;
+const TEL_HREF_PATTERN = /href=["']tel:([^"']+)["']/i;
 
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
@@ -44,8 +53,17 @@ Deno.serve(async (request) => {
 		if (!html) return json({ error: lastError || 'Could not read that website' }, 502);
 
 		const email = html.match(EMAIL_PATTERN)?.[0] || '';
-		const whatsapp = html.match(WHATSAPP_PATTERN)?.[0] || '';
 		const phone = html.match(PHONE_PATTERN)?.[0]?.trim() || '';
+
+		let whatsapp = html.match(WHATSAPP_LINK_PATTERN)?.[0] || '';
+		if (!whatsapp) {
+			for (const tagMatch of html.matchAll(ANCHOR_TAG_PATTERN)) {
+				const tag = tagMatch[0];
+				if (!/whatsapp/i.test(tag)) continue;
+				const telMatch = tag.match(TEL_HREF_PATTERN);
+				if (telMatch) { whatsapp = telMatch[1]; break; }
+			}
+		}
 
 		return json({ email, phone, whatsapp });
 	} catch (error) {

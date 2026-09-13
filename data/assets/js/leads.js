@@ -21,24 +21,26 @@ const OVERPASS_ENDPOINTS = [
 const RESULT_CAP = 500;
 const SITE_URL = 'https://smart-menu-solutions.github.io/smart-menu-solutions/index.html';
 
-// ISO 3166-1 alpha-2 code, display name, and which message template to use.
+// ISO 3166-1 alpha-2 code, display name, which message template to use, and
+// the international calling code (used to fix up locally-formatted numbers
+// picked up during enrichment - see withCallingCode()).
 const COUNTRIES = [
-	{ code: 'DE', name: 'Germany', lang: 'de' },
-	{ code: 'AT', name: 'Austria', lang: 'de' },
-	{ code: 'CH', name: 'Switzerland', lang: 'de' },
-	{ code: 'GR', name: 'Greece', lang: 'el' },
-	{ code: 'CY', name: 'Cyprus', lang: 'el' },
-	{ code: 'IT', name: 'Italy', lang: 'it' },
-	{ code: 'ES', name: 'Spain', lang: 'es' },
-	{ code: 'FR', name: 'France', lang: 'fr' },
-	{ code: 'PT', name: 'Portugal', lang: 'pt' },
-	{ code: 'NL', name: 'Netherlands', lang: 'en' },
-	{ code: 'BE', name: 'Belgium', lang: 'fr' },
-	{ code: 'HR', name: 'Croatia', lang: 'en' },
-	{ code: 'PL', name: 'Poland', lang: 'en' },
-	{ code: 'GB', name: 'United Kingdom', lang: 'en' },
-	{ code: 'IE', name: 'Ireland', lang: 'en' },
-	{ code: 'MT', name: 'Malta', lang: 'en' }
+	{ code: 'DE', name: 'Germany', lang: 'de', callingCode: '49' },
+	{ code: 'AT', name: 'Austria', lang: 'de', callingCode: '43' },
+	{ code: 'CH', name: 'Switzerland', lang: 'de', callingCode: '41' },
+	{ code: 'GR', name: 'Greece', lang: 'el', callingCode: '30' },
+	{ code: 'CY', name: 'Cyprus', lang: 'el', callingCode: '357' },
+	{ code: 'IT', name: 'Italy', lang: 'it', callingCode: '39' },
+	{ code: 'ES', name: 'Spain', lang: 'es', callingCode: '34' },
+	{ code: 'FR', name: 'France', lang: 'fr', callingCode: '33' },
+	{ code: 'PT', name: 'Portugal', lang: 'pt', callingCode: '351' },
+	{ code: 'NL', name: 'Netherlands', lang: 'en', callingCode: '31' },
+	{ code: 'BE', name: 'Belgium', lang: 'fr', callingCode: '32' },
+	{ code: 'HR', name: 'Croatia', lang: 'en', callingCode: '385' },
+	{ code: 'PL', name: 'Poland', lang: 'en', callingCode: '48' },
+	{ code: 'GB', name: 'United Kingdom', lang: 'en', callingCode: '44' },
+	{ code: 'IE', name: 'Ireland', lang: 'en', callingCode: '353' },
+	{ code: 'MT', name: 'Malta', lang: 'en', callingCode: '356' }
 ];
 
 const MESSAGE_TEMPLATES = {
@@ -146,6 +148,18 @@ function normalizeWhatsapp(raw) {
 	return String(raw).replace('https://wa.me/', '').replace('https://api.whatsapp.com/send?phone=', '').replace(/[^\d+]/g, '');
 }
 
+// Numbers pulled from a site's tel: link (see the scrape-website Edge
+// Function) are usually written in local format with no country code,
+// which would produce a wa.me link for the wrong country. Prepends the
+// searched country's calling code unless the number already looks
+// international (already has it, or is long enough to plausibly be one).
+function withCallingCode(digits) {
+	if (!digits) return '';
+	const code = currentCountry.callingCode;
+	if (!code || digits.startsWith(code) || digits.length > 11) return digits;
+	return code + digits.replace(/^0+/, '');
+}
+
 // OSM website tags frequently omit the protocol (e.g. "cafejubilee.com"),
 // which breaks both the table's link and the enrich fetch (relative URL,
 // or Deno's fetch rejects it outright).
@@ -236,7 +250,7 @@ async function enrichLead(lead) {
 		const data = await response.json();
 		if (!response.ok) throw new Error(data.error || 'Could not read that website');
 		lead.email = lead.email || data.email || '';
-		lead.whatsapp = lead.whatsapp || normalizeWhatsapp(data.whatsapp) || '';
+		lead.whatsapp = lead.whatsapp || withCallingCode(normalizeWhatsapp(data.whatsapp)) || '';
 		lead.phone = lead.phone || data.phone || '';
 		notify(`Enriched ${lead.name}`);
 		saveLeads();
