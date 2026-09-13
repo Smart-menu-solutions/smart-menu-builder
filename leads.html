@@ -14,7 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/admin.css?v=language-row-1">
 <style>
-.leads-toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+.leads-toolbar{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
 .leads-toolbar label{margin:0}
 .leads-status{color:var(--muted);font-size:12px;margin:0 0 14px}
 .leads-table-wrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:10px}
@@ -52,6 +52,14 @@ table.leads-table tr:hover td{background:var(--alt)}
                 <option value="cafe">Cafés</option>
                 <option value="hotel">Hotels</option>
                 <option value="all" selected>All four</option>
+            </select></label>
+            <label>Filter<select id="leadsFilter">
+                <option value="all" selected>Show all</option>
+                <option value="whatsapp">Has WhatsApp</option>
+                <option value="email">Has email</option>
+                <option value="phone">Has phone</option>
+                <option value="contact">Has any contact</option>
+                <option value="missing">Missing contact info</option>
             </select></label>
             <button class="button button-primary" type="button" id="leadsSearch">Search</button>
             <button class="button button-ghost" type="button" id="leadsExport">Export CSV</button>

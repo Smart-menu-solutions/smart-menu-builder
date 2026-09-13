@@ -51,8 +51,45 @@ const MESSAGE_TEMPLATES = {
 	pt: 'Olá {name} 👋 Ainda usam menu em papel? Criamos menus digitais QR atualizáveis em segundos, sem custos de impressão. Vale a pena ver: {site}'
 };
 
+const STORAGE_KEY = 'smartmenu.leads.v1';
+
+const FILTERS = {
+	all: () => true,
+	whatsapp: (lead) => !!lead.whatsapp,
+	email: (lead) => !!lead.email,
+	phone: (lead) => !!lead.phone,
+	contact: (lead) => !!(lead.whatsapp || lead.email || lead.phone),
+	missing: (lead) => !(lead.whatsapp || lead.email || lead.phone)
+};
+
 let leads = [];
 let currentCountry = COUNTRIES[0];
+let currentFilter = 'all';
+
+function visibleLeads() {
+	return leads.filter(FILTERS[currentFilter] || FILTERS.all);
+}
+
+function saveLeads() {
+	try {
+		localStorage.setItem(STORAGE_KEY, JSON.stringify({ countryCode: currentCountry.code, leads }));
+	} catch {
+		// Storage full or unavailable - losing the cache on next refresh is
+		// harmless, so this is deliberately silent.
+	}
+}
+
+function restoreLeads() {
+	try {
+		const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+		if (!saved || !Array.isArray(saved.leads)) return;
+		leads = saved.leads.map((lead) => ({ ...lead, enriching: false }));
+		const country = COUNTRIES.find((entry) => entry.code === saved.countryCode);
+		if (country) { currentCountry = country; $('#leadsCountry').value = country.code; }
+	} catch {
+		// Corrupt/old cache shape - ignore and start fresh.
+	}
+}
 
 function notify(message) {
 	const toast = $('#toast');
@@ -159,6 +196,7 @@ async function runSearch() {
 
 	status.textContent = `${leads.length} result${leads.length === 1 ? '' : 's'} for ${currentCountry.name}` +
 		(failedTypes.length ? ` (${failedTypes.join(', ')} timed out - try again to fill those in)` : '') + '.';
+	saveLeads();
 	render();
 }
 
@@ -178,6 +216,7 @@ async function enrichLead(lead) {
 		lead.whatsapp = lead.whatsapp || normalizeWhatsapp(data.whatsapp) || '';
 		lead.phone = lead.phone || data.phone || '';
 		notify(`Enriched ${lead.name}`);
+		saveLeads();
 	} catch (error) {
 		notify(`Could not enrich ${lead.name}: ${error.message}`);
 	} finally {
@@ -200,8 +239,8 @@ function selectedLeads() {
 }
 
 function exportCsv() {
-	const rows = leads.length ? leads : [];
-	if (!rows.length) { notify('Nothing to export yet - run a search first'); return; }
+	const rows = visibleLeads();
+	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
 	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
 	const csv = [header.join(',')].concat(
 		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(','))
@@ -220,14 +259,21 @@ function escapeHtml(value) {
 
 function render() {
 	const body = $('#leadsBody');
-	$('#leadsCount').textContent = `${leads.length} found`;
+	const visible = visibleLeads();
+	$('#leadsCount').textContent = leads.length && visible.length !== leads.length
+		? `${visible.length} shown / ${leads.length} found`
+		: `${leads.length} found`;
 
 	if (!leads.length) {
 		body.innerHTML = '<tr><td colspan="8" class="leads-empty">Run a search to see results here.</td></tr>';
 		return;
 	}
+	if (!visible.length) {
+		body.innerHTML = '<tr><td colspan="8" class="leads-empty">No results match this filter.</td></tr>';
+		return;
+	}
 
-	body.innerHTML = leads.map((lead) => `
+	body.innerHTML = visible.map((lead) => `
 		<tr>
 			<td><input type="checkbox" data-select="${lead.id}" ${lead.selected ? 'checked' : ''}></td>
 			<td>${escapeHtml(lead.name)}</td>
@@ -248,7 +294,11 @@ function wireEvents() {
 	$('#leadsSearch').addEventListener('click', runSearch);
 	$('#leadsExport').addEventListener('click', exportCsv);
 	$('#leadsSelectAll').addEventListener('change', (event) => {
-		leads.forEach((lead) => { lead.selected = event.target.checked; });
+		visibleLeads().forEach((lead) => { lead.selected = event.target.checked; });
+		render();
+	});
+	$('#leadsFilter').addEventListener('change', (event) => {
+		currentFilter = event.target.value;
 		render();
 	});
 	$('#leadsBody').addEventListener('click', (event) => {
@@ -266,4 +316,7 @@ function wireEvents() {
 }
 
 populateCountrySelect();
+restoreLeads();
 wireEvents();
+render();
+if (leads.length) $('#leadsStatus').textContent = `Restored ${leads.length} result${leads.length === 1 ? '' : 's'} for ${currentCountry.name} from your last search.`;
