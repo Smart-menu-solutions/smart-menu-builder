@@ -274,7 +274,11 @@ function clearLeads() {
 // HTML table saved with an .xls extension and opens it as a real, already
 // split spreadsheet - no delimiter or encoding guessing involved.
 function exportCsv() {
-	const rows = visibleLeads();
+	// If the user checked specific rows, that's a deliberate shortlist -
+	// export just those. Otherwise fall back to everything the current
+	// filter shows.
+	const checked = selectedLeads();
+	const rows = checked.length ? checked : visibleLeads();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
 	const header = ['Name', 'Address', 'Phone', 'Email', 'WhatsApp', 'Website'];
 	const keys = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
@@ -287,6 +291,7 @@ function exportCsv() {
 	link.download = `leads-${currentCountry.code.toLowerCase()}.xls`;
 	link.click();
 	URL.revokeObjectURL(link.href);
+	notify(`Exported ${rows.length} ${checked.length ? 'selected' : ''} lead${rows.length === 1 ? '' : 's'}`);
 }
 
 function escapeHtml(value) {
