@@ -70,10 +70,15 @@ function populateCountrySelect() {
 	currentCountry = COUNTRIES[0];
 }
 
+// Most of these are tagged amenity=X in OSM, but hotels use tourism=hotel
+// instead - not a real amenity in OSM's schema.
+const TYPE_TAG_KEYS = { restaurant: 'amenity', bar: 'amenity', cafe: 'amenity', hotel: 'tourism' };
+
 function overpassQuery(countryCode, type) {
+	const key = TYPE_TAG_KEYS[type] || 'amenity';
 	return `[out:json][timeout:50];
 area["ISO3166-1"="${countryCode}"][admin_level=2]->.searchArea;
-nwr["amenity"="${type}"](area.searchArea);
+nwr["${key}"="${type}"](area.searchArea);
 out center ${RESULT_CAP};`;
 }
 
@@ -121,7 +126,7 @@ function elementToLead(element) {
 }
 
 async function runSearch() {
-	const types = $('#leadsType').value === 'all' ? ['restaurant', 'bar', 'cafe'] : [$('#leadsType').value];
+	const types = $('#leadsType').value === 'all' ? ['restaurant', 'bar', 'cafe', 'hotel'] : [$('#leadsType').value];
 	const status = $('#leadsStatus');
 	$('#leadsSearch').disabled = true;
 
