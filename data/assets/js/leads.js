@@ -44,13 +44,13 @@ const COUNTRIES = [
 ];
 
 const MESSAGE_TEMPLATES = {
-	de: 'Hallo 👋\nNutzt ihr aktuell noch gedruckte Speisekarten?\nWir helfen Restaurants dabei, auf digitale QR-Menüs umzusteigen, die sich jederzeit in Sekunden aktualisieren lassen.\nVielleicht interessant für euch: {site}',
-	en: 'Hi 👋\nAre you still using printed menus?\nWe help restaurants switch to digital QR menus that can be updated in seconds, anytime.\nMight be worth a look: {site}',
-	el: 'Γεια σου 👋\nΧρησιμοποιείτε ακόμα έντυπα μενού;\nΒοηθάμε εστιατόρια να περάσουν σε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, όποτε θέλετε.\nΊσως σας ενδιαφέρει: {site}',
-	it: 'Ciao 👋\nUsate ancora menu cartacei?\nAiutiamo i ristoranti a passare a menu digitali QR aggiornabili in pochi secondi, in qualsiasi momento.\nPotrebbe interessarvi: {site}',
-	es: 'Hola 👋\n¿Todavía usáis cartas en papel?\nAyudamos a los restaurantes a pasar a menús digitales QR que se pueden actualizar en segundos, en cualquier momento.\nPuede que os interese: {site}',
-	fr: 'Bonjour 👋\nUtilisez-vous encore des cartes papier ?\nNous aidons les restaurants à passer à des menus QR numériques modifiables en quelques secondes, à tout moment.\nCela pourrait vous intéresser : {site}',
-	pt: 'Olá 👋\nAinda usam menus em papel?\nAjudamos restaurantes a mudar para menus digitais QR que podem ser atualizados em segundos, a qualquer momento.\nPode ser do vosso interesse: {site}'
+	de: 'Hallo 👋\nNutzt ihr aktuell noch gedruckte Speisekarten?\nWir helfen Ihnen dabei, auf digitale QR-Menüs umzusteigen, die sich jederzeit in Sekunden aktualisieren lassen.\nKlingt das interessant für euch: {site}',
+	en: 'Hi 👋\nAre you still using printed menus?\nWe help you switch to digital QR menus that can be updated in seconds, anytime.\nDoes that sound interesting to you: {site}',
+	el: 'Γεια σου 👋\nΧρησιμοποιείτε ακόμα έντυπα μενού;\nΣας βοηθάμε να περάσετε σε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, όποτε θέλετε.\nΣας ακούγεται ενδιαφέρον: {site}',
+	it: 'Ciao 👋\nUsate ancora menu cartacei?\nVi aiutiamo a passare a menu digitali QR aggiornabili in pochi secondi, in qualsiasi momento.\nVi sembra interessante: {site}',
+	es: 'Hola 👋\n¿Todavía usáis cartas en papel?\nOs ayudamos a pasar a menús digitales QR que se pueden actualizar en segundos, en cualquier momento.\n¿Os suena interesante? {site}',
+	fr: 'Bonjour 👋\nUtilisez-vous encore des cartes papier ?\nNous vous aidons à passer à des menus QR numériques modifiables en quelques secondes, à tout moment.\nCela vous semble intéressant ? {site}',
+	pt: 'Olá 👋\nAinda usam menus em papel?\nAjudamos-vos a mudar para menus digitais QR que podem ser atualizados em segundos, a qualquer momento.\nParece-vos interessante? {site}'
 };
 
 const STORAGE_KEY = 'smartmenu.leads.v1';
