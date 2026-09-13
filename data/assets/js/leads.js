@@ -268,26 +268,23 @@ function clearLeads() {
 	render();
 }
 
+// A plain CSV's delimiter (comma vs semicolon) and encoding depend on the
+// reader's Windows regional settings, which kept guessing wrong (everything
+// crammed into column A, Greek text garbled). Excel has always accepted an
+// HTML table saved with an .xls extension and opens it as a real, already
+// split spreadsheet - no delimiter or encoding guessing involved.
 function exportCsv() {
 	const rows = visibleLeads();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
-	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
-	// Excel's default CSV list separator depends on Windows' regional
-	// settings - German (and most non-US) locales expect ";", not ",",
-	// otherwise a double-clicked CSV opens with everything jammed into
-	// column A. Quoting every field means the delimiter choice can't
-	// collide with commas inside addresses either way.
-	const DELIMITER = ';';
-	const csv = [header.join(DELIMITER)].concat(
-		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(DELIMITER))
-	).join('\r\n');
-	// Prefix a UTF-8 BOM so Excel auto-detects the encoding on double-click
-	// instead of guessing the system codepage and mangling Greek/accented
-	// characters.
-	const blob = new Blob(['﻿' + csv], { type: 'text/csv' });
+	const header = ['Name', 'Address', 'Phone', 'Email', 'WhatsApp', 'Website'];
+	const keys = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
+	const headRow = `<tr>${header.map((label) => `<th>${escapeHtml(label)}</th>`).join('')}</tr>`;
+	const bodyRows = rows.map((lead) => `<tr>${keys.map((key) => `<td>${escapeHtml(lead[key])}</td>`).join('')}</tr>`).join('');
+	const html = `<html><head><meta charset="UTF-8"></head><body><table border="1">${headRow}${bodyRows}</table></body></html>`;
+	const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
 	const link = document.createElement('a');
 	link.href = URL.createObjectURL(blob);
-	link.download = `leads-${currentCountry.code.toLowerCase()}.csv`;
+	link.download = `leads-${currentCountry.code.toLowerCase()}.xls`;
 	link.click();
 	URL.revokeObjectURL(link.href);
 }
