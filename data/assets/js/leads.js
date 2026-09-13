@@ -272,10 +272,19 @@ function exportCsv() {
 	const rows = visibleLeads();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
 	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
-	const csv = [header.join(',')].concat(
-		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(','))
-	).join('\n');
-	const blob = new Blob([csv], { type: 'text/csv' });
+	// Excel's default CSV list separator depends on Windows' regional
+	// settings - German (and most non-US) locales expect ";", not ",",
+	// otherwise a double-clicked CSV opens with everything jammed into
+	// column A. Quoting every field means the delimiter choice can't
+	// collide with commas inside addresses either way.
+	const DELIMITER = ';';
+	const csv = [header.join(DELIMITER)].concat(
+		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(DELIMITER))
+	).join('\r\n');
+	// Prefix a UTF-8 BOM so Excel auto-detects the encoding on double-click
+	// instead of guessing the system codepage and mangling Greek/accented
+	// characters.
+	const blob = new Blob(['﻿' + csv], { type: 'text/csv' });
 	const link = document.createElement('a');
 	link.href = URL.createObjectURL(blob);
 	link.download = `leads-${currentCountry.code.toLowerCase()}.csv`;
