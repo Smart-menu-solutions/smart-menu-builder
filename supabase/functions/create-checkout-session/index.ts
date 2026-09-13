@@ -35,6 +35,7 @@ Deno.serve(async (request) => {
 		const phone = String(body.phone || '').trim();
 		const pdfPath = String(body.pdfPath || '').trim();
 		const photoAddon = Boolean(body.photoAddon);
+		const photoZipPath = String(body.photoZipPath || '').trim();
 
 		const pricing = PLAN_PRICING[plan];
 		if (!pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email) || !pdfPath) {
@@ -84,10 +85,11 @@ Deno.serve(async (request) => {
 				phone,
 				email,
 				pdfPath,
-				photoAddon: String(photoAddon)
+				photoAddon: String(photoAddon),
+				photoZipPath
 			},
 			subscription_data: {
-				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon) }
+				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath }
 			}
 		});
 
