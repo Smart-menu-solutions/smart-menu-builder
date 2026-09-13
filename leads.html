@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Menu Builder | Lead finder</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data/assets/js/auth-config.js"></script>
+<script src="data/assets/js/auth.js"></script>
+<script>requireAuth();</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/admin.css?v=language-row-1">
+<style>
+.leads-toolbar{display:grid;grid-template-columns:1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+.leads-toolbar label{margin:0}
+.leads-status{color:var(--muted);font-size:12px;margin:0 0 14px}
+.leads-table-wrap{overflow-x:auto}
+table.leads-table{width:100%;border-collapse:collapse;font-size:13px}
+table.leads-table th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.leads-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.leads-table tr:hover td{background:var(--alt)}
+.leads-empty{color:var(--muted);font-size:11px}
+.leads-actions-cell{display:flex;gap:6px;flex-wrap:wrap}
+.leads-actions-cell .button{padding:6px 10px;font-size:11px}
+.leads-count-badge{font-size:10px;font-weight:700;color:#1e6b3c;background:#e8f5ec;padding:5px 8px;border-radius:20px;white-space:nowrap}
+.leads-actions-cell .button:disabled{opacity:.4;cursor:not-allowed}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+    <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Smart Menu Builder</span></a>
+    <p class="eyebrow">Workspace</p>
+    <nav>
+        <a class="nav-link" href="admin.html"><span>▦</span> Overview</a>
+        <a class="nav-link active" href="leads.html"><span>⌕</span> Lead finder</a>
+    </nav>
+    <div class="sidebar-note"><span class="status-dot"></span><div><strong>Free lead search</strong><small>Powered by OpenStreetMap - no API key, no cost.</small></div></div>
+</aside>
+
+<main class="main">
+    <header class="topbar"><div><p class="eyebrow">Outreach</p><h1>Find restaurant &amp; bar leads</h1></div><button class="button button-ghost" type="button" onclick="logout()">Log out</button></header>
+
+    <section class="panel" style="padding:21px;margin-bottom:20px">
+        <div class="leads-toolbar">
+            <label>Country<select id="leadsCountry"></select></label>
+            <label>Type<select id="leadsType">
+                <option value="restaurant">Restaurants</option>
+                <option value="bar">Bars</option>
+                <option value="cafe">Cafés</option>
+                <option value="all" selected>All three</option>
+            </select></label>
+            <button class="button button-primary" type="button" id="leadsSearch">Search</button>
+            <button class="button button-ghost" type="button" id="leadsExport">Export CSV</button>
+        </div>
+        <p class="leads-status" id="leadsStatus">Nationwide search via OpenStreetMap (Overpass API) - capped at 500 results per search, so very large countries may not be complete in one go.</p>
+    </section>
+
+    <section class="panel" style="padding:21px">
+        <div class="panel-heading">
+            <div><p class="eyebrow">Results</p><h2>Leads</h2></div>
+            <span class="leads-count-badge" id="leadsCount">0 found</span>
+        </div>
+        <div class="leads-table-wrap">
+            <table class="leads-table">
+                <thead>
+                    <tr><th><input type="checkbox" id="leadsSelectAll"></th><th>Name</th><th>Address</th><th>Phone</th><th>Website</th><th>Email</th><th>WhatsApp</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="leadsBody"><tr><td colspan="8" class="leads-empty">Run a search to see results here.</td></tr></tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<div class="toast" id="toast" role="status"></div>
+<script src="data/assets/js/leads.js"></script>
+</body>
+</html>
