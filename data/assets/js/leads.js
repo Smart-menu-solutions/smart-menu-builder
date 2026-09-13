@@ -43,14 +43,41 @@ const COUNTRIES = [
 	{ code: 'MT', name: 'Malta', lang: 'en', callingCode: '356' }
 ];
 
+// Three-stage outreach sequence: first message -> (7 days) -> reminder ->
+// (7 days) -> final message. See leadTab()/nextAction() for the stage
+// machine, and the module doc comment - sending is always a manual click,
+// only the "is this due yet" timing is automatic.
+const FOLLOWUP_DAYS = 7;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const MESSAGE_TEMPLATES = {
-	de: 'Hallo 👋\nNutzt ihr aktuell noch gedruckte Speisekarten?\nWir helfen Ihnen dabei, auf digitale QR-Menüs umzusteigen, die sich jederzeit in Sekunden aktualisieren lassen.\nKlingt das interessant für euch: {site}',
-	en: 'Hi 👋\nAre you still using printed menus?\nWe help you switch to digital QR menus that can be updated in seconds, anytime.\nDoes that sound interesting to you: {site}',
-	el: 'Γεια σου 👋\nΧρησιμοποιείτε ακόμα έντυπα μενού;\nΣας βοηθάμε να περάσετε σε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, όποτε θέλετε.\nΣας ακούγεται ενδιαφέρον: {site}',
-	it: 'Ciao 👋\nUsate ancora menu cartacei?\nVi aiutiamo a passare a menu digitali QR aggiornabili in pochi secondi, in qualsiasi momento.\nVi sembra interessante: {site}',
-	es: 'Hola 👋\n¿Todavía usáis cartas en papel?\nOs ayudamos a pasar a menús digitales QR que se pueden actualizar en segundos, en cualquier momento.\n¿Os suena interesante? {site}',
-	fr: 'Bonjour 👋\nUtilisez-vous encore des cartes papier ?\nNous vous aidons à passer à des menus QR numériques modifiables en quelques secondes, à tout moment.\nCela vous semble intéressant ? {site}',
-	pt: 'Olá 👋\nAinda usam menus em papel?\nAjudamos-vos a mudar para menus digitais QR que podem ser atualizados em segundos, a qualquer momento.\nParece-vos interessante? {site}'
+	de: 'Hallo 👋\nKurze Frage: Nutzt ihr aktuell noch gedruckte Speisekarten?\nWir haben eine Lösung, mit der ihr eure Speisekarte per QR-Code jederzeit aktualisieren könnt, ganz ohne Neudruck.\nSchaut gerne mal rein: {site}',
+	en: 'Hi 👋\nQuick question: are you still using printed menus?\nWe have a solution that lets you update your menu via QR code anytime, no reprinting needed.\nFeel free to take a look: {site}',
+	el: 'Γεια σου 👋\nΜια γρήγορη ερώτηση: χρησιμοποιείτε ακόμα έντυπα μενού;\nΈχουμε μια λύση που σας επιτρέπει να ενημερώνετε το μενού σας μέσω QR code όποτε θέλετε, χωρίς νέα εκτύπωση.\nΡίξτε μια ματιά: {site}',
+	it: 'Ciao 👋\nUna domanda veloce: usate ancora menu cartacei?\nAbbiamo una soluzione che vi permette di aggiornare il menu tramite codice QR in qualsiasi momento, senza dover ristampare.\nDate un\'occhiata: {site}',
+	es: 'Hola 👋\nUna pregunta rápida: ¿seguís usando cartas en papel?\nTenemos una solución que os permite actualizar vuestra carta mediante código QR en cualquier momento, sin reimprimir.\nEchad un vistazo: {site}',
+	fr: 'Bonjour 👋\nPetite question : utilisez-vous encore des cartes papier ?\nNous avons une solution qui vous permet de mettre à jour votre carte via un QR code à tout moment, sans réimpression.\nN\'hésitez pas à jeter un œil : {site}',
+	pt: 'Olá 👋\nUma pergunta rápida: ainda usam menus em papel?\nTemos uma solução que vos permite atualizar o menu através de um código QR a qualquer momento, sem reimpressão.\nDeem uma vista de olhos: {site}'
+};
+
+const REMINDER_TEMPLATES = {
+	de: 'Hallo 👋\nIch wollte nur kurz nachhaken, falls meine letzte Nachricht untergegangen ist.\nMit unserem QR-Menü könnt ihr Änderungen an der Speisekarte jederzeit in wenigen Sekunden vornehmen.\nHier findet ihr alle Infos: {site}',
+	en: 'Hi 👋\nJust wanted to quickly follow up in case my last message got buried.\nWith our QR menu you can make changes to your menu anytime in just seconds.\nHere\'s all the info: {site}',
+	el: 'Γεια σου 👋\nΉθελα απλώς να επανέλθω σύντομα, μήπως το προηγούμενο μήνυμά μου πέρασε απαρατήρητο.\nΜε το ψηφιακό μας μενού QR μπορείτε να κάνετε αλλαγές στο μενού σας όποτε θέλετε, μέσα σε λίγα δευτερόλεπτα.\nΕδώ θα βρείτε όλες τις πληροφορίες: {site}',
+	it: 'Ciao 👋\nVolevo solo fare un piccolo follow-up, nel caso il mio ultimo messaggio fosse passato inosservato.\nCon il nostro menu QR potete modificare il menu in qualsiasi momento, in pochi secondi.\nQui trovate tutte le informazioni: {site}',
+	es: 'Hola 👋\nSolo quería hacer un seguimiento rápido, por si mi último mensaje pasó desapercibido.\nCon nuestro menú QR podéis hacer cambios en la carta en cualquier momento, en cuestión de segundos.\nAquí tenéis toda la información: {site}',
+	fr: 'Bonjour 👋\nJe voulais juste faire un petit rappel, au cas où mon dernier message serait passé inaperçu.\nAvec notre menu QR, vous pouvez modifier votre carte à tout moment, en quelques secondes.\nVoici toutes les infos : {site}',
+	pt: 'Olá 👋\nSó queria fazer um pequeno seguimento, caso a minha última mensagem tenha passado despercebida.\nCom o nosso menu QR podem fazer alterações ao menu a qualquer momento, em poucos segundos.\nAqui têm todas as informações: {site}'
+};
+
+const FINAL_TEMPLATES = {
+	de: 'Hallo 👋\nDas ist meine letzte Nachricht, versprochen 😊\nFalls ihr irgendwann auf eine digitale Speisekarte umsteigen möchtet, könnt ihr euch hier alles ansehen: {site}\nVielen Dank und weiterhin viel Erfolg! 🍀',
+	en: 'Hi 👋\nThis is my last message, promise 😊\nIf you ever decide to switch to a digital menu, you can check everything out here: {site}\nThank you and all the best! 🍀',
+	el: 'Γεια σου 👋\nΑυτό είναι το τελευταίο μου μήνυμα, το υπόσχομαι 😊\nΑν κάποια στιγμή θελήσετε να περάσετε σε ψηφιακό μενού, μπορείτε να δείτε τα πάντα εδώ: {site}\nΕυχαριστώ πολύ και καλή επιτυχία! 🍀',
+	it: 'Ciao 👋\nQuesto è il mio ultimo messaggio, promesso 😊\nSe in futuro vorrete passare a un menu digitale, potete dare un\'occhiata qui: {site}\nGrazie mille e buon lavoro! 🍀',
+	es: 'Hola 👋\nEste es mi último mensaje, lo prometo 😊\nSi en algún momento queréis pasaros a una carta digital, podéis ver todo aquí: {site}\n¡Muchas gracias y mucho éxito! 🍀',
+	fr: 'Bonjour 👋\nC\'est mon dernier message, promis 😊\nSi un jour vous souhaitez passer à une carte numérique, vous pouvez tout voir ici : {site}\nMerci beaucoup et bonne continuation ! 🍀',
+	pt: 'Olá 👋\nEsta é a minha última mensagem, prometido 😊\nSe um dia quiserem mudar para um menu digital, podem ver tudo aqui: {site}\nMuito obrigado e muito sucesso! 🍀'
 };
 
 const STORAGE_KEY = 'smartmenu.leads.v1';
@@ -67,9 +94,51 @@ const FILTERS = {
 let leads = [];
 let currentCountry = COUNTRIES[0];
 let currentFilter = 'all';
+let currentStageTab = 'new';
+
+// msgStage: 0 = never contacted, 1 = first message sent, 2 = reminder
+// sent, 3 = final message sent (done, hidden from every tab). msgSentAt is
+// when that last message went out - daysUntilDue() counts FOLLOWUP_DAYS
+// forward from it to decide when the next one becomes sendable.
+function daysUntilDue(lead) {
+	if (!lead.msgSentAt) return 0;
+	const elapsedDays = (Date.now() - lead.msgSentAt) / DAY_MS;
+	return Math.max(0, Math.ceil(FOLLOWUP_DAYS - elapsedDays));
+}
+
+// Which of the four tabs a lead currently belongs in. A lead moves itself
+// between "waiting" tabs and "action needed" tabs purely by elapsed time -
+// no click needed to advance from Sequence into Reminder, for example.
+function leadTab(lead) {
+	const stage = lead.msgStage || 0;
+	if (stage === 0) return 'new';
+	if (stage === 3) return 'done';
+	const due = daysUntilDue(lead) <= 0;
+	if (stage === 1) return due ? 'reminder' : 'sequence';
+	return due ? 'final' : 'reminder';
+}
+
+// The message (if any) a click on this lead's WhatsApp button should send
+// right now, and what stage that advances it to. Returns null while a lead
+// is still waiting out its 7 days - the UI shows a countdown instead of a
+// button in that case.
+function nextAction(lead) {
+	const stage = lead.msgStage || 0;
+	if (stage === 0) return { label: 'Send message', templates: MESSAGE_TEMPLATES, nextStage: 1 };
+	if (daysUntilDue(lead) > 0) return null;
+	if (stage === 1) return { label: 'Send reminder', templates: REMINDER_TEMPLATES, nextStage: 2 };
+	if (stage === 2) return { label: 'Send final', templates: FINAL_TEMPLATES, nextStage: 3 };
+	return null;
+}
 
 function visibleLeads() {
-	return leads.filter(FILTERS[currentFilter] || FILTERS.all);
+	return leads.filter((lead) => leadTab(lead) === currentStageTab).filter(FILTERS[currentFilter] || FILTERS.all);
+}
+
+function stageTabCounts() {
+	const counts = { new: 0, sequence: 0, reminder: 0, final: 0, done: 0 };
+	leads.forEach((lead) => { counts[leadTab(lead)] = (counts[leadTab(lead)] || 0) + 1; });
+	return counts;
 }
 
 function saveLeads() {
@@ -189,7 +258,9 @@ function elementToLead(element) {
 		address: buildAddress(tags),
 		phone, website, email, whatsapp,
 		selected: false,
-		enriching: false
+		enriching: false,
+		msgStage: 0,
+		msgSentAt: null
 	};
 }
 
@@ -197,6 +268,11 @@ async function runSearch() {
 	const types = $('#leadsType').value === 'all' ? ['restaurant', 'bar', 'cafe', 'hotel'] : [$('#leadsType').value];
 	const status = $('#leadsStatus');
 	$('#leadsSearch').disabled = true;
+
+	// Keep a lookup of the outgoing list so a re-search of the same
+	// country/type doesn't reset everyone's sequence progress back to "New"
+	// - a lead found again is the same business, not a new contact.
+	const previousById = new Map(leads.map((lead) => [lead.id, lead]));
 
 	// Clear the old result set immediately instead of leaving it on screen
 	// while the new search runs - otherwise it looks like the new search
@@ -214,7 +290,11 @@ async function runSearch() {
 			const data = await fetchOverpass(overpassQuery(currentCountry.code, type));
 			(data.elements || []).forEach((element) => {
 				const lead = elementToLead(element);
-				if (lead && !seen.has(lead.id)) { seen.add(lead.id); collected.push(lead); }
+				if (!lead || seen.has(lead.id)) return;
+				const previous = previousById.get(lead.id);
+				if (previous) Object.assign(lead, { msgStage: previous.msgStage, msgSentAt: previous.msgSentAt, selected: previous.selected });
+				seen.add(lead.id);
+				collected.push(lead);
 			});
 		} catch (error) {
 			failedTypes.push(type);
@@ -263,12 +343,18 @@ async function enrichLead(lead) {
 }
 
 function openWhatsapp(lead) {
+	const action = nextAction(lead);
+	if (!action) { notify('Not due yet'); return; }
 	const number = lead.whatsapp || lead.phone;
 	if (!number) { notify('No phone/WhatsApp number for this lead yet'); return; }
-	const template = MESSAGE_TEMPLATES[currentCountry.lang] || MESSAGE_TEMPLATES.en;
-	const message = template.replace('{name}', lead.name).replace('{site}', SITE_URL);
+	const template = action.templates[currentCountry.lang] || action.templates.en;
+	const message = template.replace('{site}', SITE_URL);
 	const digits = String(number).replace(/[^\d]/g, '');
 	window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
+	lead.msgStage = action.nextStage;
+	lead.msgSentAt = Date.now();
+	saveLeads();
+	render();
 }
 
 function selectedLeads() {
@@ -345,23 +431,46 @@ function escapeHtml(value) {
 	return String(value || '').replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 }
 
+function updateStageTabs() {
+	const counts = stageTabCounts();
+	document.querySelectorAll('.leads-stage-tab').forEach((tab) => {
+		const stage = tab.dataset.stage;
+		tab.classList.toggle('active', stage === currentStageTab);
+		const countEl = tab.querySelector('.leads-stage-count');
+		if (countEl) countEl.textContent = counts[stage] || 0;
+	});
+}
+
 function render() {
+	updateStageTabs();
 	const body = $('#leadsBody');
 	const visible = visibleLeads();
-	$('#leadsCount').textContent = leads.length && visible.length !== leads.length
-		? `${visible.length} shown / ${leads.length} found`
-		: `${leads.length} found`;
+	const totalInTab = leads.filter((lead) => leadTab(lead) === currentStageTab).length;
+	$('#leadsCount').textContent = totalInTab && visible.length !== totalInTab
+		? `${visible.length} shown / ${totalInTab} in this tab`
+		: `${totalInTab} found`;
 
 	if (!leads.length) {
 		body.innerHTML = '<tr><td colspan="8" class="leads-empty">Run a search to see results here.</td></tr>';
 		return;
 	}
 	if (!visible.length) {
-		body.innerHTML = '<tr><td colspan="8" class="leads-empty">No results match this filter.</td></tr>';
+		body.innerHTML = `<tr><td colspan="8" class="leads-empty">${totalInTab ? 'No results match this filter.' : 'Nothing in this tab yet.'}</td></tr>`;
 		return;
 	}
 
-	body.innerHTML = visible.map((lead) => `
+	body.innerHTML = visible.map((lead) => {
+		const action = nextAction(lead);
+		const waitingDays = !action && (lead.msgStage || 0) > 0 && (lead.msgStage || 0) < 3 ? daysUntilDue(lead) : 0;
+		const actionButton = action
+			? `<button class="button button-primary" type="button" data-whatsapp="${lead.id}" ${!(lead.whatsapp || lead.phone) ? 'disabled' : ''}>${action.label}</button>`
+			: waitingDays
+				? `<span class="leads-empty">Waiting ${waitingDays}d</span>`
+				: '';
+		const enrichButton = currentStageTab === 'new'
+			? `<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>`
+			: '';
+		return `
 		<tr>
 			<td><input type="checkbox" data-select="${lead.id}" ${lead.selected ? 'checked' : ''}></td>
 			<td>${escapeHtml(lead.name)}</td>
@@ -370,12 +479,10 @@ function render() {
 			<td>${lead.website ? `<a href="${escapeHtml(lead.website)}" target="_blank" rel="noopener">link</a>` : '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
-			<td class="leads-actions-cell">
-				<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>
-				<button class="button button-primary" type="button" data-whatsapp="${lead.id}" ${!(lead.whatsapp || lead.phone) ? 'disabled' : ''}>WhatsApp</button>
-			</td>
+			<td class="leads-actions-cell">${enrichButton}${actionButton}</td>
 		</tr>
-	`).join('');
+	`;
+	}).join('');
 }
 
 function wireEvents() {
@@ -390,6 +497,12 @@ function wireEvents() {
 	$('#leadsFilter').addEventListener('change', (event) => {
 		currentFilter = event.target.value;
 		render();
+	});
+	document.querySelectorAll('.leads-stage-tab').forEach((tab) => {
+		tab.addEventListener('click', () => {
+			currentStageTab = tab.dataset.stage;
+			render();
+		});
 	});
 	$('#leadsBody').addEventListener('click', (event) => {
 		const enrichId = event.target.dataset.enrich;
