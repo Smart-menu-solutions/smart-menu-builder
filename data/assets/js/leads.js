@@ -9,7 +9,15 @@
 
 const $ = (selector) => document.querySelector(selector);
 
-const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
+// Large countries (Germany, France, ...) time out if all three amenity
+// types are queried in one go against the whole country - runSearch()
+// queries one type at a time instead. Multiple mirrors because the main
+// instance frequently 504s under load; the others are used as fallback.
+const OVERPASS_ENDPOINTS = [
+	'https://overpass-api.de/api/interpreter',
+	'https://overpass.kumi.systems/api/interpreter',
+	'https://overpass.openstreetmap.ru/api/interpreter'
+];
 const RESULT_CAP = 500;
 const SITE_URL = 'https://smart-menu-solutions.github.io/smart-menu-solutions/index.html';
 
@@ -62,14 +70,27 @@ function populateCountrySelect() {
 	currentCountry = COUNTRIES[0];
 }
 
-function overpassQuery(countryCode, types) {
-	const filters = types.map((type) => `nwr["amenity"="${type}"](area.searchArea);`).join('\n  ');
-	return `[out:json][timeout:60];
+function overpassQuery(countryCode, type) {
+	return `[out:json][timeout:50];
 area["ISO3166-1"="${countryCode}"][admin_level=2]->.searchArea;
-(
-  ${filters}
-);
+nwr["amenity"="${type}"](area.searchArea);
 out center ${RESULT_CAP};`;
+}
+
+// Tries each mirror in turn (the main instance frequently 504s under load
+// for whole-country queries) and returns the first successful response.
+async function fetchOverpass(query) {
+	let lastError;
+	for (const endpoint of OVERPASS_ENDPOINTS) {
+		try {
+			const response = await fetch(endpoint, { method: 'POST', body: query });
+			if (!response.ok) { lastError = new Error(`HTTP ${response.status}`); continue; }
+			return await response.json();
+		} catch (error) {
+			lastError = error;
+		}
+	}
+	throw lastError || new Error('All Overpass mirrors failed');
 }
 
 function buildAddress(tags) {
@@ -102,28 +123,38 @@ function elementToLead(element) {
 async function runSearch() {
 	const types = $('#leadsType').value === 'all' ? ['restaurant', 'bar', 'cafe'] : [$('#leadsType').value];
 	const status = $('#leadsStatus');
-	status.textContent = `Searching ${currentCountry.name}…`;
 	$('#leadsSearch').disabled = true;
 
-	try {
-		const query = overpassQuery(currentCountry.code, types);
-		const response = await fetch(OVERPASS_ENDPOINT, { method: 'POST', body: query });
-		if (!response.ok) throw new Error(`Overpass returned HTTP ${response.status}`);
-		const data = await response.json();
+	const seen = new Set();
+	const collected = [];
+	const failedTypes = [];
 
-		const seen = new Set();
-		leads = (data.elements || [])
-			.map(elementToLead)
-			.filter((lead) => lead && !seen.has(lead.id) && seen.add(lead.id));
-
-		status.textContent = `${leads.length} result${leads.length === 1 ? '' : 's'} for ${currentCountry.name}${leads.length >= RESULT_CAP ? ' (capped - narrow the type or re-run to catch more)' : ''}.`;
-		render();
-	} catch (error) {
-		status.textContent = `Search failed: ${error.message}`;
-		notify('Search failed - Overpass API may be busy, try again shortly');
-	} finally {
-		$('#leadsSearch').disabled = false;
+	for (const type of types) {
+		status.textContent = `Searching ${currentCountry.name} - ${type}${types.length > 1 ? ` (${types.indexOf(type) + 1}/${types.length})` : ''}…`;
+		try {
+			const data = await fetchOverpass(overpassQuery(currentCountry.code, type));
+			(data.elements || []).forEach((element) => {
+				const lead = elementToLead(element);
+				if (lead && !seen.has(lead.id)) { seen.add(lead.id); collected.push(lead); }
+			});
+		} catch (error) {
+			failedTypes.push(type);
+		}
 	}
+
+	leads = collected;
+	$('#leadsSearch').disabled = false;
+
+	if (!leads.length && failedTypes.length) {
+		status.textContent = `Search failed for ${currentCountry.name} (${failedTypes.join(', ')}) - Overpass may be busy, try again shortly.`;
+		notify('Search failed - Overpass API may be busy, try again shortly');
+		render();
+		return;
+	}
+
+	status.textContent = `${leads.length} result${leads.length === 1 ? '' : 's'} for ${currentCountry.name}` +
+		(failedTypes.length ? ` (${failedTypes.join(', ')} timed out - try again to fill those in)` : '') + '.';
+	render();
 }
 
 async function enrichLead(lead) {
