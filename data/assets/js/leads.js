@@ -176,6 +176,12 @@ async function runSearch() {
 	const status = $('#leadsStatus');
 	$('#leadsSearch').disabled = true;
 
+	// Clear the old result set immediately instead of leaving it on screen
+	// while the new search runs - otherwise it looks like the new search
+	// already finished when it's really still showing stale data.
+	leads = [];
+	render();
+
 	const seen = new Set();
 	const collected = [];
 	const failedTypes = [];
@@ -247,6 +253,13 @@ function selectedLeads() {
 	return leads.filter((lead) => lead.selected);
 }
 
+function clearLeads() {
+	leads = [];
+	localStorage.removeItem(STORAGE_KEY);
+	$('#leadsStatus').textContent = 'Cleared - run a search to start again.';
+	render();
+}
+
 function exportCsv() {
 	const rows = visibleLeads();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
@@ -302,6 +315,7 @@ function render() {
 function wireEvents() {
 	$('#leadsSearch').addEventListener('click', runSearch);
 	$('#leadsExport').addEventListener('click', exportCsv);
+	$('#leadsClear').addEventListener('click', clearLeads);
 	$('#leadsSelectAll').addEventListener('change', (event) => {
 		visibleLeads().forEach((lead) => { lead.selected = event.target.checked; });
 		render();
