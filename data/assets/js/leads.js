@@ -44,7 +44,7 @@ const COUNTRIES = [
 ];
 
 const MESSAGE_TEMPLATES = {
-	de: 'Hallo {name} 👋 Nutzt ihr noch eine gedruckte Speisekarte? Wir bauen digitale QR-Menüs, die man in Sekunden aktualisieren kann - ohne Druckkosten. Kurzer Blick lohnt sich: {site}',
+	de: 'Hallo 👋\nNutzt ihr aktuell noch gedruckte Speisekarten?\nWir helfen Restaurants dabei, auf digitale QR-Menüs umzusteigen, die sich jederzeit in Sekunden aktualisieren lassen.\nVielleicht interessant für euch: {site}',
 	en: 'Hi {name} 👋 Still using a printed menu? We build digital QR menus you can update in seconds - no printing costs. Worth a quick look: {site}',
 	el: 'Γεια σου {name} 👋 Χρησιμοποιείτε ακόμα έντυπο μενού; Φτιάχνουμε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, χωρίς κόστος εκτύπωσης. Ρίξε μια ματιά: {site}',
 	it: 'Ciao {name} 👋 Usate ancora il menu cartaceo? Creiamo menu digitali QR aggiornabili in pochi secondi, senza costi di stampa. Dai un\'occhiata: {site}',
