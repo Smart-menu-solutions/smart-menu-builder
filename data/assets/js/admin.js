@@ -454,15 +454,30 @@ async function deleteClient() {
 	if (clients.length === 1) return notify('Keep at least one client in the workspace');
 	if (!confirm('Delete this client and their menu?')) return;
 	const removed = selectedClient();
+	const previousClients = clients;
+	const previousSelectedId = selectedId;
 	clients = clients.filter((client) => client.id !== selectedId);
 	selectedId = clients[0].id;
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	render();
-	notify('Client deleted');
 	if (typeof supabaseClient !== 'undefined' && removed?.slug) {
 		const { error } = await supabaseClient.from('menus').delete().eq('slug', removed.slug);
-		if (error) notify(`Removed locally; cloud delete failed: ${error.message}`);
+		if (error) {
+			// Cloud delete failed - e.g. an order/subscription still references
+			// this menu, which the database's foreign key blocks. Undo the
+			// optimistic local removal instead of leaving this tab out of sync
+			// with Supabase: without this, the client would silently reappear
+			// next time any device re-synced, looking like the deletion never
+			// happened at all.
+			clients = previousClients;
+			selectedId = previousSelectedId;
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+			render();
+			notify(`Could not delete "${removed.name}": ${error.message}`);
+			return;
+		}
 	}
+	notify('Client deleted');
 }
 $('#deleteClient').addEventListener('click', deleteClient); if ($('#deleteClientTop')) $('#deleteClientTop').addEventListener('click', deleteClient); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); if ($('#saveChangesTop')) $('#saveChangesTop').addEventListener('click', () => readForm()); $('#downloadQr').addEventListener('click', async () => {
 	try {
