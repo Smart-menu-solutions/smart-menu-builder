@@ -53,13 +53,40 @@ function escapeHtml(value: string): string {
 	}[character] as string));
 }
 
-async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string) {
+interface EmailAttachment { filename: string; content: string }
+
+// Chunked to avoid a stack overflow from String.fromCharCode(...bytes) on
+// large files (PDFs, photo ZIPs) - spreading a big Uint8Array as arguments
+// blows the call stack well before it blows the string length.
+function toBase64(bytes: Uint8Array): string {
+	let binary = '';
+	const chunkSize = 0x8000;
+	for (let i = 0; i < bytes.length; i += chunkSize) {
+		binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+	}
+	return btoa(binary);
+}
+
+// Downloads a file the customer already uploaded (menu PDF, photo ZIP) so it
+// can ride along as a real email attachment instead of just a storage path
+// staff would otherwise have to look up manually.
+async function fetchAttachment(path: string): Promise<EmailAttachment | null> {
+	if (!path) return null;
+	const { data, error } = await supabase.storage.from('menu-pdfs').download(path);
+	if (error || !data) {
+		console.error('Failed to download attachment', path, error);
+		return null;
+	}
+	return { filename: path.split('/').pop() || 'file', content: toBase64(new Uint8Array(await data.arrayBuffer())) };
+}
+
+async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string, attachments?: EmailAttachment[]) {
 	let providerMessageId: string | null = null;
 	try {
 		const response = await fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ from: FROM_EMAIL, to: [recipient], subject, html })
+			body: JSON.stringify({ from: FROM_EMAIL, to: [recipient], subject, html, ...(attachments && attachments.length ? { attachments } : {}) })
 		});
 		const data = await response.json().catch(() => ({}));
 		if (response.ok) providerMessageId = data.id ?? null;
@@ -77,12 +104,12 @@ async function sendEmail(recipient: string, subscriptionId: string | null, kind:
 	if (logError) console.error('Failed to write notifications_log', logError);
 }
 
-// Internal "something happened" alert to us, unchanged from before.
-async function sendNotification(subscriptionId: string | null, subject: string, lines: Record<string, string>) {
+// Internal "something happened" alert to us.
+async function sendNotification(subscriptionId: string | null, subject: string, lines: Record<string, string>, attachments?: EmailAttachment[]) {
 	const html = `<h2>${escapeHtml(subject)}</h2><ul>${
 		Object.entries(lines).map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value ?? '-'))}</li>`).join('')
 	}</ul>`;
-	await sendEmail(NOTIFICATION_EMAIL, subscriptionId, subject, subject, html);
+	await sendEmail(NOTIFICATION_EMAIL, subscriptionId, subject, subject, html, attachments);
 }
 
 // Customer-facing confirmation. NOTE: until a custom domain is verified on
@@ -209,10 +236,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			stripe_checkout_session_id: session.id
 		});
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
+		const renewalAttachment = await fetchAttachment(pdfPath);
 		await Promise.all([
 			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
-			}),
+			}, renewalAttachment ? [renewalAttachment] : undefined),
 			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan)
 		]);
 		return;
@@ -268,6 +296,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		stripe_checkout_session_id: session.id
 	});
 
+	const orderAttachments = (await Promise.all([
+		fetchAttachment(pdfPath),
+		fetchAttachment(metadata.photoZipPath || '')
+	])).filter((attachment): attachment is EmailAttachment => attachment !== null);
+
 	await Promise.all([
 		sendNotification(subscription.id, 'Neue Bestellung eingegangen', {
 			Kontakt: contactName,
@@ -279,7 +312,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
-		}),
+		}, orderAttachments),
 		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan)
 	]);
 }
