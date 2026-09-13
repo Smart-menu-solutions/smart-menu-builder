@@ -27,6 +27,7 @@
 }
 
 .backup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
+.dish-count-badge{cursor:default}
 
 .client-status.status-expired{background:#e0a000}
 .client-status.status-deactivated{background:#c9403a}
