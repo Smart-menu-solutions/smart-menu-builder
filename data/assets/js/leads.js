@@ -45,12 +45,12 @@ const COUNTRIES = [
 
 const MESSAGE_TEMPLATES = {
 	de: 'Hallo 👋\nNutzt ihr aktuell noch gedruckte Speisekarten?\nWir helfen Restaurants dabei, auf digitale QR-Menüs umzusteigen, die sich jederzeit in Sekunden aktualisieren lassen.\nVielleicht interessant für euch: {site}',
-	en: 'Hi {name} 👋 Still using a printed menu? We build digital QR menus you can update in seconds - no printing costs. Worth a quick look: {site}',
-	el: 'Γεια σου {name} 👋 Χρησιμοποιείτε ακόμα έντυπο μενού; Φτιάχνουμε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, χωρίς κόστος εκτύπωσης. Ρίξε μια ματιά: {site}',
-	it: 'Ciao {name} 👋 Usate ancora il menu cartaceo? Creiamo menu digitali QR aggiornabili in pochi secondi, senza costi di stampa. Dai un\'occhiata: {site}',
-	es: 'Hola {name} 👋 ¿Todavía usáis carta en papel? Creamos menús digitales QR que se actualizan en segundos, sin costes de impresión. Échale un vistazo: {site}',
-	fr: 'Bonjour {name} 👋 Vous utilisez encore une carte papier ? Nous créons des menus QR numériques modifiables en quelques secondes, sans frais d\'impression. À voir ici : {site}',
-	pt: 'Olá {name} 👋 Ainda usam menu em papel? Criamos menus digitais QR atualizáveis em segundos, sem custos de impressão. Vale a pena ver: {site}'
+	en: 'Hi 👋\nAre you still using printed menus?\nWe help restaurants switch to digital QR menus that can be updated in seconds, anytime.\nMight be worth a look: {site}',
+	el: 'Γεια σου 👋\nΧρησιμοποιείτε ακόμα έντυπα μενού;\nΒοηθάμε εστιατόρια να περάσουν σε ψηφιακά μενού QR που ενημερώνονται σε δευτερόλεπτα, όποτε θέλετε.\nΊσως σας ενδιαφέρει: {site}',
+	it: 'Ciao 👋\nUsate ancora menu cartacei?\nAiutiamo i ristoranti a passare a menu digitali QR aggiornabili in pochi secondi, in qualsiasi momento.\nPotrebbe interessarvi: {site}',
+	es: 'Hola 👋\n¿Todavía usáis cartas en papel?\nAyudamos a los restaurantes a pasar a menús digitales QR que se pueden actualizar en segundos, en cualquier momento.\nPuede que os interese: {site}',
+	fr: 'Bonjour 👋\nUtilisez-vous encore des cartes papier ?\nNous aidons les restaurants à passer à des menus QR numériques modifiables en quelques secondes, à tout moment.\nCela pourrait vous intéresser : {site}',
+	pt: 'Olá 👋\nAinda usam menus em papel?\nAjudamos restaurantes a mudar para menus digitais QR que podem ser atualizados em segundos, a qualquer momento.\nPode ser do vosso interesse: {site}'
 };
 
 const STORAGE_KEY = 'smartmenu.leads.v1';
