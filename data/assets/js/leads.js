@@ -109,7 +109,13 @@ function daysUntilDue(lead) {
 // Which of the four tabs a lead currently belongs in. A lead moves itself
 // between "waiting" tabs and "action needed" tabs purely by elapsed time -
 // no click needed to advance from Sequence into Reminder, for example.
+// A manually-stopped lead (already a customer, asked not to be contacted,
+// ...) is treated the same as "done" - hidden from every tab, no more
+// follow-ups computed for it - since there's no reliable automatic way to
+// tell from here whether someone converted (the lead finder and the real
+// order/customer system don't share an ID).
 function leadTab(lead) {
+	if (lead.stopped) return 'done';
 	const stage = lead.msgStage || 0;
 	if (stage === 0) return 'new';
 	if (stage === 3) return 'done';
@@ -260,7 +266,8 @@ function elementToLead(element) {
 		selected: false,
 		enriching: false,
 		msgStage: 0,
-		msgSentAt: null
+		msgSentAt: null,
+		stopped: false
 	};
 }
 
@@ -292,7 +299,7 @@ async function runSearch() {
 				const lead = elementToLead(element);
 				if (!lead || seen.has(lead.id)) return;
 				const previous = previousById.get(lead.id);
-				if (previous) Object.assign(lead, { msgStage: previous.msgStage, msgSentAt: previous.msgSentAt, selected: previous.selected });
+				if (previous) Object.assign(lead, { msgStage: previous.msgStage, msgSentAt: previous.msgSentAt, selected: previous.selected, stopped: previous.stopped });
 				seen.add(lead.id);
 				collected.push(lead);
 			});
@@ -355,6 +362,16 @@ function openWhatsapp(lead) {
 	lead.msgSentAt = Date.now();
 	saveLeads();
 	render();
+}
+
+// Manual "this contact already converted / don't follow up" override -
+// see leadTab()'s comment for why this isn't detected automatically.
+function stopLead(lead) {
+	if (!confirm(`Stop the follow-up sequence for ${lead.name}? They'll disappear from all tabs (e.g. because they already ordered).`)) return;
+	lead.stopped = true;
+	saveLeads();
+	render();
+	notify(`Stopped follow-ups for ${lead.name}`);
 }
 
 function selectedLeads() {
@@ -470,6 +487,7 @@ function render() {
 		const enrichButton = currentStageTab === 'new'
 			? `<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>`
 			: '';
+		const stopButton = `<button class="button button-danger" type="button" data-stop="${lead.id}" title="Already a customer, or otherwise stop contacting them">Stop</button>`;
 		return `
 		<tr>
 			<td><input type="checkbox" data-select="${lead.id}" ${lead.selected ? 'checked' : ''}></td>
@@ -479,7 +497,7 @@ function render() {
 			<td>${lead.website ? `<a href="${escapeHtml(lead.website)}" target="_blank" rel="noopener">link</a>` : '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
-			<td class="leads-actions-cell">${enrichButton}${actionButton}</td>
+			<td class="leads-actions-cell">${enrichButton}${actionButton}${stopButton}</td>
 		</tr>
 	`;
 	}).join('');
@@ -507,8 +525,10 @@ function wireEvents() {
 	$('#leadsBody').addEventListener('click', (event) => {
 		const enrichId = event.target.dataset.enrich;
 		const whatsappId = event.target.dataset.whatsapp;
+		const stopId = event.target.dataset.stop;
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
+		if (stopId) stopLead(leads.find((lead) => lead.id === stopId));
 	});
 	$('#leadsBody').addEventListener('change', (event) => {
 		const selectId = event.target.dataset.select;
