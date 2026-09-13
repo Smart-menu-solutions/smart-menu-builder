@@ -268,17 +268,27 @@ function clearLeads() {
 	render();
 }
 
-// A plain CSV's delimiter (comma vs semicolon) and encoding depend on the
-// reader's Windows regional settings, which kept guessing wrong (everything
-// crammed into column A, Greek text garbled). Excel has always accepted an
-// HTML table saved with an .xls extension and opens it as a real, already
-// split spreadsheet - no delimiter or encoding guessing involved.
-function exportCsv() {
-	// If the user checked specific rows, that's a deliberate shortlist -
-	// export just those. Otherwise fall back to everything the current
-	// filter shows.
+// If the user checked specific rows, that's a deliberate shortlist - export
+// just those. Otherwise fall back to everything the current filter shows.
+function rowsToExport() {
 	const checked = selectedLeads();
-	const rows = checked.length ? checked : visibleLeads();
+	return checked.length ? checked : visibleLeads();
+}
+
+function exportNotice(rows) {
+	const wasSelection = rows.length && rows.length === selectedLeads().length;
+	notify(`Exported ${rows.length} ${wasSelection ? 'selected ' : ''}lead${rows.length === 1 ? '' : 's'}`);
+}
+
+// A plain CSV's delimiter (comma vs semicolon) and encoding depend on the
+// reader's Windows regional settings, which kept guessing wrong when opened
+// directly in Excel (everything crammed into column A, Greek text garbled).
+// Excel has always accepted an HTML table saved with an .xls extension and
+// opens it as a real, already split spreadsheet - no delimiter or encoding
+// guessing involved. This is the export button for viewing/managing the
+// list in Excel.
+function exportExcel() {
+	const rows = rowsToExport();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
 	const header = ['Name', 'Address', 'Phone', 'Email', 'WhatsApp', 'Website'];
 	const keys = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
@@ -291,7 +301,28 @@ function exportCsv() {
 	link.download = `leads-${currentCountry.code.toLowerCase()}.xls`;
 	link.click();
 	URL.revokeObjectURL(link.href);
-	notify(`Exported ${rows.length} ${checked.length ? 'selected' : ''} lead${rows.length === 1 ? '' : 's'}`);
+	exportNotice(rows);
+}
+
+// Plain, standards-compliant CSV (comma-delimited, UTF-8 with a BOM) for
+// importing into external bulk-messaging tools (WATI, Zoko, Twilio, ...)
+// that parse CSV programmatically rather than guessing a Windows locale
+// delimiter the way Excel does - a real .csv is what those tools expect,
+// the .xls trick above wouldn't upload correctly there.
+function exportCsv() {
+	const rows = rowsToExport();
+	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
+	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
+	const csv = [header.join(',')].concat(
+		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(','))
+	).join('\r\n');
+	const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+	const link = document.createElement('a');
+	link.href = URL.createObjectURL(blob);
+	link.download = `leads-${currentCountry.code.toLowerCase()}.csv`;
+	link.click();
+	URL.revokeObjectURL(link.href);
+	exportNotice(rows);
 }
 
 function escapeHtml(value) {
@@ -333,7 +364,8 @@ function render() {
 
 function wireEvents() {
 	$('#leadsSearch').addEventListener('click', runSearch);
-	$('#leadsExport').addEventListener('click', exportCsv);
+	$('#leadsExport').addEventListener('click', exportExcel);
+	$('#leadsExportCsv').addEventListener('click', exportCsv);
 	$('#leadsClear').addEventListener('click', clearLeads);
 	$('#leadsSelectAll').addEventListener('change', (event) => {
 		visibleLeads().forEach((lead) => { lead.selected = event.target.checked; });

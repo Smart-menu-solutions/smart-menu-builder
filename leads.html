@@ -14,7 +14,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/admin.css?v=language-row-1">
 <style>
-.leads-toolbar{display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:10px;align-items:end;margin-bottom:18px}
+.leads-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:18px}
+.leads-toolbar label{display:grid;gap:6px;min-width:160px;flex:1}
 .leads-toolbar label{margin:0}
 .leads-status{color:var(--muted);font-size:12px;margin:0 0 14px}
 .leads-table-wrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:10px}
@@ -63,6 +64,7 @@ table.leads-table tr:hover td{background:var(--alt)}
             </select></label>
             <button class="button button-primary" type="button" id="leadsSearch">Search</button>
             <button class="button button-ghost" type="button" id="leadsExport">Export Excel</button>
+            <button class="button button-ghost" type="button" id="leadsExportCsv">Export CSV</button>
             <button class="button button-danger" type="button" id="leadsClear">Clear</button>
         </div>
         <p class="leads-status" id="leadsStatus">Nationwide search via OpenStreetMap (Overpass API) - capped at 500 results per search, so very large countries may not be complete in one go.</p>
@@ -85,6 +87,6 @@ table.leads-table tr:hover td{background:var(--alt)}
 </main>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="data/assets/js/leads.js?v=2026-09-13e"></script>
+<script src="data/assets/js/leads.js?v=2026-09-13f"></script>
 </body>
 </html>
