@@ -158,14 +158,22 @@ function normalizeWebsite(raw) {
 function elementToLead(element) {
 	const tags = element.tags || {};
 	if (!tags.name) return null;
+
+	const phone = tags.phone || tags['contact:phone'] || '';
+	const website = normalizeWebsite(tags.website || tags['contact:website'] || '');
+	const email = tags.email || tags['contact:email'] || '';
+	const whatsapp = normalizeWhatsapp(tags['contact:whatsapp']);
+
+	// No phone, website, email, or WhatsApp means there's no way to reach
+	// this place and nothing to enrich either - skip it instead of leaving
+	// a dead row (no working buttons) cluttering the results.
+	if (!phone && !website && !email && !whatsapp) return null;
+
 	return {
 		id: `${element.type}/${element.id}`,
 		name: tags.name,
 		address: buildAddress(tags),
-		phone: tags.phone || tags['contact:phone'] || '',
-		website: normalizeWebsite(tags.website || tags['contact:website'] || ''),
-		email: tags.email || tags['contact:email'] || '',
-		whatsapp: normalizeWhatsapp(tags['contact:whatsapp']),
+		phone, website, email, whatsapp,
 		selected: false,
 		enriching: false
 	};
