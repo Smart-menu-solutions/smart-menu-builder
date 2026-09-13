@@ -275,6 +275,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			Email: email,
 			Telefon: metadata.phone || '-',
 			Plan: plan,
+			'Foto-Zusatz': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
 		}),

@@ -7,10 +7,10 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 
 const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
 
-const PLAN_PRICING: Record<string, { amountCents: number; label: string }> = {
-	start: { amountCents: 11900, label: 'Smart Start' },
-	pro: { amountCents: 12900, label: 'Smart Pro' },
-	premium: { amountCents: 16900, label: 'Smart Premium' }
+const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAddOnCents: number }> = {
+	start: { amountCents: 11900, label: 'Smart Start', photoAddOnCents: 1000 },
+	pro: { amountCents: 12900, label: 'Smart Pro', photoAddOnCents: 3000 },
+	premium: { amountCents: 16900, label: 'Smart Premium', photoAddOnCents: 9000 }
 };
 
 const CORS_HEADERS = {
@@ -34,6 +34,7 @@ Deno.serve(async (request) => {
 		const companyName = String(body.companyName || '').trim();
 		const phone = String(body.phone || '').trim();
 		const pdfPath = String(body.pdfPath || '').trim();
+		const photoAddon = Boolean(body.photoAddon);
 
 		const pricing = PLAN_PRICING[plan];
 		if (!pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email) || !pdfPath) {
@@ -42,19 +43,36 @@ Deno.serve(async (request) => {
 
 		// Price comes exclusively from the server-side PLAN_PRICING map — the
 		// previous version trusted a client-supplied amount, which let a caller
-		// pay for "premium" at the "start" price.
+		// pay for "premium" at the "start" price. Same reasoning for the photo
+		// add-on: only the boolean flag is trusted from the client, the actual
+		// amount is looked up server-side per plan.
+		const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
+			price_data: {
+				currency: 'eur',
+				unit_amount: pricing.amountCents,
+				recurring: { interval: 'year' },
+				product_data: { name: `Smart Menu Solutions – ${pricing.label}` }
+			},
+			quantity: 1
+		}];
+		if (photoAddon) {
+			// One-time charge alongside the recurring plan — Stripe Checkout
+			// supports mixing a non-recurring price_data line item into a
+			// subscription-mode session; it's billed once at signup only.
+			lineItems.push({
+				price_data: {
+					currency: 'eur',
+					unit_amount: pricing.photoAddOnCents,
+					product_data: { name: 'Professional dish photos (one-time)' }
+				},
+				quantity: 1
+			});
+		}
+
 		const session = await stripe.checkout.sessions.create({
 			mode: 'subscription',
 			customer_email: email,
-			line_items: [{
-				price_data: {
-					currency: 'eur',
-					unit_amount: pricing.amountCents,
-					recurring: { interval: 'year' },
-					product_data: { name: `Smart Menu Solutions – ${pricing.label}` }
-				},
-				quantity: 1
-			}],
+			line_items: lineItems,
 			success_url: `${SITE_ORIGIN}/success.html?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${SITE_ORIGIN}/cancel.html`,
 			metadata: {
@@ -65,10 +83,11 @@ Deno.serve(async (request) => {
 				companyName,
 				phone,
 				email,
-				pdfPath
+				pdfPath,
+				photoAddon: String(photoAddon)
 			},
 			subscription_data: {
-				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath }
+				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon) }
 			}
 		});
 
