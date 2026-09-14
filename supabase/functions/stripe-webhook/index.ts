@@ -145,6 +145,27 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 	await sendEmail(to, subscriptionId, `Kundenbestätigung: ${subject}`, subject, html);
 }
 
+// Sent the moment an automatic renewal payment fails — this is the start of
+// the 7-day grace period, the menu is still online at this point (only
+// check-subscriptions taking it offline after the grace period runs out).
+async function sendPaymentFailedEmail(subscriptionId: string, to: string, contactName: string, renewalToken: string) {
+	if (!EMAIL_PATTERN.test(to)) {
+		console.error('Skipping payment-failed customer email: no valid email on file', subscriptionId);
+		return;
+	}
+	const subject = 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
+	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}`;
+	const html = `
+		<p>Hallo ${escapeHtml(contactName || '')},</p>
+		<p>leider konnte die automatische Zahlung für die Verlängerung Ihres Abos nicht durchgeführt werden.</p>
+		<p>Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden:</p>
+		<p><a href="${renewalUrl}">Jetzt verlängern</a></p>
+		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Smart Menu Solutions</p>
+	`;
+	await sendEmail(to, subscriptionId, 'Kundenmail: Zahlung fehlgeschlagen', subject, html);
+}
+
 Deno.serve(async (request) => {
 	const signature = request.headers.get('stripe-signature') ?? '';
 	const rawBody = await request.text();
@@ -215,7 +236,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			console.error('Renewal checkout completed without subscriptionId in metadata', session.id);
 			return;
 		}
-		const { data: existing } = await supabase.from('subscriptions').select('id, plan').eq('id', subscriptionId).maybeSingle();
+		const { data: existing } = await supabase.from('subscriptions').select('id, plan, menu_slug').eq('id', subscriptionId).maybeSingle();
 		if (!existing) {
 			console.error('Renewal checkout references unknown subscription', subscriptionId);
 			return;
@@ -229,6 +250,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			grace_until: null,
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
+		// Paying via the renewal link is how a deactivated menu comes back online.
+		await supabase.from('menus').update({ is_published: true }).eq('slug', existing.menu_slug);
 		await supabase.from('orders').insert({
 			subscription_id: subscriptionId,
 			type: 'renewal',
@@ -340,6 +363,9 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 		grace_until: null,
 		updated_at: new Date().toISOString()
 	}).eq('id', subscription.id);
+	// In case this subscription had already been deactivated (menu offline)
+	// before the automatic renewal invoice succeeded.
+	await supabase.from('menus').update({ is_published: true }).eq('slug', subscription.menu_slug);
 
 	await Promise.all([
 		sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
@@ -354,7 +380,11 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
 	const stripeSubscriptionId = invoice.subscription as string;
 	if (!stripeSubscriptionId) return;
 
-	const { data: subscription } = await supabase.from('subscriptions').select('*').eq('stripe_subscription_id', stripeSubscriptionId).maybeSingle();
+	const { data: subscription } = await supabase
+		.from('subscriptions')
+		.select('*, customers(contact_name, email)')
+		.eq('stripe_subscription_id', stripeSubscriptionId)
+		.maybeSingle();
 	if (!subscription) return;
 
 	const today = new Date();
@@ -364,15 +394,22 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
 		updated_at: new Date().toISOString()
 	}).eq('id', subscription.id);
 
-	await sendNotification(subscription.id, 'Automatische Verlängerung fehlgeschlagen', {
-		'Subscription-ID': subscription.id,
-		Plan: subscription.plan,
-		'Renewal-Link': `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}`
-	});
+	await Promise.all([
+		sendNotification(subscription.id, 'Automatische Verlängerung fehlgeschlagen', {
+			'Subscription-ID': subscription.id,
+			Plan: subscription.plan,
+			'Renewal-Link': `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}`
+		}),
+		sendPaymentFailedEmail(subscription.id, subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.renewal_token)
+	]);
 }
 
 async function handleSubscriptionDeleted(stripeSubscription: Stripe.Subscription) {
-	const { data: subscription } = await supabase.from('subscriptions').select('id').eq('stripe_subscription_id', stripeSubscription.id).maybeSingle();
+	const { data: subscription } = await supabase.from('subscriptions').select('id, menu_slug').eq('stripe_subscription_id', stripeSubscription.id).maybeSingle();
 	if (!subscription) return;
 	await supabase.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', subscription.id);
+	// A cancelled subscription is a stronger end-state than "deactivated" —
+	// keeping the menu published here while deactivation takes it offline
+	// would be inconsistent.
+	await supabase.from('menus').update({ is_published: false }).eq('slug', subscription.menu_slug);
 }

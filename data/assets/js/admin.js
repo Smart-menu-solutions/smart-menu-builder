@@ -6,7 +6,7 @@ let selectedId = clients[0]?.id;
 let clientSearch = '';
 let subscriptionsBySlug = {};
 let showOnlyNeedsRenewal = false;
-const SUBSCRIPTION_STATUS_LABELS = { active: 'Active', expired: 'Renewal needed', deactivated: 'Deactivated', cancelled: 'Cancelled' };
+const SUBSCRIPTION_STATUS_LABELS = { active: 'Active', expired: 'Expired', deactivated: 'Deactivated', cancelled: 'Cancelled' };
 const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
 // menu.js renders the live menu's language switcher buttons in exactly the
 // order client.languages lists them, so this order is directly what a
@@ -358,9 +358,10 @@ function render() {
 	$('#clientList').innerHTML = visibleClients.map((item) => {
 		const sub = subscriptionsBySlug[item.slug];
 		const statusClass = sub && sub.status !== 'active' ? `status-${sub.status}` : '';
-		const statusTitle = sub ? SUBSCRIPTION_STATUS_LABELS[sub.status] || '' : '';
+		const statusLabel = sub ? (SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status) : '';
 		const subInfo = sub ? ` · ${escapeHtml(sub.plan)} · until ${escapeHtml(sub.current_period_end || '?')}` : '';
-		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small></span><i class="client-status ${statusClass}" title="${escapeAttr(statusTitle)}"></i></div>`;
+		const statusBadge = sub ? `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>` : '';
+		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i>${statusBadge}</div>`;
 	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
