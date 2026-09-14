@@ -39,8 +39,7 @@
 .language-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .language-row.lang-missing{background:#fdecea;border-color:#f3c6c2}
 .language-move{display:flex;gap:4px;flex-shrink:0}
-.language-move .move-language{width:26px;height:26px;padding:0;line-height:1;font-size:11px;border-radius:6px;border-color:var(--ink)!important;color:var(--ink)!important}
-.language-move .move-language:hover:not(:disabled){border-color:var(--orange)!important;color:var(--orange)!important}
+.language-move .move-language{width:26px;height:26px;padding:0;line-height:1;font-size:11px;border-radius:6px}
 .language-move .move-language:disabled{opacity:.3;cursor:not-allowed}
 .language-check{display:flex!important;align-items:center;gap:8px;margin:0;flex:1}
 .language-check input[type="checkbox"]{width:16px;height:16px;margin:0;flex-shrink:0;accent-color:#f66a09}
