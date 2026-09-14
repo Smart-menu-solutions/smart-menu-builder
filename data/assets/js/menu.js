@@ -1,9 +1,11 @@
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const app = isBrowser ? document.querySelector('#app') : null;
 const slug = isBrowser ? new URLSearchParams(location.search).get('client') : null;
-const requestedLanguage = isBrowser
-	? (new URLSearchParams(location.search).get('lang') || 'en').toLowerCase()
-	: 'en';
+const urlLanguageParam = isBrowser ? new URLSearchParams(location.search).get('lang') : null;
+// No explicit ?lang= in the URL (the normal case when a customer scans the
+// QR code) — falls back to 'en' until renderMenu() swaps it for the menu's
+// own main language once the client data has loaded.
+let requestedLanguage = (urlLanguageParam || 'en').toLowerCase();
 
 function escapeHtml(value) {
 	return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
@@ -86,6 +88,9 @@ function buildCategory(client, category) {
 }
 
 function renderMenu(client) {
+	if (!urlLanguageParam) {
+		requestedLanguage = ((client.languages && client.languages[0]) || client.sourceLanguage || 'en').toLowerCase();
+	}
 	document.title = `${client.name} — Digital menu`;
 	const visibleCategories = (client.categories || []).filter((category) => Array.isArray(category.items) && category.items.length);
 	const categories = visibleCategories.map((category) => buildCategory(client, category)).join('');

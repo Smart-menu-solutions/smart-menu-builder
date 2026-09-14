@@ -73,7 +73,10 @@ async function saveClients() {
 }
 function isUuid(value) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function selectedClient() { return clients.find((client) => client.id === selectedId); }
-function menuUrl(client) { return `${window.location.href.replace(/admin\.html.*$/, '')}menu.html?client=${encodeURIComponent(client.slug)}`; }
+function menuUrl(client) {
+	const mainLanguage = (client.languages && client.languages[0]) || client.sourceLanguage || 'en';
+	return `${window.location.href.replace(/admin\.html.*$/, '')}menu.html?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(mainLanguage)}`;
+}
 async function uploadImage(file, pathHint) {
 	if (typeof supabaseClient === 'undefined') throw new Error('Cloud storage is not available.');
 	const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
