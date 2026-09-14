@@ -32,10 +32,12 @@
 .client-status.status-expired{background:#e0a000}
 .client-status.status-deactivated{background:#c9403a}
 .client-status.status-cancelled{background:#9a9a9a}
+.client-status.status-none{background:#c7c4bf}
 .status-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:3px 8px;border-radius:20px;white-space:nowrap;color:#1e6b3c;background:#e8f5ec}
 .status-badge.status-expired{color:#8a5c00;background:#fdf1dc}
 .status-badge.status-deactivated{color:#8a231c;background:#fdecea}
 .status-badge.status-cancelled{color:#5c5c5c;background:#efefef}
+.status-badge.status-none{color:#767471;background:#f0efed}
 .subscription-banner{background:#fdecea;border:1px solid #f3c6c2;color:#8a231c;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:16px}
 .subscription-banner a{color:#8a231c;font-weight:700}
 .language-hint{color:var(--muted);font-size:11px;margin:0 0 4px}

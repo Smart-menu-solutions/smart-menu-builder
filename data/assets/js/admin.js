@@ -357,10 +357,10 @@ function render() {
 	const visibleClients = showOnlyNeedsRenewal ? searched.filter((item) => needsRenewal(subscriptionsBySlug[item.slug])) : searched;
 	$('#clientList').innerHTML = visibleClients.map((item) => {
 		const sub = subscriptionsBySlug[item.slug];
-		const statusClass = sub && sub.status !== 'active' ? `status-${sub.status}` : '';
-		const statusLabel = sub ? (SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status) : '';
+		const statusClass = sub ? (sub.status !== 'active' ? `status-${sub.status}` : '') : 'status-none';
+		const statusLabel = sub ? (SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status) : 'No subscription';
 		const subInfo = sub ? ` · ${escapeHtml(sub.plan)} · until ${escapeHtml(sub.current_period_end || '?')}` : '';
-		const statusBadge = sub ? `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>` : '';
+		const statusBadge = `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>`;
 		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i>${statusBadge}</div>`;
 	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
