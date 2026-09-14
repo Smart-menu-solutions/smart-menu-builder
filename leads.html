@@ -79,14 +79,15 @@ table.leads-table tr:hover td{background:var(--alt)}
         <ol>
             <li>Land + Kategorie wählen → <strong>Search</strong></li>
             <li><strong>Filter</strong> auf "Has any contact" stellen</li>
-            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen</li>
-            <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern</li>
-            <li>Tab <strong>"New List"</strong>: pro Kontakt <strong>WhatsApp</strong> klicken → Nachricht 1 senden → wandert automatisch in <strong>"Sequence"</strong></li>
-            <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → WhatsApp klicken → Erinnerung senden</li>
-            <li>Nach weiteren 7 Tagen automatisch fällig in <strong>"Final"</strong> → WhatsApp klicken → letzte Nachricht → Kontakt verschwindet danach aus der Liste</li>
+            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp von der Website, ändert nichts an der Stufe)</li>
+            <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für die Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
+            <li>Tab <strong>"New List"</strong>: pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
+            <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → "Send reminder" klicken → Erinnerung senden</li>
+            <li>Nach weiteren 7 Tagen automatisch fällig in <strong>"Final"</strong> → "Send final" klicken → letzte Nachricht → Kontakt verschwindet danach aus der Liste</li>
             <li>Schon bestellt oder soll nicht mehr angeschrieben werden? <strong>"Stop"</strong> klicken</li>
             <li><strong>Clear</strong> zum Zurücksetzen der ganzen Liste</li>
         </ol>
+        <p style="margin:10px 0 0;font-size:12px;color:var(--muted)"><strong>"All"</strong>-Tab zeigt alle aktiven Kontakte über alle Stufen hinweg zusammen (ohne Final/gestoppte).</p>
     </details>
 
     <section class="panel" style="padding:21px;margin-bottom:20px">
