@@ -137,13 +137,24 @@ function nextAction(lead) {
 	return null;
 }
 
+// "all" isn't a real stage - it's every lead that isn't done/stopped,
+// shown together instead of filtered to one pipeline step.
+function matchesStageTab(lead, stageTab) {
+	const tab = leadTab(lead);
+	return stageTab === 'all' ? tab !== 'done' : tab === stageTab;
+}
+
 function visibleLeads() {
-	return leads.filter((lead) => leadTab(lead) === currentStageTab).filter(FILTERS[currentFilter] || FILTERS.all);
+	return leads.filter((lead) => matchesStageTab(lead, currentStageTab)).filter(FILTERS[currentFilter] || FILTERS.all);
 }
 
 function stageTabCounts() {
-	const counts = { new: 0, sequence: 0, reminder: 0, final: 0, done: 0 };
-	leads.forEach((lead) => { counts[leadTab(lead)] = (counts[leadTab(lead)] || 0) + 1; });
+	const counts = { all: 0, new: 0, sequence: 0, reminder: 0, final: 0, done: 0 };
+	leads.forEach((lead) => {
+		const tab = leadTab(lead);
+		counts[tab] = (counts[tab] || 0) + 1;
+		if (tab !== 'done') counts.all += 1;
+	});
 	return counts;
 }
 
@@ -462,7 +473,7 @@ function render() {
 	updateStageTabs();
 	const body = $('#leadsBody');
 	const visible = visibleLeads();
-	const totalInTab = leads.filter((lead) => leadTab(lead) === currentStageTab).length;
+	const totalInTab = leads.filter((lead) => matchesStageTab(lead, currentStageTab)).length;
 	$('#leadsCount').textContent = totalInTab && visible.length !== totalInTab
 		? `${visible.length} shown / ${totalInTab} in this tab`
 		: `${totalInTab} found`;
@@ -484,7 +495,7 @@ function render() {
 			: waitingDays
 				? `<span class="leads-empty">Waiting ${waitingDays}d</span>`
 				: '';
-		const enrichButton = currentStageTab === 'new'
+		const enrichButton = (lead.msgStage || 0) === 0
 			? `<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>`
 			: '';
 		const stopButton = `<button class="button button-danger" type="button" data-stop="${lead.id}" title="Already a customer, or otherwise stop contacting them">Stop</button>`;
