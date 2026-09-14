@@ -14,7 +14,7 @@ const supabase = createClient(
 	Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
 // Every system notification (order, renewal, expiry, deactivation) goes to
 // this single address, not to the customer. Using "smartmenusolutions"

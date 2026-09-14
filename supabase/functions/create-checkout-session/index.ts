@@ -5,7 +5,7 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 	httpClient: Stripe.createFetchHttpClient()
 });
 
-const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
 const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAddOnCents: number }> = {
 	start: { amountCents: 11900, label: 'Smart Start', photoAddOnCents: 1000 },

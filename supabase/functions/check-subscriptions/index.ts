@@ -5,7 +5,7 @@ const supabase = createClient(
 	Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+const SITE_ORIGIN = 'https://smartmenusolutions.com';
 const NOTIFICATION_EMAIL = Deno.env.get('NOTIFICATION_EMAIL') ?? 'smartmenusolutions@outlook.com';
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onboarding@resend.dev>';

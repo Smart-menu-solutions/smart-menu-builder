@@ -11,7 +11,7 @@ const supabase = createClient(
 	Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
 
-const SITE_ORIGIN = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
 const PLAN_PRICING: Record<string, { amountCents: number; label: string }> = {
 	start: { amountCents: 11900, label: 'Smart Start' },
