@@ -305,6 +305,11 @@ function elementToLead(element) {
 		name: tags.name,
 		address: buildAddress(tags),
 		phone, website, email, whatsapp,
+		// Captured at search time, not read from currentCountry when a message
+		// is sent - otherwise switching the country dropdown after searching
+		// (without re-searching) would send a still-visible lead's message in
+		// the wrong language, since currentCountry would have already moved on.
+		lang: currentCountry.lang,
 		selected: false,
 		enriching: false,
 		msgStage: 0,
@@ -399,7 +404,7 @@ function openWhatsapp(lead) {
 	// sending to it would still advance the sequence stage, permanently
 	// marking a contact as messaged even though nothing was ever delivered.
 	if (!lead.whatsapp) { notify('No confirmed WhatsApp number for this lead yet'); return; }
-	const template = action.templates[currentCountry.lang] || action.templates.en;
+	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const message = template.replace('{site}', SITE_URL);
 	const digits = String(lead.whatsapp).replace(/[^\d]/g, '');
 	// api.whatsapp.com/send is used directly instead of wa.me - wa.me is a
@@ -417,8 +422,8 @@ function openEmail(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
 	if (!lead.email) { notify('No email for this lead yet'); return; }
-	const template = action.templates[currentCountry.lang] || action.templates.en;
-	const subject = action.subjects[currentCountry.lang] || action.subjects.en;
+	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
+	const subject = action.subjects[lead.lang] || action.subjects[currentCountry.lang] || action.subjects.en;
 	const message = template.replace('{site}', SITE_URL);
 	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
 	lead.msgStage = action.nextStage;
