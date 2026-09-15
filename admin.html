@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=status-badges-2">
+<link rel="stylesheet" href="assets/css/admin.css?v=header-bg-1">
 </head>
 <body>
 <aside class="sidebar">
@@ -52,6 +52,22 @@
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
                     <div class="form-grid"><label>Customer name<input id="businessName" required placeholder="e.g. Café Ole"></label><label>URL slug<input id="slug" required placeholder="cafe-ole"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
+                    <div class="header-bg-control">
+                        <span class="header-bg-label">Menu header style</span>
+                        <div class="header-bg-row">
+                            <div class="header-bg-preview" id="headerBgPreview"></div>
+                            <div class="header-bg-actions">
+                                <button type="button" class="button button-ghost" id="pickHeaderBg">Choose from Pictures</button>
+                                <label class="button button-ghost" for="uploadHeaderBg">Upload new</label>
+                                <input id="uploadHeaderBg" type="file" accept="image/*" hidden>
+                                <button type="button" class="button button-ghost" id="removeHeaderBg">Remove</button>
+                            </div>
+                        </div>
+                        <div class="header-style-row">
+                            <label>Header font<select id="headerFont"><option value="">Default (Open Sans)</option><option value="playfair">Playfair Display</option><option value="montserrat">Montserrat</option><option value="poppins">Poppins</option><option value="dancing">Dancing Script</option><option value="oswald">Oswald</option></select></label>
+                            <label>Header text color<input id="headerTextColor" type="color" value="#ffffff"></label>
+                        </div>
+                    </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
                     <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden><span class="button button-ghost dish-count-badge" id="dishCountBadge" title="Photo add-on tiers: Smart Start 50 / Smart Pro 150 / Smart Premium 450 dishes">0 dishes</span></div></div>
@@ -72,13 +88,24 @@
 
     <section class="activity-section" id="activity">
         <div class="panel activity-panel">
+            <div class="panel-heading"><div><p class="eyebrow">Media</p><h2>Pictures</h2></div><label class="button button-ghost" for="photoLibraryInput">＋ Upload photo</label></div>
+            <input id="photoLibraryInput" type="file" accept="image/*" multiple hidden>
+            <div id="photoLibraryGrid" class="photo-library-grid"><p class="client-empty">Loading…</p></div>
+        </div>
+        <div class="panel activity-panel">
             <div class="panel-heading"><div><p class="eyebrow">Automation</p><h2>Recent activity</h2></div></div>
             <div id="activityList" class="activity-list"><p class="client-empty">Loading…</p></div>
         </div>
     </section>
 </main>
 <div class="toast" id="toast" role="status"></div>
+<div class="modal-overlay" id="photoPickerModal" hidden>
+    <div class="modal-box">
+        <div class="modal-heading"><h3>Choose a header photo</h3><button type="button" class="icon-button" id="closePhotoPicker">×</button></div>
+        <div id="photoPickerGrid" class="photo-library-grid"></div>
+    </div>
+</div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=main-lang-default-1"></script>
+<script src="data/assets/js/admin.js?v=header-bg-1"></script>
 </body>
 </html>

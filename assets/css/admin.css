@@ -29,6 +29,30 @@
 .backup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
 .dish-count-badge{cursor:default}
 
+.activity-section .panel + .panel{margin-top:18px}
+.photo-library-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.photo-library-grid .client-empty{grid-column:1/-1}
+.photo-library-item{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--alt)}
+.photo-library-item img{width:100%;height:100px;object-fit:cover;display:block}
+.photo-copy-link{display:block;width:100%;border:0;border-top:1px solid var(--line);background:#fff;color:var(--orange);font-size:11px;font-weight:700;padding:6px 0;cursor:pointer}
+.photo-copy-link:hover{background:var(--tint);color:var(--orange-dark)}
+
+.header-bg-control{grid-column:1/-1;border-top:1px solid var(--line);margin-top:16px;padding-top:16px}
+.header-bg-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:8px}
+.header-bg-preview{width:100px;height:64px;border-radius:8px;overflow:hidden;background:var(--alt);border:1px solid var(--line);flex-shrink:0;display:grid;place-items:center}
+.header-bg-preview img{width:100%;height:100%;object-fit:cover}
+.header-bg-empty{color:var(--muted);font-size:11px;padding:4px;text-align:center}
+.header-bg-actions{display:flex;flex-wrap:wrap;gap:8px}
+.header-style-row{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
+.header-style-row label{min-width:160px}
+.header-style-row input[type="color"]{padding:3px;height:38px;width:60px;cursor:pointer}
+.modal-overlay{position:fixed;inset:0;background:rgba(38,36,33,.55);display:grid;place-items:center;z-index:20;padding:20px}
+.modal-box{background:#fff;border-radius:14px;box-shadow:var(--shadow);padding:21px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto}
+.modal-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-heading h3{margin:0;font-size:17px}
+.photo-pick-item{cursor:pointer}
+.photo-pick-item:hover img{opacity:.8}
+
 .client-status.status-expired{background:#e0a000}
 .client-status.status-deactivated{background:#c9403a}
 .client-status.status-cancelled{background:#9a9a9a}

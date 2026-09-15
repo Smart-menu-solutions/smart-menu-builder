@@ -60,6 +60,9 @@ async function saveClients() {
 		currency: client.currency || '€',
 		languages: client.languages || ['en', 'de', 'el'],
 		translations: client.translations || {},
+		header_background_url: client.header_background_url || null,
+		header_font: client.header_font || null,
+		header_text_color: client.header_text_color || null,
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
@@ -368,6 +371,9 @@ function render() {
 	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
+	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : '<span class="header-bg-empty">No custom background — using default</span>';
+	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
+	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
 	const clientSubscription = subscriptionsBySlug[client.slug];
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
@@ -552,10 +558,89 @@ async function loadActivity() {
 	}).join('');
 }
 
+async function loadPhotoLibrary() {
+	const grid = $('#photoLibraryGrid');
+	if (!grid) return;
+	grid.innerHTML = '<p class="client-empty">Loading…</p>';
+	const { files, error } = await listLibraryPhotos();
+	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
+	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos uploaded yet.</p>'; return; }
+	grid.innerHTML = files.map((url) => `<div class="photo-library-item"><img src="${escapeAttr(url)}" alt="" loading="lazy"><button type="button" class="photo-copy-link" data-copy-photo="${escapeAttr(url)}">Copy link</button></div>`).join('');
+	document.querySelectorAll('[data-copy-photo]').forEach((button) => button.addEventListener('click', async () => {
+		await navigator.clipboard.writeText(button.dataset.copyPhoto);
+		notify('Photo link copied');
+	}));
+}
+async function listLibraryPhotos() {
+	if (typeof supabaseClient === 'undefined') return { error: 'Cloud connection unavailable.' };
+	const { data, error } = await supabaseClient.storage.from('menu-images').list('library', { sortBy: { column: 'created_at', order: 'desc' } });
+	if (error) return { error: error.message };
+	const files = (data || []).filter((file) => file.id && file.name !== '.emptyFolderPlaceholder');
+	return { files: files.map((file) => supabaseClient.storage.from('menu-images').getPublicUrl(`library/${file.name}`).data.publicUrl) };
+}
+async function openHeaderBgPicker() {
+	const modal = $('#photoPickerModal');
+	const grid = $('#photoPickerGrid');
+	modal.hidden = false;
+	grid.innerHTML = '<p class="client-empty">Loading…</p>';
+	const { files, error } = await listLibraryPhotos();
+	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
+	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos in your library yet — upload one under Activity first.</p>'; return; }
+	grid.innerHTML = files.map((url) => `<div class="photo-library-item photo-pick-item" data-pick-photo="${escapeAttr(url)}"><img src="${escapeAttr(url)}" alt="" loading="lazy"></div>`).join('');
+	document.querySelectorAll('[data-pick-photo]').forEach((item) => item.addEventListener('click', async () => {
+		selectedClient().header_background_url = item.dataset.pickPhoto;
+		modal.hidden = true;
+		try { await saveClients(); notify('Header background updated'); } catch (error) { notify(error.message); }
+		render();
+	}));
+}
+if ($('#pickHeaderBg')) $('#pickHeaderBg').addEventListener('click', openHeaderBgPicker);
+if ($('#closePhotoPicker')) $('#closePhotoPicker').addEventListener('click', () => { $('#photoPickerModal').hidden = true; });
+if ($('#uploadHeaderBg')) $('#uploadHeaderBg').addEventListener('change', async () => {
+	const input = $('#uploadHeaderBg');
+	const file = input.files[0];
+	if (!file) return;
+	try {
+		const url = await uploadImage(file, `library/${Date.now()}`);
+		selectedClient().header_background_url = url;
+		await saveClients();
+		notify('Header background uploaded');
+		render();
+	} catch (error) { notify(error.message); } finally { input.value = ''; }
+});
+if ($('#removeHeaderBg')) $('#removeHeaderBg').addEventListener('click', () => {
+	selectedClient().header_background_url = '';
+	saveClients().then(render).catch((error) => notify(error.message));
+});
+if ($('#headerFont')) $('#headerFont').addEventListener('change', () => {
+	selectedClient().header_font = $('#headerFont').value;
+	saveClients().then(render).catch((error) => notify(error.message));
+});
+if ($('#headerTextColor')) $('#headerTextColor').addEventListener('change', () => {
+	selectedClient().header_text_color = $('#headerTextColor').value;
+	saveClients().then(render).catch((error) => notify(error.message));
+});
+
+if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', async () => {
+	const input = $('#photoLibraryInput');
+	const files = [...input.files];
+	if (!files.length) return;
+	try {
+		for (let index = 0; index < files.length; index += 1) await uploadImage(files[index], `library/${Date.now()}-${index}`);
+		notify(files.length > 1 ? 'Photos uploaded' : 'Photo uploaded');
+		await loadPhotoLibrary();
+	} catch (error) {
+		notify(error.message);
+	} finally {
+		input.value = '';
+	}
+});
+
 render();
 syncFromSupabase();
 syncSubscriptions();
 loadActivity();
+loadPhotoLibrary();
 
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);

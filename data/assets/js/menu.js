@@ -13,6 +13,26 @@ function escapeHtml(value) {
 	}[character]));
 }
 
+const HEADER_FONTS = {
+	playfair: { family: "'Playfair Display', serif", google: 'Playfair+Display:wght@600;700' },
+	montserrat: { family: "'Montserrat', sans-serif", google: 'Montserrat:wght@600;700' },
+	poppins: { family: "'Poppins', sans-serif", google: 'Poppins:wght@600;700' },
+	dancing: { family: "'Dancing Script', cursive", google: 'Dancing+Script:wght@600;700' },
+	oswald: { family: "'Oswald', sans-serif", google: 'Oswald:wght@600;700' }
+};
+// Only Open Sans is loaded by default (via menu.css); a client's custom
+// header font is fetched on demand so picking one doesn't cost every other
+// client's page load, and skipped entirely once already injected.
+function loadGoogleFont(googleParam) {
+	const id = `google-font-${googleParam}`;
+	if (document.getElementById(id)) return;
+	const link = document.createElement('link');
+	link.id = id;
+	link.rel = 'stylesheet';
+	link.href = `https://fonts.googleapis.com/css2?family=${googleParam}&display=swap`;
+	document.head.appendChild(link);
+}
+
 function logoMarkup(client) {
 	const source = client.logo_url || client.logoUrl || client.logo;
 	if (!source || !/^https?:\/\//i.test(source)) return '';
@@ -94,9 +114,19 @@ function renderMenu(client) {
 	document.title = `${client.name} — Digital menu`;
 	const visibleCategories = (client.categories || []).filter((category) => Array.isArray(category.items) && category.items.length);
 	const categories = visibleCategories.map((category) => buildCategory(client, category)).join('');
+	const heroBackground = client.header_background_url && /^https?:\/\//i.test(client.header_background_url)
+		? ` style="background-image:linear-gradient(rgba(38,36,33,.5),rgba(38,36,33,.5)), url('${escapeHtml(client.header_background_url)}')"`
+		: '';
+	const headerFont = HEADER_FONTS[client.header_font];
+	if (headerFont) loadGoogleFont(headerFont.google);
+	const headerTextStyle = [
+		headerFont ? `font-family:${headerFont.family}` : '',
+		/^#[0-9a-f]{3,8}$/i.test(client.header_text_color || '') ? `color:${client.header_text_color}` : ''
+	].filter(Boolean).join(';');
+	const headerTextAttr = headerTextStyle ? ` style="${headerTextStyle}"` : '';
 	app.innerHTML = `
-		<header class="menu-hero" id="menu-top"><a class="menu-back" href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(requestedLanguage)}#menu-top">← Back to menu</a>${logoMarkup(client)}<h1>${escapeHtml(client.name)}</h1>
-			${client.address ? `<p>${escapeHtml(client.address)}</p>` : ''}
+		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(requestedLanguage)}#menu-top">← Back to menu</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
+			${client.address ? `<p${headerTextAttr}>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${buildContactLinks(client)}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
