@@ -596,6 +596,7 @@ async function openHeaderBgPicker() {
 }
 if ($('#pickHeaderBg')) $('#pickHeaderBg').addEventListener('click', openHeaderBgPicker);
 if ($('#closePhotoPicker')) $('#closePhotoPicker').addEventListener('click', () => { $('#photoPickerModal').hidden = true; });
+if ($('#photoPickerModal')) $('#photoPickerModal').addEventListener('click', (event) => { if (event.target.id === 'photoPickerModal') $('#photoPickerModal').hidden = true; });
 if ($('#uploadHeaderBg')) $('#uploadHeaderBg').addEventListener('change', async () => {
 	const input = $('#uploadHeaderBg');
 	const file = input.files[0];
