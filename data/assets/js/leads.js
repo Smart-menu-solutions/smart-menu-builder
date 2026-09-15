@@ -361,6 +361,21 @@ async function runSearch() {
 	if (!leads.length && failedTypes.length) {
 		status.textContent = `Search failed for ${currentCountry.name} (${failedTypes.join(', ')}) - Overpass may be busy, try again shortly.`;
 		notify('Search failed - Overpass API may be busy, try again shortly');
+		leads = Array.from(previousById.values());
+		render();
+		return;
+	}
+
+	// A whole country legitimately having zero restaurants/bars/cafes/hotels
+	// in OSM essentially never happens - a 0-result response almost always
+	// means an Overpass mirror returned an incomplete/empty payload without
+	// throwing. Restoring the previous list instead of saving over it avoids
+	// silently wiping a real list (with outreach progress) over a flaky
+	// response - the user can still hit Clear explicitly if 0 is correct.
+	if (!leads.length && previousById.size) {
+		status.textContent = `0 results for ${currentCountry.name} - that's unusual, Overpass may have returned an incomplete response. Your previous list was kept - try searching again.`;
+		notify('Search returned nothing unexpectedly - kept your previous list');
+		leads = Array.from(previousById.values());
 		render();
 		return;
 	}
