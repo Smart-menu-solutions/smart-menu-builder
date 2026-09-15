@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=header-bg-2">
+<link rel="stylesheet" href="assets/css/admin.css?v=pictures-nav-1">
 </head>
 <body>
 <aside class="sidebar">
@@ -26,6 +26,7 @@
         <a class="nav-link" href="#builder"><span>✦</span> Menu builder</a>
         <a class="nav-link" href="#qr"><span>⌗</span> QR codes</a>
         <a class="nav-link" href="#activity"><span>🕐</span> Activity</a>
+        <a class="nav-link" href="#pictures"><span>📁</span> Pictures</a>
         <a class="nav-link" href="leads.html"><span>⌕</span> Lead finder</a>
     </nav>
     <div class="sidebar-note"><span class="status-dot"></span><div><strong>Local workspace</strong><small>Your client data stays in this browser.</small></div></div>
@@ -88,13 +89,16 @@
 
     <section class="activity-section" id="activity">
         <div class="panel activity-panel">
+            <div class="panel-heading"><div><p class="eyebrow">Automation</p><h2>Recent activity</h2></div></div>
+            <div id="activityList" class="activity-list"><p class="client-empty">Loading…</p></div>
+        </div>
+    </section>
+
+    <section class="pictures-section" id="pictures">
+        <div class="panel activity-panel">
             <div class="panel-heading"><div><p class="eyebrow">Media</p><h2>Pictures</h2></div><label class="button button-ghost" for="photoLibraryInput">＋ Upload photo</label></div>
             <input id="photoLibraryInput" type="file" accept="image/*" multiple hidden>
             <div id="photoLibraryGrid" class="photo-library-grid"><p class="client-empty">Loading…</p></div>
-        </div>
-        <div class="panel activity-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Automation</p><h2>Recent activity</h2></div></div>
-            <div id="activityList" class="activity-list"><p class="client-empty">Loading…</p></div>
         </div>
     </section>
 </main>
