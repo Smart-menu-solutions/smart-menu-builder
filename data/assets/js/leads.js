@@ -368,7 +368,11 @@ function openWhatsapp(lead) {
 	const template = action.templates[currentCountry.lang] || action.templates.en;
 	const message = template.replace('{site}', SITE_URL);
 	const digits = String(number).replace(/[^\d]/g, '');
-	window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, '_blank');
+	// api.whatsapp.com/send is used directly instead of wa.me - wa.me is a
+	// redirect layer, and handing an emoji-bearing URL through it to the
+	// WhatsApp Desktop app on Windows has been observed to corrupt the emoji
+	// (mojibake) on the far side; the direct endpoint avoids that extra hop.
+	window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(message)}`, '_blank');
 	lead.msgStage = action.nextStage;
 	lead.msgSentAt = Date.now();
 	saveLeads();
