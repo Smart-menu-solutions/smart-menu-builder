@@ -462,6 +462,8 @@ function selectedLeads() {
 }
 
 function clearLeads() {
+	if (!leads.length) return;
+	if (!confirm(`Clear all ${leads.length} leads? This can't be undone - outreach progress will be lost too.`)) return;
 	leads = [];
 	localStorage.removeItem(STORAGE_KEY);
 	$('#leadsStatus').textContent = 'Cleared - run a search to start again.';
