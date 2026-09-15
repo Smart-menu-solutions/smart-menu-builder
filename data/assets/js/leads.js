@@ -19,7 +19,7 @@ const OVERPASS_ENDPOINTS = [
 	'https://overpass.openstreetmap.ru/api/interpreter'
 ];
 const RESULT_CAP = 500;
-const SITE_URL = 'https://smart-menu-solutions.github.io/smart-menu-solutions/index.html';
+const SITE_URL = 'https://smartmenusolutions.com/';
 
 // ISO 3166-1 alpha-2 code, display name, which message template to use, and
 // the international calling code (used to fix up locally-formatted numbers
