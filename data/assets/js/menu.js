@@ -190,14 +190,16 @@ function smartFoodMatchModalMarkup(strings) {
 	<div class="smart-match-overlay" id="smartMatchOverlay" hidden>
 		<div class="smart-match-box" role="dialog" aria-modal="true" aria-label="${escapeHtml(strings.title)}">
 			<button type="button" class="smart-match-close" id="smartMatchClose" aria-label="${escapeHtml(strings.closeLabel)}">✕</button>
-			<div id="smartMatchQuiz">
-				<h2>${escapeHtml(strings.title)}</h2>
-				<div class="quiz-question"><p>${escapeHtml(strings.q1.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q1, 'q1')}</div></div>
-				<div class="quiz-question"><p>${escapeHtml(strings.q2.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q2, 'q2')}</div></div>
-				<div class="quiz-question"><p>${escapeHtml(strings.q3.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q3, 'q3')}</div></div>
-				<button type="button" class="smart-match-submit" id="smartMatchSubmit">${escapeHtml(strings.submitLabel)}</button>
+			<div class="smart-match-scroll">
+				<div id="smartMatchQuiz">
+					<h2>${escapeHtml(strings.title)}</h2>
+					<div class="quiz-question"><p>${escapeHtml(strings.q1.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q1, 'q1')}</div></div>
+					<div class="quiz-question"><p>${escapeHtml(strings.q2.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q2, 'q2')}</div></div>
+					<div class="quiz-question"><p>${escapeHtml(strings.q3.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q3, 'q3')}</div></div>
+					<button type="button" class="smart-match-submit" id="smartMatchSubmit">${escapeHtml(strings.submitLabel)}</button>
+				</div>
+				<div id="smartMatchResult" hidden></div>
 			</div>
-			<div id="smartMatchResult" hidden></div>
 		</div>
 	</div>`;
 }
