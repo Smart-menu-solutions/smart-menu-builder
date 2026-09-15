@@ -3,7 +3,8 @@
    contact's website for an email/WhatsApp link on demand (via a small
    Edge Function, since fetching arbitrary websites needs to happen
    server-side to avoid CORS), export everything to CSV, and open a
-   pre-filled, country-appropriate WhatsApp chat one contact at a time.
+   pre-filled, country-appropriate WhatsApp chat or email one contact at a
+   time - whichever contact channel that lead has.
    Deliberately no bulk/automatic sending - the outgoing message is only
    ever opened, never sent, by this code; a human clicks "send" each time. */
 
@@ -80,6 +81,36 @@ const FINAL_TEMPLATES = {
 	pt: 'Olá 👋\nEsta é a minha última mensagem, prometido 😊\nSe um dia quiserem mudar para um menu digital, podem ver tudo aqui: {site}\nMuito obrigado e muito sucesso! 🍀'
 };
 
+// Email needs a subject line, unlike WhatsApp - one per template stage/
+// language, same tone as the matching body above.
+const MESSAGE_SUBJECTS = {
+	de: 'Digitale Speisekarte statt Neudruck?',
+	en: 'Digital menu instead of reprinting?',
+	el: 'Ψηφιακό μενού αντί για νέα εκτύπωση;',
+	it: 'Menu digitale invece di ristampare?',
+	es: '¿Carta digital en lugar de reimprimir?',
+	fr: 'Une carte numérique plutôt qu\'une réimpression ?',
+	pt: 'Menu digital em vez de reimpressão?'
+};
+const REMINDER_SUBJECTS = {
+	de: 'Kurze Erinnerung: digitale Speisekarte',
+	en: 'Quick reminder: digital menu',
+	el: 'Σύντομη υπενθύμιση: ψηφιακό μενού',
+	it: 'Piccolo promemoria: menu digitale',
+	es: 'Recordatorio rápido: carta digital',
+	fr: 'Petit rappel : carte numérique',
+	pt: 'Lembrete rápido: menu digital'
+};
+const FINAL_SUBJECTS = {
+	de: 'Letzte Nachricht: digitale Speisekarte',
+	en: 'Last message: digital menu',
+	el: 'Τελευταίο μήνυμα: ψηφιακό μενού',
+	it: 'Ultimo messaggio: menu digitale',
+	es: 'Último mensaje: carta digital',
+	fr: 'Dernier message : carte numérique',
+	pt: 'Última mensagem: menu digital'
+};
+
 const STORAGE_KEY = 'smartmenu.leads.v1';
 
 const FILTERS = {
@@ -130,10 +161,10 @@ function leadTab(lead) {
 // button in that case.
 function nextAction(lead) {
 	const stage = lead.msgStage || 0;
-	if (stage === 0) return { label: 'Send message', templates: MESSAGE_TEMPLATES, nextStage: 1 };
+	if (stage === 0) return { label: 'Send message', templates: MESSAGE_TEMPLATES, subjects: MESSAGE_SUBJECTS, nextStage: 1 };
 	if (daysUntilDue(lead) > 0) return null;
-	if (stage === 1) return { label: 'Send reminder', templates: REMINDER_TEMPLATES, nextStage: 2 };
-	if (stage === 2) return { label: 'Send final', templates: FINAL_TEMPLATES, nextStage: 3 };
+	if (stage === 1) return { label: 'Send reminder', templates: REMINDER_TEMPLATES, subjects: REMINDER_SUBJECTS, nextStage: 2 };
+	if (stage === 2) return { label: 'Send final', templates: FINAL_TEMPLATES, subjects: FINAL_SUBJECTS, nextStage: 3 };
 	return null;
 }
 
@@ -363,16 +394,33 @@ async function enrichLead(lead) {
 function openWhatsapp(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
-	const number = lead.whatsapp || lead.phone;
-	if (!number) { notify('No phone/WhatsApp number for this lead yet'); return; }
+	// lead.phone is deliberately not used as a fallback here - it's just a
+	// generic phone number with no confirmation it's WhatsApp-reachable, and
+	// sending to it would still advance the sequence stage, permanently
+	// marking a contact as messaged even though nothing was ever delivered.
+	if (!lead.whatsapp) { notify('No confirmed WhatsApp number for this lead yet'); return; }
 	const template = action.templates[currentCountry.lang] || action.templates.en;
 	const message = template.replace('{site}', SITE_URL);
-	const digits = String(number).replace(/[^\d]/g, '');
+	const digits = String(lead.whatsapp).replace(/[^\d]/g, '');
 	// api.whatsapp.com/send is used directly instead of wa.me - wa.me is a
 	// redirect layer, and handing an emoji-bearing URL through it to the
 	// WhatsApp Desktop app on Windows has been observed to corrupt the emoji
 	// (mojibake) on the far side; the direct endpoint avoids that extra hop.
 	window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(message)}`, '_blank');
+	lead.msgStage = action.nextStage;
+	lead.msgSentAt = Date.now();
+	saveLeads();
+	render();
+}
+
+function openEmail(lead) {
+	const action = nextAction(lead);
+	if (!action) { notify('Not due yet'); return; }
+	if (!lead.email) { notify('No email for this lead yet'); return; }
+	const template = action.templates[currentCountry.lang] || action.templates.en;
+	const subject = action.subjects[currentCountry.lang] || action.subjects.en;
+	const message = template.replace('{site}', SITE_URL);
+	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
 	lead.msgStage = action.nextStage;
 	lead.msgSentAt = Date.now();
 	saveLeads();
@@ -494,8 +542,14 @@ function render() {
 	body.innerHTML = visible.map((lead) => {
 		const action = nextAction(lead);
 		const waitingDays = !action && (lead.msgStage || 0) > 0 && (lead.msgStage || 0) < 3 ? daysUntilDue(lead) : 0;
+		const waButton = action && lead.whatsapp
+			? `<button class="button button-primary" type="button" data-whatsapp="${lead.id}">${action.label} · WhatsApp</button>`
+			: '';
+		const emailButton = action && lead.email
+			? `<button class="button button-primary" type="button" data-email="${lead.id}">${action.label} · Email</button>`
+			: '';
 		const actionButton = action
-			? `<button class="button button-primary" type="button" data-whatsapp="${lead.id}" ${!(lead.whatsapp || lead.phone) ? 'disabled' : ''}>${action.label}</button>`
+			? (waButton || emailButton ? `${waButton}${emailButton}` : '<span class="leads-empty">No WhatsApp/email yet</span>')
 			: waitingDays
 				? `<span class="leads-empty">Waiting ${waitingDays}d</span>`
 				: '';
@@ -540,9 +594,11 @@ function wireEvents() {
 	$('#leadsBody').addEventListener('click', (event) => {
 		const enrichId = event.target.dataset.enrich;
 		const whatsappId = event.target.dataset.whatsapp;
+		const emailId = event.target.dataset.email;
 		const stopId = event.target.dataset.stop;
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
+		if (emailId) openEmail(leads.find((lead) => lead.id === emailId));
 		if (stopId) stopLead(leads.find((lead) => lead.id === stopId));
 	});
 	$('#leadsBody').addEventListener('change', (event) => {
