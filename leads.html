@@ -79,7 +79,7 @@ table.leads-table tr:hover td{background:var(--alt)}
         <ol>
             <li>Land + Kategorie wählen → <strong>Search</strong></li>
             <li><strong>Filter</strong> auf "Has any contact" stellen</li>
-            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp von der Website, ändert nichts an der Stufe)</li>
+            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp von der Website, ändert nichts an der Stufe) - oder Kontakte anhaken und oben <strong>Enrich all</strong> klicken, um mehrere auf einmal zu ergänzen</li>
             <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für die Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
             <li>Tab <strong>"New List"</strong>: pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
             <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → "Send reminder" klicken → Erinnerung senden</li>
@@ -109,6 +109,7 @@ table.leads-table tr:hover td{background:var(--alt)}
                 <option value="missing">Missing contact info</option>
             </select></label>
             <button class="button button-primary" type="button" id="leadsSearch">Search</button>
+            <button class="button button-ghost" type="button" id="leadsEnrichAll">Enrich all</button>
             <button class="button button-ghost" type="button" id="leadsExport">Export Excel</button>
             <button class="button button-ghost" type="button" id="leadsExportCsv">Export CSV</button>
             <button class="button button-danger" type="button" id="leadsClear">Clear</button>
@@ -140,6 +141,6 @@ table.leads-table tr:hover td{background:var(--alt)}
 </main>
 
 <div class="toast" id="toast" role="status"></div>
-<script src="data/assets/js/leads.js?v=2026-09-15e"></script>
+<script src="data/assets/js/leads.js?v=2026-09-15f"></script>
 </body>
 </html>

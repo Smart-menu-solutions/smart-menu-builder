@@ -411,6 +411,26 @@ async function enrichLead(lead) {
 	}
 }
 
+// Bulk version of the per-row Enrich button - same eligibility (a website,
+// not already in flight, still unmessaged) so it never re-scrapes a lead
+// whose sequence has already started. Runs one at a time rather than all
+// at once, since these all hit the same scrape-website Edge Function and
+// a burst of dozens of concurrent requests risks tripping its rate limit
+// or overloading whatever's on the other end of each target site.
+async function enrichAll() {
+	const pool = selectedLeads().length ? selectedLeads() : visibleLeads();
+	const targets = pool.filter((lead) => lead.website && !lead.enriching && (lead.msgStage || 0) === 0);
+	if (!targets.length) { notify('Nothing to enrich - needs a website and no message sent yet'); return; }
+	const button = $('#leadsEnrichAll');
+	button.disabled = true;
+	for (let i = 0; i < targets.length; i++) {
+		$('#leadsStatus').textContent = `Enriching ${i + 1}/${targets.length}…`;
+		await enrichLead(targets[i]);
+	}
+	$('#leadsStatus').textContent = `Enriched ${targets.length} lead${targets.length === 1 ? '' : 's'}.`;
+	button.disabled = false;
+}
+
 function openWhatsapp(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
@@ -596,6 +616,7 @@ function render() {
 
 function wireEvents() {
 	$('#leadsSearch').addEventListener('click', runSearch);
+	$('#leadsEnrichAll').addEventListener('click', enrichAll);
 	$('#leadsExport').addEventListener('click', exportExcel);
 	$('#leadsExportCsv').addEventListener('click', exportCsv);
 	$('#leadsClear').addEventListener('click', clearLeads);
