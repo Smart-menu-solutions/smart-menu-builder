@@ -332,6 +332,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			Telefon: metadata.phone || '-',
 			Plan: plan,
 			'Foto-Zusatz': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart Food Match': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
 			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
