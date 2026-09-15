@@ -107,6 +107,155 @@ function buildCategory(client, category) {
 		</section>`;
 }
 
+// --- Smart Food Match: pure rule-based matching, no AI/API calls ---------
+// Legacy/untagged sections have courseType '' and fall through to 'other',
+// which never gets its own pool below - keeping existing untagged clients'
+// data harmless rather than guessing where an unclassified section belongs.
+function courseTypeOf(category) {
+	return category.courseType || 'other';
+}
+
+function buildCourseCatalog(client) {
+	const pools = { starter: [], main: [], dessert: [] };
+	(client.categories || []).forEach((category) => {
+		const pool = pools[courseTypeOf(category)];
+		if (pool) pool.push(...(category.items || []));
+	});
+	return pools;
+}
+
+// Gates the quiz entry point on the live menu - only offer it once there's
+// at least one real candidate for every course, so it can never open into a
+// broken/empty result.
+function canRunSmartMatch(client) {
+	const pools = buildCourseCatalog(client);
+	return pools.starter.length > 0 && pools.main.length > 0 && pools.dessert.length > 0;
+}
+
+// Cascading filter -> fallback -> random pick. `rng` defaults to Math.random
+// but is injectable so tests can pick deterministically (rng=()=>0 picks the
+// first candidate, rng=()=>0.999 the last).
+function pickCourse(pool, { style, appetiteSize, favoritesOnly } = {}, rng = Math.random) {
+	if (!pool.length) return null;
+	let candidates = pool;
+	if (favoritesOnly) {
+		const favorites = pool.filter((item) => item.isFavorite);
+		if (favorites.length) candidates = favorites;
+	} else if (style) {
+		const styled = pool.filter((item) => item.style === style);
+		if (styled.length) candidates = styled;
+	}
+	if (appetiteSize) {
+		const sized = candidates.filter((item) => item.appetiteSize === appetiteSize);
+		if (sized.length) candidates = sized;
+	}
+	const index = Math.min(candidates.length - 1, Math.floor(rng() * candidates.length));
+	return candidates[index];
+}
+
+// answers: { appetiteSize, style, favoritesOnly } - the "what do you want
+// today" question is intentionally not read here, it's decorative/mood-
+// flavor only (confirmed: the result is always a full 3-course combo
+// regardless of that answer) and is only ever echoed back in the "why"
+// text, built where this is called from (it needs the language strings).
+function matchSmartFoodMenu(client, answers, rng = Math.random) {
+	const pools = buildCourseCatalog(client);
+	const result = { starter: null, main: null, dessert: null, skipped: [] };
+	['starter', 'main', 'dessert'].forEach((course) => {
+		const pick = pickCourse(pools[course], answers, rng);
+		if (pick) result[course] = pick; else result.skipped.push(course);
+	});
+	return result;
+}
+
+// Falls back to German for any language not yet authored in quiz-strings.js
+// (see that file's TODO languages) rather than throwing or showing blanks -
+// same null-safe convention as fallbackTranslation().
+function smartFoodMatchStrings() {
+	const catalogs = window.SMART_FOOD_MATCH_STRINGS;
+	if (!catalogs) return null;
+	return catalogs[requestedLanguage] || catalogs.de || null;
+}
+
+function quizOptionsMarkup(question, name) {
+	return question.options.map((option) => `<label class="quiz-option"><input type="radio" name="${name}" value="${escapeHtml(option.value)}"><span>${escapeHtml(option.label)}</span></label>`).join('');
+}
+
+function smartFoodMatchButtonMarkup(strings) {
+	return `<div class="smart-match-entry"><button type="button" class="smart-match-button" id="smartMatchOpen">${escapeHtml(strings.openButton)}</button><p class="smart-match-tagline">${escapeHtml(strings.intro)}</p></div>`;
+}
+
+function smartFoodMatchModalMarkup(strings) {
+	return `
+	<div class="smart-match-overlay" id="smartMatchOverlay" hidden>
+		<div class="smart-match-box" role="dialog" aria-modal="true" aria-label="${escapeHtml(strings.title)}">
+			<button type="button" class="smart-match-close" id="smartMatchClose" aria-label="${escapeHtml(strings.closeLabel)}">✕</button>
+			<div id="smartMatchQuiz">
+				<h2>${escapeHtml(strings.title)}</h2>
+				<div class="quiz-question"><p>${escapeHtml(strings.q1.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q1, 'q1')}</div></div>
+				<div class="quiz-question"><p>${escapeHtml(strings.q2.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q2, 'q2')}</div></div>
+				<div class="quiz-question"><p>${escapeHtml(strings.q3.text)}</p><div class="quiz-options">${quizOptionsMarkup(strings.q3, 'q3')}</div></div>
+				<button type="button" class="smart-match-submit" id="smartMatchSubmit">${escapeHtml(strings.submitLabel)}</button>
+			</div>
+			<div id="smartMatchResult" hidden></div>
+		</div>
+	</div>`;
+}
+
+function smartMatchAppetiteLabel(strings, value) { return strings.q2.options.find((option) => option.value === value)?.label || ''; }
+function smartMatchStyleLabel(strings, value) { return strings.q3.options.find((option) => option.value === value)?.label || ''; }
+
+function courseResultMarkup(client, strings, label, item) {
+	if (!item) return `<div class="smart-match-course"><h3>${escapeHtml(label)}</h3><p class="smart-match-empty">${escapeHtml(strings.skippedMessage)}</p></div>`;
+	const translation = itemTranslation(client, item);
+	return `<div class="smart-match-course"><h3>${escapeHtml(label)}</h3><p class="smart-match-dish">${escapeHtml(translation.name || item.name)}</p></div>`;
+}
+
+function renderSmartFoodResult(client, strings, answers, result) {
+	const why = answers.favoritesOnly ? strings.whyFavoritesTemplate
+		: strings.whyTemplate.replace('{appetite}', smartMatchAppetiteLabel(strings, answers.appetiteSize).toLowerCase()).replace('{style}', smartMatchStyleLabel(strings, answers.style).toLowerCase());
+	document.getElementById('smartMatchResult').innerHTML = `
+		<h2>${escapeHtml(strings.resultTitle)}</h2>
+		${courseResultMarkup(client, strings, strings.starterLabel, result.starter)}
+		${courseResultMarkup(client, strings, strings.mainLabel, result.main)}
+		${courseResultMarkup(client, strings, strings.dessertLabel, result.dessert)}
+		<p class="smart-match-why"><strong>${escapeHtml(strings.whyLabel)}</strong><br>${escapeHtml(why)}</p>
+		<button type="button" class="smart-match-submit" id="smartMatchRestart">${escapeHtml(strings.restartLabel)}</button>`;
+	document.getElementById('smartMatchQuiz').hidden = true;
+	document.getElementById('smartMatchResult').hidden = false;
+	document.getElementById('smartMatchRestart').addEventListener('click', () => {
+		document.querySelectorAll('#smartMatchQuiz input[type="radio"]:checked').forEach((input) => { input.checked = false; });
+		document.getElementById('smartMatchResult').hidden = true;
+		document.getElementById('smartMatchQuiz').hidden = false;
+	});
+}
+
+function wireSmartFoodMatch(client, strings) {
+	const openButton = document.getElementById('smartMatchOpen');
+	const overlay = document.getElementById('smartMatchOverlay');
+	if (!openButton || !overlay) return;
+	openButton.addEventListener('click', () => { overlay.hidden = false; });
+	document.getElementById('smartMatchClose').addEventListener('click', () => { overlay.hidden = true; });
+	overlay.addEventListener('click', (event) => { if (event.target === overlay) overlay.hidden = true; });
+	document.getElementById('smartMatchSubmit').addEventListener('click', () => {
+		const checked = (name) => document.querySelector(`#smartMatchQuiz input[name="${name}"]:checked`)?.value;
+		const q3 = checked('q3');
+		if (!checked('q1') || !checked('q2') || !q3) { notifySmartMatch(strings); return; }
+		const answers = { appetiteSize: checked('q2'), style: q3 === 'favorites' ? null : q3, favoritesOnly: q3 === 'favorites' };
+		const result = matchSmartFoodMenu(client, answers);
+		renderSmartFoodResult(client, strings, answers, result);
+	});
+}
+
+// A tiny inline nudge instead of a full toast system (menu.html has none) -
+// just flags the quiz still has unanswered questions.
+function notifySmartMatch(strings) {
+	const quiz = document.getElementById('smartMatchQuiz');
+	quiz.classList.remove('smart-match-shake');
+	void quiz.offsetWidth;
+	quiz.classList.add('smart-match-shake');
+}
+
 function renderMenu(client) {
 	if (!urlLanguageParam) {
 		requestedLanguage = ((client.languages && client.languages[0]) || client.sourceLanguage || 'en').toLowerCase();
@@ -124,15 +273,19 @@ function renderMenu(client) {
 		/^#[0-9a-f]{3,8}$/i.test(client.header_text_color || '') ? `color:${client.header_text_color}` : ''
 	].filter(Boolean).join(';');
 	const headerTextAttr = headerTextStyle ? ` style="${headerTextStyle}"` : '';
+	const smartMatchStrings = client.smart_food_match_enabled && canRunSmartMatch(client) ? smartFoodMatchStrings() : null;
 	app.innerHTML = `
 		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(requestedLanguage)}#menu-top">← Back to menu</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p${headerTextAttr}>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${buildContactLinks(client)}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
+		${smartMatchStrings ? smartFoodMatchButtonMarkup(smartMatchStrings) : ''}
 		<nav class="category-nav" aria-label="Menu categories">${visibleCategories.map((category) => `<a href="#category-${categoryId(category.name)}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
-		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>`;
+		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>
+		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}`;
+	if (smartMatchStrings) wireSmartFoodMatch(client, smartMatchStrings);
 }
 
 async function loadMenu() {
@@ -187,7 +340,10 @@ async function loadMenu() {
 		});
 	}
 
-const menuHelpers = { escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation };
+const menuHelpers = {
+	escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation,
+	courseTypeOf, buildCourseCatalog, canRunSmartMatch, pickCourse, matchSmartFoodMenu
+};
 
 if (typeof module !== 'undefined' && module.exports) {
 	module.exports = menuHelpers;
@@ -196,4 +352,7 @@ if (typeof window !== 'undefined') {
 	window.__menuHelpers = menuHelpers;
 }
 export default menuHelpers;
-export { escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation };
+export {
+	escapeHtml, logoMarkup, languageMarkup, fallbackTranslation, categoryName, itemTranslation,
+	courseTypeOf, buildCourseCatalog, canRunSmartMatch, pickCourse, matchSmartFoodMenu
+};

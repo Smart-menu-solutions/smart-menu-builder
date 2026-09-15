@@ -83,6 +83,15 @@
 .image-thumb{width:32px;height:32px;border-radius:6px;object-fit:cover;border:1px solid var(--line)}
 .image-upload-btn{cursor:pointer;color:var(--orange);font-weight:700;font-size:11px}
 .image-upload-btn:hover{color:var(--orange-dark)}
+.course-type-select{width:100%;margin:2px 0 6px;font-size:11px;padding:6px 8px}
+.item-tags{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:2px 0}
+.item-tags select{font-size:11px;padding:6px 8px;min-width:0}
+.item-favorite-check{display:flex!important;align-items:center;gap:5px;margin:0;font-size:11px;white-space:nowrap}
+.item-favorite-check input{width:14px;height:14px;margin:0;accent-color:#f66a09}
+.smart-match-toggle{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:var(--muted)}
+.smart-match-toggle label{display:flex!important;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ink)}
+.smart-match-toggle input{width:16px;height:16px;margin:0;accent-color:#f66a09}
+#smartFoodMatchHint.smart-match-not-ready{color:#b3261e}
 #renewalFilterCard.active-filter{border-color:var(--orange);box-shadow:0 0 0 2px var(--tint)}
 .editor-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
 .editor-tab{padding:10px 16px;border:0;background:none;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}

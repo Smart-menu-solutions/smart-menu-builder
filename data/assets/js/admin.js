@@ -30,6 +30,56 @@ function slugifyName(value) {
 		.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 		.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-+/g, '-');
 }
+
+// Smart Food Match tag suggestions - pure keyword guesses over a section/
+// dish's own name+description, covering the same 5 languages as
+// LANGUAGE_CATALOG (en/de/el/it/es). These only ever pre-fill an empty tag
+// (see the call sites in render()) - never re-run over a tag an owner has
+// already set or corrected, or a deliberate fix would revert on next render.
+const COURSE_TYPE_KEYWORDS = {
+	starter: /vorspeis|starter|antipast|entrada|orektik|meze/i,
+	dessert: /dessert|nachspeis|dolci|suess|s.ss|postre|epidorpio/i,
+	drink: /getraenk|getr.nk|drink|bevand|bebida|beverage|ποτ/i,
+	main: /hauptgericht|hauptspeis|main.?course|secondi|piatt.\s*principal|plato\s*principal|kurio/i
+};
+function suggestCourseType(categoryName) {
+	const name = String(categoryName || '');
+	for (const [type, pattern] of Object.entries(COURSE_TYPE_KEYWORDS)) if (pattern.test(name)) return type;
+	return '';
+}
+const STYLE_KEYWORDS = {
+	fresh: /salat|salad|frisch|leicht|fresh|light|insalata|ensalada|fresco/i,
+	hearty: /deftig|herzhaft|kraeftig|kr.ftig|hearty|rich|gegrillt|grill|steak|burger|bistecca/i,
+	special: /spezial|signature|chef|gourmet|especial|speciale/i,
+	quick: /schnell|express|quick|fast|snack/i
+};
+function suggestStyle(name, description) {
+	const text = `${name || ''} ${description || ''}`;
+	for (const [style, pattern] of Object.entries(STYLE_KEYWORDS)) if (pattern.test(text)) return style;
+	return '';
+}
+const APPETITE_SIZE_KEYWORDS = {
+	small: /mini|klein|small|piccol|peque/i,
+	'very-large': /xxl|sharing|family|riesig|big|maxi|grande/i
+};
+// No keyword hit falls back to a sensible default by course, rather than
+// leaving every dish "medium" regardless of whether it's a starter or a
+// main - that default only kicks in once a real courseType is known.
+function suggestAppetiteSize(name, description, courseType) {
+	const text = `${name || ''} ${description || ''}`;
+	for (const [size, pattern] of Object.entries(APPETITE_SIZE_KEYWORDS)) if (pattern.test(text)) return size;
+	if (courseType === 'main') return 'large';
+	if (courseType === 'starter' || courseType === 'dessert') return 'medium';
+	return '';
+}
+// The live menu hides the Smart Food Match button unless all three courses
+// have at least one tagged item - mirrored here so the admin toggle can
+// warn the owner *before* they enable it and nothing visibly happens.
+function smartFoodMatchQualifies(client) {
+	const hasCourse = (courseType) => (client.categories || []).some((category) => category.courseType === courseType && (category.items || []).length > 0);
+	return hasCourse('starter') && hasCourse('main') && hasCourse('dessert');
+}
+
 function normalizeClient(client) {
 	return {
 		...client,
@@ -39,10 +89,18 @@ function normalizeClient(client) {
 		categories: Array.isArray(client.categories) ? client.categories.map((category) => ({
 			name: category.name || 'Menu',
 			image: category.image || '',
-			items: Array.isArray(category.items) ? category.items.map((item) => ({ name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '', image: item.image || '' })) : []
+			// '' means unclassified - never auto-defaulted to a real course here,
+			// so an existing untagged client's categories stay excluded from
+			// every Smart Food Match pool until an owner explicitly tags them.
+			courseType: category.courseType || '',
+			items: Array.isArray(category.items) ? category.items.map((item) => ({
+				name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '', image: item.image || '',
+				appetiteSize: item.appetiteSize || '', style: item.style || '', isFavorite: !!item.isFavorite
+			})) : []
 		})) : [],
 		languages: Array.isArray(client.languages) && client.languages.length ? client.languages : ['en'],
-		translations: client.translations || {}
+		translations: client.translations || {},
+		smart_food_match_enabled: !!client.smart_food_match_enabled
 	};
 }
 function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved.map(normalizeClient) : structuredClone(seedClients).map(normalizeClient); } catch { return structuredClone(seedClients).map(normalizeClient); } }
@@ -63,6 +121,7 @@ async function saveClients() {
 		header_background_url: client.header_background_url || null,
 		header_font: client.header_font || null,
 		header_text_color: client.header_text_color || null,
+		smart_food_match_enabled: !!client.smart_food_match_enabled,
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
@@ -354,6 +413,21 @@ async function translateMenu() {
 function render() {
 	const client = selectedClient() || clients[0]; if (!client) return;
 	selectedId = client.id;
+	// Fill in a Smart Food Match tag suggestion the first time a category/item
+	// is ever rendered with that field still empty, then leave it alone for
+	// good - once a real value is stored (even an auto-suggested one), this
+	// short-circuits and never overwrites it again, so an owner's correction
+	// can't silently revert on a later render. Runs before the qualifies-hint
+	// check and the category editor template below, both of which read these
+	// same fields - otherwise a freshly-classified client would show a stale
+	// "not ready" hint until a second render.
+	client.categories.forEach((category) => {
+		category.courseType = category.courseType || suggestCourseType(category.name);
+		(category.items || []).forEach((item) => {
+			item.style = item.style || suggestStyle(item.name, item.description);
+			item.appetiteSize = item.appetiteSize || suggestAppetiteSize(item.name, item.description, category.courseType);
+		});
+	});
 	$('#clientCount').textContent = clients.length; $('#navClientCount').textContent = clients.length;
 	$('#sectionCount').textContent = clients.reduce((total, item) => total + item.categories.length, 0); $('#qrCount').textContent = clients.length;
 	const needsRenewal = (sub) => sub && (sub.status === 'expired' || sub.status === 'deactivated');
@@ -374,6 +448,14 @@ function render() {
 	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : '<span class="header-bg-empty">No custom background — using default</span>';
 	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
 	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
+	if ($('#smartFoodMatchEnabled')) {
+		$('#smartFoodMatchEnabled').checked = !!client.smart_food_match_enabled;
+		const qualifies = smartFoodMatchQualifies(client);
+		$('#smartFoodMatchHint').textContent = qualifies
+			? 'Ready - starter, main and dessert sections are all tagged.'
+			: 'Not ready yet - needs at least one tagged starter, main and dessert section (see the dropdown on each section above).';
+		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
+	}
 	const clientSubscription = subscriptionsBySlug[client.slug];
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
@@ -415,7 +497,21 @@ function render() {
 		const noun = kind === 'category' ? 'section' : 'dish';
 		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
 	}
-	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	function selectOptions(options, current) {
+		return options.map(([value, label]) => `<option value="${value}"${value === (current || '') ? ' selected' : ''}>${label}</option>`).join('');
+	}
+	// courseType is tagged once per section (not per dish) - it's what Smart
+	// Food Match uses to know which section counts as starters/mains/desserts.
+	function courseTypeControl(category, categoryIndex) {
+		const options = [['', 'Smart Food Match: not classified'], ['starter', 'Starter'], ['main', 'Main'], ['dessert', 'Dessert'], ['drink', 'Drink'], ['other', 'Other (ignored)']];
+		return `<select data-category-course-type="${categoryIndex}" class="course-type-select" title="Which course this section counts as for Smart Food Match">${selectOptions(options, category.courseType)}</select>`;
+	}
+	function itemTagsControl(item, categoryIndex, itemIndex) {
+		const sizeOptions = [['', 'Size: not set'], ['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['very-large', 'Very large']];
+		const styleOptions = [['', 'Style: not set'], ['fresh', 'Fresh & light'], ['hearty', 'Hearty & rich'], ['special', 'Something special'], ['quick', 'Quick & simple']];
+		return `<div class="item-tags"><select data-item-appetite-size="${categoryIndex}-${itemIndex}" title="Portion size, for Smart Food Match">${selectOptions(sizeOptions, item.appetiteSize)}</select><select data-item-style="${categoryIndex}-${itemIndex}" title="Dish style, for Smart Food Match">${selectOptions(styleOptions, item.style)}</select><label class="item-favorite-check"><input type="checkbox" data-item-favorite="${categoryIndex}-${itemIndex}"${item.isFavorite ? ' checked' : ''}> Favorite</label></div>`;
+	}
+	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}${courseTypeControl(category, categoryIndex)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}${itemTagsControl(item, categoryIndex, itemIndex)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
 	const uploadClientId = client.id;
 	document.querySelectorAll('[data-image-input]').forEach((input) => input.addEventListener('change', async () => {
 		const file = input.files[0];
@@ -452,7 +548,11 @@ function render() {
 	document.querySelectorAll('[data-remove-category]').forEach((button) => button.addEventListener('click', () => { client.categories.splice(Number(button.dataset.removeCategory), 1); saveClients(); render(); }));
 	document.querySelectorAll('[data-move-category]').forEach((button) => button.addEventListener('click', () => { const [direction, indexText] = button.dataset.moveCategory.split('-'); const index = Number(indexText); const target = direction === 'up' ? index - 1 : index + 1; if (target < 0 || target >= client.categories.length) return; [client.categories[index], client.categories[target]] = [client.categories[target], client.categories[index]]; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-remove-item]').forEach((button) => button.addEventListener('click', () => { const [categoryIndex, itemIndex] = button.dataset.removeItem.split('-').map(Number); client.categories[categoryIndex].items.splice(itemIndex, 1); saveClients(); render(); }));
-	document.querySelectorAll('[data-add-item]').forEach((button) => button.addEventListener('click', () => { client.categories[Number(button.dataset.addItem)].items.push({ name: 'New dish', description: '', price: '0.00' }); saveClients(); render(); }));
+	document.querySelectorAll('[data-add-item]').forEach((button) => button.addEventListener('click', () => { client.categories[Number(button.dataset.addItem)].items.push({ name: 'New dish', description: '', price: '0.00', appetiteSize: '', style: '', isFavorite: false }); saveClients(); render(); }));
+	document.querySelectorAll('[data-category-course-type]').forEach((select) => select.addEventListener('change', () => { client.categories[Number(select.dataset.categoryCourseType)].courseType = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
+	document.querySelectorAll('[data-item-appetite-size]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemAppetiteSize.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].appetiteSize = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
+	document.querySelectorAll('[data-item-style]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemStyle.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].style = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
+	document.querySelectorAll('[data-item-favorite]').forEach((checkbox) => checkbox.addEventListener('change', () => { const [categoryIndex, itemIndex] = checkbox.dataset.itemFavorite.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].isFavorite = checkbox.checked; saveClients().then(render).catch((error) => notify(error.message)); }));
 	const url = menuUrl(client); $('#qrUrl').textContent = url; $('#previewMenu').href = url; if ($('#previewMenuTop')) $('#previewMenuTop').href = url; $('#qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(url)}`;
 	document.querySelectorAll('#clientForm input, #clientForm select, #clientForm button, #clientForm textarea').forEach((element) => { if (element.id !== 'deleteClient') element.disabled = isLocked; });
 }
@@ -619,6 +719,10 @@ if ($('#headerFont')) $('#headerFont').addEventListener('change', () => {
 });
 if ($('#headerTextColor')) $('#headerTextColor').addEventListener('change', () => {
 	selectedClient().header_text_color = $('#headerTextColor').value;
+	saveClients().then(render).catch((error) => notify(error.message));
+});
+if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('change', () => {
+	selectedClient().smart_food_match_enabled = $('#smartFoodMatchEnabled').checked;
 	saveClients().then(render).catch((error) => notify(error.message));
 });
 

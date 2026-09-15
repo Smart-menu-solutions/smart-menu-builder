@@ -16,6 +16,9 @@ create table if not exists public.menus (
 alter table public.menus
   add column if not exists languages jsonb not null default '["en","de","el"]'::jsonb;
 
+alter table public.menus
+  add column if not exists smart_food_match_enabled boolean not null default false;
+
 alter table public.menus enable row level security;
 
 create policy "Published menus are public"

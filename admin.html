@@ -73,6 +73,7 @@
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
                     <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden><span class="button button-ghost dish-count-badge" id="dishCountBadge" title="Photo add-on tiers: Smart Start 50 / Smart Pro 150 / Smart Premium 450 dishes">0 dishes</span></div></div>
                     <div class="menu-heading"><div><p class="eyebrow">Menu content</p><h3>Sections & dishes</h3></div><button type="button" class="button button-ghost" id="addCategory">＋ Add section</button></div>
+                    <div class="smart-match-toggle"><label><input type="checkbox" id="smartFoodMatchEnabled"> Enable Smart Food Match (quiz recommendation on the live menu)</label><span id="smartFoodMatchHint"></span></div>
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="languages" hidden>
