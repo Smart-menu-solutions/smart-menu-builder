@@ -447,6 +447,12 @@ function openWhatsapp(lead) {
 	// WhatsApp Desktop app on Windows has been observed to corrupt the emoji
 	// (mojibake) on the far side; the direct endpoint avoids that extra hop.
 	window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(message)}`, '_blank');
+	// Opening the chat only proves the number and template were valid, not
+	// that anything was actually sent - WhatsApp itself might say the number
+	// isn't on WhatsApp, or the tab could just be closed unsent. Confirming
+	// here (after switching over and back) is the only way this code can
+	// know before advancing the sequence.
+	if (!confirm(`Did that message actually go out to ${lead.name} on WhatsApp?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
 	lead.msgStage = action.nextStage;
 	lead.msgSentAt = Date.now();
 	saveLeads();
@@ -461,6 +467,11 @@ function openEmail(lead) {
 	const subject = action.subjects[lead.lang] || action.subjects[currentCountry.lang] || action.subjects.en;
 	const message = template.replace('{site}', SITE_URL);
 	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
+	// Opening the draft doesn't mean it was sent - the mail app could still
+	// be closed unsent (e.g. while just testing which account it opens
+	// with). Confirming here is the only way this code can know before
+	// advancing the sequence.
+	if (!confirm(`Did that email actually get sent to ${lead.name}?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
 	lead.msgStage = action.nextStage;
 	lead.msgSentAt = Date.now();
 	saveLeads();
