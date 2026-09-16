@@ -665,10 +665,17 @@ async function loadPhotoLibrary() {
 	const { files, error } = await listLibraryPhotos();
 	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
 	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos uploaded yet.</p>'; return; }
-	grid.innerHTML = files.map((url) => `<div class="photo-library-item"><img src="${escapeAttr(url)}" alt="" loading="lazy"><button type="button" class="photo-copy-link" data-copy-photo="${escapeAttr(url)}">Copy link</button></div>`).join('');
+	grid.innerHTML = files.map((file) => `<div class="photo-library-item"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"><div class="photo-item-actions"><button type="button" class="photo-copy-link" data-copy-photo="${escapeAttr(file.url)}">Copy link</button><button type="button" class="photo-delete-link" data-delete-photo="${escapeAttr(file.name)}">Delete</button></div></div>`).join('');
 	document.querySelectorAll('[data-copy-photo]').forEach((button) => button.addEventListener('click', async () => {
 		await navigator.clipboard.writeText(button.dataset.copyPhoto);
 		notify('Photo link copied');
+	}));
+	document.querySelectorAll('[data-delete-photo]').forEach((button) => button.addEventListener('click', async () => {
+		if (!confirm('Delete this photo? This cannot be undone, and it will disappear from any menu still using it.')) return;
+		const { error } = await supabaseClient.storage.from('menu-images').remove([`library/${button.dataset.deletePhoto}`]);
+		if (error) { notify(`Could not delete photo: ${error.message}`); return; }
+		notify('Photo deleted');
+		await loadPhotoLibrary();
 	}));
 }
 async function listLibraryPhotos() {
@@ -676,7 +683,7 @@ async function listLibraryPhotos() {
 	const { data, error } = await supabaseClient.storage.from('menu-images').list('library', { sortBy: { column: 'created_at', order: 'desc' } });
 	if (error) return { error: error.message };
 	const files = (data || []).filter((file) => file.id && file.name !== '.emptyFolderPlaceholder');
-	return { files: files.map((file) => supabaseClient.storage.from('menu-images').getPublicUrl(`library/${file.name}`).data.publicUrl) };
+	return { files: files.map((file) => ({ name: file.name, url: supabaseClient.storage.from('menu-images').getPublicUrl(`library/${file.name}`).data.publicUrl })) };
 }
 async function openHeaderBgPicker() {
 	const modal = $('#photoPickerModal');
@@ -686,7 +693,7 @@ async function openHeaderBgPicker() {
 	const { files, error } = await listLibraryPhotos();
 	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
 	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos in your library yet — upload one under Activity first.</p>'; return; }
-	grid.innerHTML = files.map((url) => `<div class="photo-library-item photo-pick-item" data-pick-photo="${escapeAttr(url)}"><img src="${escapeAttr(url)}" alt="" loading="lazy"></div>`).join('');
+	grid.innerHTML = files.map((file) => `<div class="photo-library-item photo-pick-item" data-pick-photo="${escapeAttr(file.url)}"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"></div>`).join('');
 	document.querySelectorAll('[data-pick-photo]').forEach((item) => item.addEventListener('click', async () => {
 		selectedClient().header_background_url = item.dataset.pickPhoto;
 		modal.hidden = true;
