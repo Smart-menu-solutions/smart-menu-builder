@@ -492,6 +492,47 @@ function selectedLeads() {
 	return leads.filter((lead) => lead.selected);
 }
 
+// Lets the user seed a contact by hand (not found via the OSM search) - it
+// joins the same `leads` array at msgStage 0, so it shows up in "New List"
+// and runs through the exact same enrich/send/stop pipeline as a searched
+// lead. "manual/" ids keep it from ever colliding with an OSM element id.
+function openAddContactModal() {
+	$('#addContactForm').reset();
+	$('#addContactModal').hidden = false;
+	$('#contactName').focus();
+}
+
+function closeAddContactModal() {
+	$('#addContactModal').hidden = true;
+}
+
+function addManualContact(event) {
+	event.preventDefault();
+	const name = $('#contactName').value.trim();
+	if (!name) return;
+	const lead = {
+		id: `manual/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+		name,
+		address: $('#contactAddress').value.trim(),
+		phone: $('#contactPhone').value.trim(),
+		website: normalizeWebsite($('#contactWebsite').value.trim()),
+		email: $('#contactEmail').value.trim(),
+		whatsapp: normalizeWhatsapp($('#contactWhatsapp').value.trim()),
+		lang: currentCountry.lang,
+		selected: false,
+		enriching: false,
+		msgStage: 0,
+		msgSentAt: null,
+		stopped: false
+	};
+	leads.push(lead);
+	currentStageTab = 'new';
+	saveLeads();
+	closeAddContactModal();
+	render();
+	notify(`Added ${lead.name}`);
+}
+
 function clearLeads() {
 	if (!leads.length) return;
 	if (!confirm(`Clear all ${leads.length} leads? This can't be undone - outreach progress will be lost too.`)) return;
@@ -631,6 +672,11 @@ function wireEvents() {
 	$('#leadsExport').addEventListener('click', exportExcel);
 	$('#leadsExportCsv').addEventListener('click', exportCsv);
 	$('#leadsClear').addEventListener('click', clearLeads);
+	$('#leadsAddContact').addEventListener('click', openAddContactModal);
+	$('#closeAddContact').addEventListener('click', closeAddContactModal);
+	$('#cancelAddContact').addEventListener('click', closeAddContactModal);
+	$('#addContactModal').addEventListener('click', (event) => { if (event.target.id === 'addContactModal') closeAddContactModal(); });
+	$('#addContactForm').addEventListener('submit', addManualContact);
 	$('#leadsSelectAll').addEventListener('change', (event) => {
 		visibleLeads().forEach((lead) => { lead.selected = event.target.checked; });
 		render();
