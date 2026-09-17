@@ -13,7 +13,7 @@ const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solution
 // customer sees, not just an admin-side convenience.
 const LANGUAGE_CATALOG = [
 	{ code: 'en', label: 'English' }, { code: 'de', label: 'Deutsch' }, { code: 'el', label: 'Ελληνικά' },
-	{ code: 'it', label: 'Italiano' }, { code: 'es', label: 'Español' }
+	{ code: 'it', label: 'Italiano' }, { code: 'es', label: 'Español' }, { code: 'fr', label: 'Français' }
 ];
 // Enabled languages first, in the client's saved order, then any not-yet-
 // enabled catalog languages appended so they still show up (unchecked) to
@@ -32,15 +32,15 @@ function slugifyName(value) {
 }
 
 // Smart Food Match tag suggestions - pure keyword guesses over a section/
-// dish's own name+description, covering the same 5 languages as
-// LANGUAGE_CATALOG (en/de/el/it/es). These only ever pre-fill an empty tag
+// dish's own name+description, covering the same 6 languages as
+// LANGUAGE_CATALOG (en/de/el/it/es/fr). These only ever pre-fill an empty tag
 // (see the call sites in render()) - never re-run over a tag an owner has
 // already set or corrected, or a deliberate fix would revert on next render.
 const COURSE_TYPE_KEYWORDS = {
-	starter: /vorspeis|starter|antipast|entrada|orektik|meze/i,
+	starter: /vorspeis|starter|antipast|entrada|orektik|meze|entr.e/i,
 	dessert: /dessert|nachspeis|dolci|suess|s.ss|postre|epidorpio/i,
-	drink: /getraenk|getr.nk|drink|bevand|bebida|beverage|ποτ/i,
-	main: /hauptgericht|hauptspeis|main.?course|secondi|piatt.\s*principal|plato\s*principal|kurio/i
+	drink: /getraenk|getr.nk|drink|bevand|bebida|beverage|ποτ|boisson/i,
+	main: /hauptgericht|hauptspeis|main.?course|secondi|piatt.\s*principal|plato\s*principal|plat\s*principal|kurio/i
 };
 function suggestCourseType(categoryName) {
 	const name = String(categoryName || '');

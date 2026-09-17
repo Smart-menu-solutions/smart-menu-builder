@@ -6,7 +6,7 @@
 // labels are hardcoded English) - this file is the first one, scoped to
 // just this feature's static text.
 //
-// All five languages (matching admin.js's LANGUAGE_CATALOG: en/de/el/it/es)
+// All six languages (matching admin.js's LANGUAGE_CATALOG: en/de/el/it/es/fr)
 // are translated below. menu.js still falls back to German for any language
 // code missing from this catalog entirely - it never throws.
 window.SMART_FOOD_MATCH_STRINGS = {
@@ -235,5 +235,50 @@ window.SMART_FOOD_MATCH_STRINGS = {
 		whyTemplate: 'Según tu apetito ({appetite}) y tus ganas de algo {style}, hemos preparado esta combinación de nuestra carta.',
 		whyFavoritesTemplate: 'Querías ver nuestros favoritos - aquí tienes nuestra recomendación.',
 		skippedMessage: 'Para este plato todavía no tenemos una sugerencia adecuada.'
+	},
+	fr: {
+		openButton: '✨ Trouver ma recommandation',
+		title: '🍽️ Smart Food Match',
+		intro: 'Trouvez votre recommandation parfaite en 10 secondes.',
+		closeLabel: 'Fermer',
+		nextLabel: 'Suivant',
+		submitLabel: '✨ Afficher ma recommandation',
+		restartLabel: 'Réessayer',
+		q1: {
+			text: 'Que souhaitez-vous aujourd\'hui ?',
+			options: [
+				{ value: 'food', label: 'Manger' },
+				{ value: 'drink', label: 'Boire' },
+				{ value: 'sweet', label: 'Quelque chose de sucré' },
+				{ value: 'surprise', label: 'Surprenez-moi' }
+			]
+		},
+		q2: {
+			text: 'Quel est votre appétit ?',
+			options: [
+				{ value: 'small', label: 'Petit' },
+				{ value: 'medium', label: 'Moyen' },
+				{ value: 'large', label: 'Grand' },
+				{ value: 'very-large', label: 'Très grand' }
+			]
+		},
+		q3: {
+			text: 'De quoi avez-vous envie en ce moment ?',
+			options: [
+				{ value: 'fresh', label: 'Frais & léger' },
+				{ value: 'hearty', label: 'Copieux & savoureux' },
+				{ value: 'special', label: 'Quelque chose de spécial' },
+				{ value: 'quick', label: 'Rapide & simple' },
+				{ value: 'favorites', label: 'Montrez-moi vos favoris' }
+			]
+		},
+		resultTitle: 'Votre recommandation',
+		starterLabel: '🥗 Entrée',
+		mainLabel: '🍖 Plat principal',
+		dessertLabel: '🍰 Dessert',
+		whyLabel: '💡 Pourquoi cette recommandation ?',
+		whyTemplate: 'En fonction de votre appétit ({appetite}) et de votre envie de {style}, nous avons composé cette combinaison à partir de notre carte.',
+		whyFavoritesTemplate: 'Vous vouliez voir nos favoris - voici notre recommandation.',
+		skippedMessage: 'Nous n\'avons pas encore de suggestion adaptée pour ce plat.'
 	}
 };
