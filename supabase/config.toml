@@ -21,3 +21,6 @@ verify_jwt = false
 
 [functions.send-weekly-report]
 verify_jwt = false
+
+[functions.manage-addons]
+verify_jwt = false

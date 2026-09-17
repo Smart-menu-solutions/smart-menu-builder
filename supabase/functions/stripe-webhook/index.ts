@@ -117,7 +117,7 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 // single address verified on the Resend account — real customer inboxes
 // will silently fail (logged as a Resend API error in notifications_log,
 // provider_message_id stays null) until that domain verification is done.
-async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string) {
+async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping customer confirmation: no valid email on file', subscriptionId);
 		await supabase.from('notifications_log').insert({
@@ -139,6 +139,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
+		<p>Möchten Sie später Smart Food Match oder den Weekly Analytics Report dazubuchen? <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
 		<p>Smart Menu Solutions</p>
 	`;
@@ -236,7 +237,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			console.error('Renewal checkout completed without subscriptionId in metadata', session.id);
 			return;
 		}
-		const { data: existing } = await supabase.from('subscriptions').select('id, plan, menu_slug').eq('id', subscriptionId).maybeSingle();
+		const { data: existing } = await supabase.from('subscriptions').select('id, plan, menu_slug, addon_token').eq('id', subscriptionId).maybeSingle();
 		if (!existing) {
 			console.error('Renewal checkout references unknown subscription', subscriptionId);
 			return;
@@ -264,7 +265,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
 			}, renewalAttachment ? [renewalAttachment] : undefined),
-			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan)
+			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token)
 		]);
 		return;
 	}
@@ -339,7 +340,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
 		}, orderAttachments),
-		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan)
+		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token)
 	]);
 }
 
@@ -374,7 +375,7 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 		sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
 			'Subscription-ID': subscription.id, Plan: subscription.plan
 		}),
-		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan)
+		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan, subscription.addon_token)
 	]);
 }
 

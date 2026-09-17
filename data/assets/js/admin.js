@@ -474,6 +474,18 @@ function render() {
 		analyticsRow.style.display = showAnalytics ? '' : 'none';
 		if (showAnalytics) $('#analyticsStatsLink').href = `${RENEWAL_SITE}/stats.html?token=${clientSubscription.stats_token}`;
 	}
+	// Unlike the stats link above, this one shows as soon as a subscription
+	// exists at all - its whole purpose is handing the customer the link
+	// BEFORE they've added anything, not just once something is already on.
+	const manageAddonsLink = $('#manageAddonsLink');
+	if (manageAddonsLink) {
+		if (clientSubscription?.addon_token) {
+			manageAddonsLink.style.display = '';
+			manageAddonsLink.href = `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}`;
+		} else {
+			manageAddonsLink.style.display = 'none';
+		}
+	}
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
 	if (isLocked) {
@@ -649,7 +661,7 @@ async function syncFromSupabase() {
 }
 async function syncSubscriptions() {
 	if (typeof supabaseClient === 'undefined') return;
-	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token').order('created_at', { ascending: false });
+	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token').order('created_at', { ascending: false });
 	if (error) return;
 	subscriptionsBySlug = {};
 	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
