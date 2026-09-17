@@ -7,10 +7,10 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 
 const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
-const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAddOnCents: number; smartFoodMatchAddOnCents: number }> = {
-	start: { amountCents: 11900, label: 'Smart Start', photoAddOnCents: 1000, smartFoodMatchAddOnCents: 500 },
-	pro: { amountCents: 12900, label: 'Smart Pro', photoAddOnCents: 3000, smartFoodMatchAddOnCents: 500 },
-	premium: { amountCents: 16900, label: 'Smart Premium', photoAddOnCents: 9000, smartFoodMatchAddOnCents: 500 }
+const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAddOnCents: number; smartFoodMatchAddOnCents: number; analyticsReportsAddOnCents: number }> = {
+	start: { amountCents: 11900, label: 'Smart Start', photoAddOnCents: 1000, smartFoodMatchAddOnCents: 500, analyticsReportsAddOnCents: 500 },
+	pro: { amountCents: 12900, label: 'Smart Pro', photoAddOnCents: 3000, smartFoodMatchAddOnCents: 500, analyticsReportsAddOnCents: 500 },
+	premium: { amountCents: 16900, label: 'Smart Premium', photoAddOnCents: 9000, smartFoodMatchAddOnCents: 500, analyticsReportsAddOnCents: 500 }
 };
 
 const CORS_HEADERS = {
@@ -37,6 +37,7 @@ Deno.serve(async (request) => {
 		const photoAddon = Boolean(body.photoAddon);
 		const photoZipPath = String(body.photoZipPath || '').trim();
 		const smartFoodMatchAddon = Boolean(body.smartFoodMatchAddon);
+		const analyticsReportsAddon = Boolean(body.analyticsReportsAddon);
 
 		const pricing = PLAN_PRICING[plan];
 		if (!pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email) || !pdfPath) {
@@ -85,6 +86,20 @@ Deno.serve(async (request) => {
 				quantity: 1
 			});
 		}
+		if (analyticsReportsAddon) {
+			// Same shape as the Smart Food Match add-on above: a standing feature,
+			// billed yearly as a second recurring line item on the same
+			// subscription.
+			lineItems.push({
+				price_data: {
+					currency: 'eur',
+					unit_amount: pricing.analyticsReportsAddOnCents,
+					recurring: { interval: 'year' },
+					product_data: { name: 'Weekly Analytics Report add-on' }
+				},
+				quantity: 1
+			});
+		}
 
 		const session = await stripe.checkout.sessions.create({
 			mode: 'subscription',
@@ -103,10 +118,11 @@ Deno.serve(async (request) => {
 				pdfPath,
 				photoAddon: String(photoAddon),
 				photoZipPath,
-				smartFoodMatchAddon: String(smartFoodMatchAddon)
+				smartFoodMatchAddon: String(smartFoodMatchAddon),
+				analyticsReportsAddon: String(analyticsReportsAddon)
 			},
 			subscription_data: {
-				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon) }
+				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon), analyticsReportsAddon: String(analyticsReportsAddon) }
 			}
 		});
 

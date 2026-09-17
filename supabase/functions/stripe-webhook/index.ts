@@ -291,7 +291,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		currency: '€',
 		categories: [],
 		languages: ['de', 'en'],
-		is_published: false
+		is_published: false,
+		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true'
 	});
 	if (menuError) {
 		console.error('Failed to insert draft menu', menuError);
@@ -333,6 +334,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			Plan: plan,
 			'Foto-Zusatz': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart Food Match': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
+			'Analytics Report': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
 			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
@@ -411,6 +413,8 @@ async function handleSubscriptionDeleted(stripeSubscription: Stripe.Subscription
 	await supabase.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('id', subscription.id);
 	// A cancelled subscription is a stronger end-state than "deactivated" —
 	// keeping the menu published here while deactivation takes it offline
-	// would be inconsistent.
-	await supabase.from('menus').update({ is_published: false }).eq('slug', subscription.menu_slug);
+	// would be inconsistent. Analytics reports are cleared here too, so a
+	// cancelled customer stops getting the weekly email from the next
+	// Monday's send-weekly-report run onward.
+	await supabase.from('menus').update({ is_published: false, analytics_reports_enabled: false }).eq('slug', subscription.menu_slug);
 }

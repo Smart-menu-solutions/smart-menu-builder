@@ -100,7 +100,14 @@ function normalizeClient(client) {
 		})) : [],
 		languages: Array.isArray(client.languages) && client.languages.length ? client.languages : ['en'],
 		translations: client.translations || {},
-		smart_food_match_enabled: !!client.smart_food_match_enabled
+		smart_food_match_enabled: !!client.smart_food_match_enabled,
+		// Read-only passthrough - auto-activated by stripe-webhook, never set
+		// here or in saveClients()'s upsert payload below (unlike
+		// smart_food_match_enabled, which IS staff-editable). Including it in
+		// the upsert would let an unrelated "Save changes" click silently
+		// overwrite the webhook's own value back to whatever was last loaded
+		// into memory.
+		analytics_reports_enabled: !!client.analytics_reports_enabled
 	};
 }
 function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved.map(normalizeClient) : structuredClone(seedClients).map(normalizeClient); } catch { return structuredClone(seedClients).map(normalizeClient); } }
@@ -456,6 +463,9 @@ function render() {
 			: 'Not ready yet - needs at least one tagged starter, main and dessert section (see the dropdown on each section above).';
 		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
 	}
+	// Read-only - no click handler, unlike smartFoodMatchEnabled above. This
+	// flag is set entirely by stripe-webhook on purchase/cancellation.
+	if ($('#analyticsStatusBadge')) $('#analyticsStatusBadge').style.display = client.analytics_reports_enabled ? '' : 'none';
 	const clientSubscription = subscriptionsBySlug[client.slug];
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');

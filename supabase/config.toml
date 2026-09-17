@@ -12,3 +12,12 @@ verify_jwt = false
 
 [functions.translate]
 verify_jwt = false
+
+[functions.track-menu-view]
+verify_jwt = false
+
+[functions.get-stats]
+verify_jwt = false
+
+[functions.send-weekly-report]
+verify_jwt = false

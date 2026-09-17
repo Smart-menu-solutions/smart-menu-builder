@@ -88,7 +88,7 @@ function categoryId(name) {
 function buildCategory(client, category) {
 	const categoryImage = category.image && /^https?:\/\//i.test(category.image) ? `<img class="category-image" src="${escapeHtml(category.image)}" alt="">` : '';
 	return `
-		<section class="category" id="category-${categoryId(category.name)}">
+		<section class="category" id="category-${categoryId(category.name)}" data-category-name="${escapeHtml(category.name)}">
 			<h2>${escapeHtml(categoryName(client, category))}</h2>
 			${categoryImage}
 			${(category.items || []).map((item) => {
@@ -96,7 +96,7 @@ function buildCategory(client, category) {
 				const description = translation.description || item.description;
 				const itemImage = item.image && /^https?:\/\//i.test(item.image) ? `<img class="item-image" src="${escapeHtml(item.image)}" alt="">` : '';
 				return `
-				<article class="item">
+				<article class="item" data-item-name="${escapeHtml(item.name)}">
 					${itemImage}
 					<div class="item-body">
 						<div class="item-header"><h3>${escapeHtml(translation.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
@@ -258,6 +258,49 @@ function notifySmartMatch(strings) {
 	quiz.classList.add('smart-match-shake');
 }
 
+// Anonymous, cookie-less traffic counting for the Weekly Analytics Report
+// add-on (see track-menu-view Edge Function) - a no-op for every client
+// that hasn't bought the add-on, so it costs nothing for anyone else.
+// Counts each category/dish once per visit via IntersectionObserver, then
+// flushes a single beacon on page-hide rather than one request per item.
+function startViewTracking(client) {
+	if (!client.analytics_reports_enabled) return;
+	const seenCategories = new Set();
+	const seenDishes = new Set();
+	let sent = false;
+
+	const flush = () => {
+		if (sent) return;
+		sent = true;
+		const payload = JSON.stringify({ menuSlug: client.slug, categories: [...seenCategories], dishes: [...seenDishes] });
+		const endpoint = `${AUTH_CONFIG.supabaseUrl}/functions/v1/track-menu-view`;
+		// text/plain keeps this a CORS-safelisted "simple request" - sendBeacon
+		// can't attach headers to satisfy a preflight, so a non-safelisted type
+		// would just silently fail cross-origin. The function reads the body as
+		// raw text and parses it itself rather than trusting Content-Type.
+		if (navigator.sendBeacon && navigator.sendBeacon(endpoint, new Blob([payload], { type: 'text/plain' }))) return;
+		fetch(endpoint, { method: 'POST', body: payload, keepalive: true }).catch(() => {});
+	};
+
+	if (typeof IntersectionObserver !== 'undefined') {
+		const observer = new IntersectionObserver((entries) => {
+			entries.forEach((entry) => {
+				if (!entry.isIntersecting) return;
+				const { categoryName, itemName } = entry.target.dataset;
+				if (categoryName) seenCategories.add(categoryName);
+				if (itemName) seenDishes.add(itemName);
+				observer.unobserve(entry.target);
+			});
+		}, { threshold: 0.5 });
+		document.querySelectorAll('.category, .item').forEach((element) => observer.observe(element));
+	}
+
+	// pagehide covers tab close/navigate/bfcache; visibilitychange catches the
+	// mobile case (switching apps) where pagehide can fire late or not at all.
+	window.addEventListener('pagehide', flush);
+	document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
+}
+
 function renderMenu(client) {
 	if (!urlLanguageParam) {
 		requestedLanguage = ((client.languages && client.languages[0]) || client.sourceLanguage || 'en').toLowerCase();
@@ -288,6 +331,7 @@ function renderMenu(client) {
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>
 		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}`;
 	if (smartMatchStrings) wireSmartFoodMatch(client, smartMatchStrings);
+	startViewTracking(client);
 }
 
 async function loadMenu() {
