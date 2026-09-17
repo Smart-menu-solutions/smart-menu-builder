@@ -53,7 +53,15 @@ const COURSE_ORDER = ['starter', 'main', 'dessert'];
 // sfm_reco labels are '<course>::<dish name>' (see menu.js). Sums per
 // (course, dish) across the range, then keeps only the single most-
 // recommended dish for each course - courses with no data are omitted
-// entirely rather than shown empty.
+// entirely rather than shown empty. Every completed quiz always logs
+// exactly one starter + one main + one dessert (canRunSmartMatch() only
+// ever offers the quiz once all three course pools are non-empty, and
+// pickCourse() then always returns something from a non-empty pool) - so
+// the total across all 'starter' dishes equals the number of completed
+// quizzes this week, which is a far more meaningful "total" for the ring
+// than summing the three displayed top-dish counts (those can be smaller
+// than the real total once a course has more than one distinct dish
+// recommended).
 function topRecommendations(rows: { day: string; metric_type: string; label: string; view_count: number }[], from: string, to: string) {
 	const totals = new Map<string, Map<string, number>>();
 	for (const row of rows) {
@@ -66,14 +74,16 @@ function topRecommendations(rows: { day: string; metric_type: string; label: str
 		const dishTotals = totals.get(course)!;
 		dishTotals.set(dish, (dishTotals.get(dish) || 0) + row.view_count);
 	}
-	const result: { course: string; dish: string; count: number }[] = [];
+	const items: { course: string; dish: string; count: number }[] = [];
 	for (const course of COURSE_ORDER) {
 		const dishTotals = totals.get(course);
 		if (!dishTotals || dishTotals.size === 0) continue;
 		const [topDish, topCount] = [...dishTotals.entries()].sort((a, b) => b[1] - a[1])[0];
-		result.push({ course, dish: topDish, count: topCount });
+		items.push({ course, dish: topDish, count: topCount });
 	}
-	return result;
+	const starterTotals = totals.get('starter');
+	const totalCompletions = starterTotals ? [...starterTotals.values()].reduce((sum, count) => sum + count, 0) : 0;
+	return { items, totalCompletions };
 }
 
 Deno.serve(async (request) => {
@@ -111,6 +121,7 @@ Deno.serve(async (request) => {
 	if (rowsError) return json({ error: 'Could not load stats.' }, 500);
 
 	const allRows = rows ?? [];
+	const sfm = topRecommendations(allRows, rangeStart, rangeEnd);
 	return json({
 		addonActive: true,
 		menuName: menu.name,
@@ -121,7 +132,8 @@ Deno.serve(async (request) => {
 		topCategories: topLabels(allRows, 'category', rangeStart, rangeEnd, 5),
 		topDishes: topLabels(allRows, 'dish', rangeStart, rangeEnd, 5),
 		sfmEnabled: !!menu.smart_food_match_enabled,
-		topRecommendations: topRecommendations(allRows, rangeStart, rangeEnd)
+		topRecommendations: sfm.items,
+		sfmTotalCompletions: sfm.totalCompletions
 	});
 });
 
