@@ -21,6 +21,7 @@ const CORS_HEADERS = {
 
 const MAX_CATEGORIES = 100;
 const MAX_DISHES = 500;
+const MAX_RECOMMENDATIONS = 50;
 
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
@@ -42,6 +43,7 @@ Deno.serve(async (request) => {
 		// row twice within one statement.
 		const categories = [...new Set(Array.isArray(body.categories) ? body.categories.map(String) : [])].slice(0, MAX_CATEGORIES);
 		const dishes = [...new Set(Array.isArray(body.dishes) ? body.dishes.map(String) : [])].slice(0, MAX_DISHES);
+		const recommendations = [...new Set(Array.isArray(body.recommendations) ? body.recommendations.map(String) : [])].slice(0, MAX_RECOMMENDATIONS);
 
 		// Only count views for menus that are actually live and have the
 		// add-on active - also means a slug probe never reveals anything via
@@ -61,7 +63,8 @@ Deno.serve(async (request) => {
 			p_day: today,
 			p_visit: true,
 			p_categories: categories,
-			p_dishes: dishes
+			p_dishes: dishes,
+			p_recommendations: recommendations
 		});
 		if (error) console.error('increment_menu_views failed', error);
 

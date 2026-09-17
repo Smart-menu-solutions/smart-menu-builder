@@ -48,6 +48,34 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 	return rows.reduce((sum, row) => row.metric_type === 'visit' && row.day >= from && row.day <= to ? sum + row.view_count : sum, 0);
 }
 
+const COURSE_ORDER = ['starter', 'main', 'dessert'];
+
+// sfm_reco labels are '<course>::<dish name>' (see menu.js). Sums per
+// (course, dish) across the range, then keeps only the single most-
+// recommended dish for each course - courses with no data are omitted
+// entirely rather than shown empty.
+function topRecommendations(rows: { day: string; metric_type: string; label: string; view_count: number }[], from: string, to: string) {
+	const totals = new Map<string, Map<string, number>>();
+	for (const row of rows) {
+		if (row.metric_type !== 'sfm_reco' || row.day < from || row.day > to) continue;
+		const separatorIndex = row.label.indexOf('::');
+		if (separatorIndex < 0) continue;
+		const course = row.label.slice(0, separatorIndex);
+		const dish = row.label.slice(separatorIndex + 2);
+		if (!totals.has(course)) totals.set(course, new Map());
+		const dishTotals = totals.get(course)!;
+		dishTotals.set(dish, (dishTotals.get(dish) || 0) + row.view_count);
+	}
+	const result: { course: string; dish: string; count: number }[] = [];
+	for (const course of COURSE_ORDER) {
+		const dishTotals = totals.get(course);
+		if (!dishTotals || dishTotals.size === 0) continue;
+		const [topDish, topCount] = [...dishTotals.entries()].sort((a, b) => b[1] - a[1])[0];
+		result.push({ course, dish: topDish, count: topCount });
+	}
+	return result;
+}
+
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 	if (request.method !== 'GET') return json({ error: 'Method not allowed' }, 405);
@@ -58,12 +86,12 @@ Deno.serve(async (request) => {
 
 	const { data: subscription, error } = await supabase
 		.from('subscriptions')
-		.select('id, status, menu_slug, menus(name, analytics_reports_enabled)')
+		.select('id, status, menu_slug, menus(name, analytics_reports_enabled, smart_food_match_enabled)')
 		.eq('stats_token', token)
 		.maybeSingle();
 	if (error || !subscription) return json({ error: 'This link is no longer valid.' }, 404);
 
-	const menu = subscription.menus as { name: string; analytics_reports_enabled: boolean } | null;
+	const menu = subscription.menus as { name: string; analytics_reports_enabled: boolean; smart_food_match_enabled: boolean } | null;
 	if (!menu?.analytics_reports_enabled) {
 		return json({ addonActive: false });
 	}
@@ -91,7 +119,9 @@ Deno.serve(async (request) => {
 		totalVisits: sumVisits(allRows, rangeStart, rangeEnd),
 		previousWeekVisits: sumVisits(allRows, previousRangeStart, previousRangeEnd),
 		topCategories: topLabels(allRows, 'category', rangeStart, rangeEnd, 5),
-		topDishes: topLabels(allRows, 'dish', rangeStart, rangeEnd, 5)
+		topDishes: topLabels(allRows, 'dish', rangeStart, rangeEnd, 5),
+		sfmEnabled: !!menu.smart_food_match_enabled,
+		topRecommendations: topRecommendations(allRows, rangeStart, rangeEnd)
 	});
 });
 

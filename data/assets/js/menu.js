@@ -213,7 +213,22 @@ function courseResultMarkup(client, strings, label, item) {
 	return `<div class="smart-match-course"><h3>${escapeHtml(label)}</h3><p class="smart-match-dish">${escapeHtml(translation.name || item.name)}</p></div>`;
 }
 
-function renderSmartFoodResult(client, strings, answers, result) {
+// Logs one '<course>::<dish name>' entry per served course into recoLog (a
+// Set, so a visitor retaking the quiz several times in one session still
+// only counts once per distinct course+dish - same "once per visit"
+// convention as seenCategories/seenDishes in startViewTracking()). Read at
+// beacon-flush time, not sent immediately, to stay a single request per
+// visit.
+function logSmartMatchRecommendations(result, recoLog) {
+	if (!recoLog) return;
+	['starter', 'main', 'dessert'].forEach((course) => {
+		const item = result[course];
+		if (item) recoLog.add(`${course}::${item.name}`);
+	});
+}
+
+function renderSmartFoodResult(client, strings, answers, result, recoLog) {
+	logSmartMatchRecommendations(result, recoLog);
 	const why = answers.favoritesOnly ? strings.whyFavoritesTemplate
 		: strings.whyTemplate.replace('{appetite}', smartMatchAppetiteLabel(strings, answers.appetiteSize).toLowerCase()).replace('{style}', smartMatchStyleLabel(strings, answers.style).toLowerCase());
 	document.getElementById('smartMatchResult').innerHTML = `
@@ -232,7 +247,7 @@ function renderSmartFoodResult(client, strings, answers, result) {
 	});
 }
 
-function wireSmartFoodMatch(client, strings) {
+function wireSmartFoodMatch(client, strings, recoLog) {
 	const openButton = document.getElementById('smartMatchOpen');
 	const overlay = document.getElementById('smartMatchOverlay');
 	if (!openButton || !overlay) return;
@@ -245,7 +260,7 @@ function wireSmartFoodMatch(client, strings) {
 		if (!checked('q1') || !checked('q2') || !q3) { notifySmartMatch(strings); return; }
 		const answers = { appetiteSize: checked('q2'), style: q3 === 'favorites' ? null : q3, favoritesOnly: q3 === 'favorites' };
 		const result = matchSmartFoodMenu(client, answers);
-		renderSmartFoodResult(client, strings, answers, result);
+		renderSmartFoodResult(client, strings, answers, result, recoLog);
 	});
 }
 
@@ -263,7 +278,7 @@ function notifySmartMatch(strings) {
 // that hasn't bought the add-on, so it costs nothing for anyone else.
 // Counts each category/dish once per visit via IntersectionObserver, then
 // flushes a single beacon on page-hide rather than one request per item.
-function startViewTracking(client) {
+function startViewTracking(client, recoLog) {
 	if (!client.analytics_reports_enabled) return;
 	const seenCategories = new Set();
 	const seenDishes = new Set();
@@ -272,7 +287,7 @@ function startViewTracking(client) {
 	const flush = () => {
 		if (sent) return;
 		sent = true;
-		const payload = JSON.stringify({ menuSlug: client.slug, categories: [...seenCategories], dishes: [...seenDishes] });
+		const payload = JSON.stringify({ menuSlug: client.slug, categories: [...seenCategories], dishes: [...seenDishes], recommendations: [...(recoLog || [])] });
 		const endpoint = `${AUTH_CONFIG.supabaseUrl}/functions/v1/track-menu-view`;
 		// text/plain keeps this a CORS-safelisted "simple request" - sendBeacon
 		// can't attach headers to satisfy a preflight, so a non-safelisted type
@@ -330,8 +345,9 @@ function renderMenu(client) {
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&enable=upscale&height=70" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>
 		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}`;
-	if (smartMatchStrings) wireSmartFoodMatch(client, smartMatchStrings);
-	startViewTracking(client);
+	const smartMatchRecoLog = new Set();
+	if (smartMatchStrings) wireSmartFoodMatch(client, smartMatchStrings, smartMatchRecoLog);
+	startViewTracking(client, smartMatchRecoLog);
 }
 
 async function loadMenu() {
