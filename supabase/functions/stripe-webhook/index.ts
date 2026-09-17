@@ -293,7 +293,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		categories: [],
 		languages: ['de', 'en'],
 		is_published: false,
-		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true'
+		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true',
+		photo_addon_enabled: metadata.photoAddon === 'true'
 	});
 	if (menuError) {
 		console.error('Failed to insert draft menu', menuError);

@@ -107,7 +107,10 @@ function normalizeClient(client) {
 		// the upsert would let an unrelated "Save changes" click silently
 		// overwrite the webhook's own value back to whatever was last loaded
 		// into memory.
-		analytics_reports_enabled: !!client.analytics_reports_enabled
+		analytics_reports_enabled: !!client.analytics_reports_enabled,
+		// Same read-only reasoning as analytics_reports_enabled above - set
+		// once by stripe-webhook at initial purchase, never staff-editable.
+		photo_addon_enabled: !!client.photo_addon_enabled
 	};
 }
 function loadClients() { try { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(saved) && saved.length ? saved.map(normalizeClient) : structuredClone(seedClients).map(normalizeClient); } catch { return structuredClone(seedClients).map(normalizeClient); } }
@@ -417,6 +420,32 @@ async function translateMenu() {
 	}
 }
 
+// The Add-ons tab: a read-only board of purchase status for the three
+// sellable extras, plus a "Send link" per feature that has a self-service
+// page (analytics/smart-food-match both live on the same addons.html, sfm
+// via manage-addons; photo has no purchase page of its own yet, so it gets
+// a status dot but no send button).
+function renderAddonBoard(client, clientSubscription) {
+	const analyticsStatus = $('#addonStatusAnalytics');
+	if (!analyticsStatus) return; // Add-ons tab not present in this markup version
+	analyticsStatus.classList.toggle('active', !!client.analytics_reports_enabled);
+	const viewLink = $('#addonViewAnalytics');
+	if (client.analytics_reports_enabled && clientSubscription?.stats_token) {
+		viewLink.style.display = '';
+		viewLink.href = `${RENEWAL_SITE}/stats.html?token=${clientSubscription.stats_token}`;
+	} else {
+		viewLink.style.display = 'none';
+	}
+
+	$('#addonStatusSfm').classList.toggle('active', !!client.smart_food_match_enabled);
+	$('#addonStatusPhoto').classList.toggle('active', !!client.photo_addon_enabled);
+
+	const addonsUrl = clientSubscription?.addon_token ? `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}` : '';
+	[$('#addonSendAnalytics'), $('#addonSendSfm')].forEach((button) => { button.disabled = !addonsUrl; });
+	$('#addonSendAnalytics').dataset.link = addonsUrl;
+	$('#addonSendSfm').dataset.link = addonsUrl;
+}
+
 function render() {
 	const client = selectedClient() || clients[0]; if (!client) return;
 	selectedId = client.id;
@@ -463,29 +492,13 @@ function render() {
 			: 'Not ready yet - needs at least one tagged starter, main and dessert section (see the dropdown on each section above).';
 		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
 	}
-	// Read-only - no click handler, unlike smartFoodMatchEnabled above. This
-	// flag is set entirely by stripe-webhook on purchase/cancellation. The
-	// "View stats" link reuses the same stats_token/stats.html the customer's
-	// own weekly email links to - just the owner opening the same page.
+	// Read-only board - none of these three flags have a click handler here,
+	// unlike smartFoodMatchEnabled above. analytics_reports_enabled and
+	// photo_addon_enabled are set entirely by stripe-webhook on purchase
+	// (smart_food_match_enabled is staff-editable via the checkbox above,
+	// but its purchased/not-purchased state still belongs on this board too).
 	const clientSubscription = subscriptionsBySlug[client.slug];
-	const analyticsRow = $('#analyticsStatusRow');
-	if (analyticsRow) {
-		const showAnalytics = !!client.analytics_reports_enabled && !!clientSubscription?.stats_token;
-		analyticsRow.style.display = showAnalytics ? '' : 'none';
-		if (showAnalytics) $('#analyticsStatsLink').href = `${RENEWAL_SITE}/stats.html?token=${clientSubscription.stats_token}`;
-	}
-	// Unlike the stats link above, this one shows as soon as a subscription
-	// exists at all - its whole purpose is handing the customer the link
-	// BEFORE they've added anything, not just once something is already on.
-	const manageAddonsLink = $('#manageAddonsLink');
-	if (manageAddonsLink) {
-		if (clientSubscription?.addon_token) {
-			manageAddonsLink.style.display = '';
-			manageAddonsLink.href = `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}`;
-		} else {
-			manageAddonsLink.style.display = 'none';
-		}
-	}
+	renderAddonBoard(client, clientSubscription);
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
 	if (isLocked) {
@@ -756,6 +769,14 @@ if ($('#headerTextColor')) $('#headerTextColor').addEventListener('change', () =
 if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('change', () => {
 	selectedClient().smart_food_match_enabled = $('#smartFoodMatchEnabled').checked;
 	saveClients().then(render).catch((error) => notify(error.message));
+});
+[$('#addonSendAnalytics'), $('#addonSendSfm')].forEach((button) => {
+	if (!button) return;
+	button.addEventListener('click', async () => {
+		if (!button.dataset.link) return;
+		await navigator.clipboard.writeText(button.dataset.link);
+		notify('Add-ons link copied');
+	});
 });
 
 if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', async () => {

@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=photo-delete-x-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=addons-board-1">
 </head>
 <body>
 <aside class="sidebar">
@@ -45,15 +45,11 @@
         <div class="panel client-panel"><div class="panel-heading"><div><p class="eyebrow">Portfolio</p><h2>Your clients</h2></div><button class="icon-button" id="addClient" title="Add a client">＋</button></div><input class="client-search" id="clientSearch" type="search" placeholder="Search clients..." aria-label="Search clients"><div id="clientList" class="client-list"></div></div>
         <div class="panel editor-panel" id="builder"><div class="panel-heading"><div><p class="eyebrow">Selected client</p><h2 id="editorTitle">Client details</h2></div><span class="saved-state" id="savedState">Saved locally</span></div>
             <div class="subscription-banner" id="subscriptionBanner" style="display:none"></div>
-            <div id="analyticsStatusRow" style="display:none;margin-bottom:14px">
-                <span class="status-badge">📊 Weekly Analytics Report: active</span>
-                <a href="#" id="analyticsStatsLink" target="_blank" rel="noopener" style="margin-left:8px;font-size:11px;font-weight:700;color:var(--orange)">View stats ↗</a>
-            </div>
-            <a href="#" id="manageAddonsLink" target="_blank" rel="noopener" style="display:none;margin-bottom:14px;font-size:11px;font-weight:700;color:var(--orange)">Manage add-ons ↗</a>
             <div class="editor-tabs" role="tablist">
                 <button type="button" class="editor-tab active" data-tab="details" role="tab" aria-selected="true">Details</button>
                 <button type="button" class="editor-tab" data-tab="menu" role="tab" aria-selected="false">Menu &amp; Photos</button>
                 <button type="button" class="editor-tab" data-tab="languages" role="tab" aria-selected="false">Languages</button>
+                <button type="button" class="editor-tab" data-tab="addons" role="tab" aria-selected="false">Add-ons</button>
             </div>
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
@@ -83,6 +79,26 @@
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="languages" hidden>
                     <div class="language-panel"><strong>Menu languages</strong><p class="language-hint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language">Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
+                </div>
+                <div class="editor-tab-panel" data-tab-panel="addons" hidden>
+                    <p class="language-hint">Green means the client already has it. "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
+                    <div class="addon-board">
+                        <div class="addon-board-row">
+                            <span class="addon-board-status" id="addonStatusAnalytics"></span>
+                            <span class="addon-board-name">Weekly Analytics Report</span>
+                            <a href="#" class="addon-board-view" id="addonViewAnalytics" target="_blank" rel="noopener" style="display:none">View stats ↗</a>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendAnalytics">Send link</button>
+                        </div>
+                        <div class="addon-board-row">
+                            <span class="addon-board-status" id="addonStatusSfm"></span>
+                            <span class="addon-board-name">Smart Food Match</span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSfm">Send link</button>
+                        </div>
+                        <div class="addon-board-row">
+                            <span class="addon-board-status" id="addonStatusPhoto"></span>
+                            <span class="addon-board-name">Photo add-on</span>
+                        </div>
+                    </div>
                 </div>
                 <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
             </form>
@@ -116,6 +132,6 @@
     </div>
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=addons-1"></script>
+<script src="data/assets/js/admin.js?v=addons-board-1"></script>
 </body>
 </html>

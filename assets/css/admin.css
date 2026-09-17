@@ -67,6 +67,14 @@
 .status-badge.status-cancelled{color:#5c5c5c;background:#efefef}
 .status-badge.status-none{color:#767471;background:#f0efed}
 .subscription-banner{background:#fdecea;border:1px solid #f3c6c2;color:#8a231c;border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:16px}
+.addon-board{display:grid;gap:10px;margin-top:14px}
+.addon-board-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.addon-board-status{width:10px;height:10px;border-radius:50%;background:#c7c4bf;flex-shrink:0}
+.addon-board-status.active{background:#2fa360}
+.addon-board-name{font-weight:700;font-size:13px}
+.addon-board-view{margin-left:auto;font-size:11px;font-weight:700;color:var(--orange)}
+.addon-board-send{margin-left:auto;font-size:11px;padding:6px 12px}
+.addon-board-view+.addon-board-send{margin-left:10px}
 .subscription-banner a{color:#8a231c;font-weight:700}
 .language-hint{color:var(--muted);font-size:11px;margin:0 0 4px}
 .language-editor{display:grid;gap:6px}
