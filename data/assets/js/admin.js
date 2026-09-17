@@ -464,9 +464,16 @@ function render() {
 		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
 	}
 	// Read-only - no click handler, unlike smartFoodMatchEnabled above. This
-	// flag is set entirely by stripe-webhook on purchase/cancellation.
-	if ($('#analyticsStatusBadge')) $('#analyticsStatusBadge').style.display = client.analytics_reports_enabled ? '' : 'none';
+	// flag is set entirely by stripe-webhook on purchase/cancellation. The
+	// "View stats" link reuses the same stats_token/stats.html the customer's
+	// own weekly email links to - just the owner opening the same page.
 	const clientSubscription = subscriptionsBySlug[client.slug];
+	const analyticsRow = $('#analyticsStatusRow');
+	if (analyticsRow) {
+		const showAnalytics = !!client.analytics_reports_enabled && !!clientSubscription?.stats_token;
+		analyticsRow.style.display = showAnalytics ? '' : 'none';
+		if (showAnalytics) $('#analyticsStatsLink').href = `${RENEWAL_SITE}/stats.html?token=${clientSubscription.stats_token}`;
+	}
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
 	if (isLocked) {
@@ -642,7 +649,7 @@ async function syncFromSupabase() {
 }
 async function syncSubscriptions() {
 	if (typeof supabaseClient === 'undefined') return;
-	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token').order('created_at', { ascending: false });
+	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token').order('created_at', { ascending: false });
 	if (error) return;
 	subscriptionsBySlug = {};
 	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
