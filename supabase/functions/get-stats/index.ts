@@ -63,7 +63,11 @@ function translateCategoryLabel(translations: MenuTranslations, sourceLabel: str
 	return translations?.categories?.[sourceLabel]?.name || sourceLabel;
 }
 function translateItemLabel(translations: MenuTranslations, sourceLabel: string): string {
-	return translations?.items?.[sourceLabel]?.name || sourceLabel;
+	const translated = translations?.items?.[sourceLabel]?.name || sourceLabel;
+	// Some menus number their dishes for ordering ("1. Classic Bruschetta")
+	// - useful on the printed/live menu, just clutter in a stats summary, so
+	// strip a leading "<number>. " before displaying it here.
+	return translated.replace(/^\d+\.\s*/, '');
 }
 
 const COURSE_ORDER = ['starter', 'main', 'dessert', 'drink'];
