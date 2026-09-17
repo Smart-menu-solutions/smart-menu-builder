@@ -665,11 +665,7 @@ async function loadPhotoLibrary() {
 	const { files, error } = await listLibraryPhotos();
 	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
 	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos uploaded yet.</p>'; return; }
-	grid.innerHTML = files.map((file) => `<div class="photo-library-item"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"><div class="photo-item-actions"><button type="button" class="photo-copy-link" data-copy-photo="${escapeAttr(file.url)}">Copy link</button><button type="button" class="photo-delete-link" data-delete-photo="${escapeAttr(file.name)}">Delete</button></div></div>`).join('');
-	document.querySelectorAll('[data-copy-photo]').forEach((button) => button.addEventListener('click', async () => {
-		await navigator.clipboard.writeText(button.dataset.copyPhoto);
-		notify('Photo link copied');
-	}));
+	grid.innerHTML = files.map((file) => `<div class="photo-library-item"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"><button type="button" class="icon-button photo-delete-x" data-delete-photo="${escapeAttr(file.name)}" title="Delete photo">×</button></div>`).join('');
 	document.querySelectorAll('[data-delete-photo]').forEach((button) => button.addEventListener('click', async () => {
 		if (!confirm('Delete this photo? This cannot be undone, and it will disappear from any menu still using it.')) return;
 		const { error } = await supabaseClient.storage.from('menu-images').remove([`library/${button.dataset.deletePhoto}`]);
