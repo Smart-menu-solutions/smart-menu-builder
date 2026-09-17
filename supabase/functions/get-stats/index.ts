@@ -48,6 +48,24 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 	return rows.reduce((sum, row) => row.metric_type === 'visit' && row.day >= from && row.day <= to ? sum + row.view_count : sum, 0);
 }
 
+// stats.html has no language switcher - it's always English - so category/
+// dish labels (tracked under their source-menu name, e.g. German for most
+// customers, to keep counts from fragmenting by language) need translating
+// to English here for display. Mirrors menu.js's categoryName()/
+// itemTranslation() lookup into menus.translations, minus the browser-only
+// static fallback file (menus.translations is the live, DB-backed
+// translation source - the fallback file only covers a handful of legacy
+// demo clients that predate it). Falls back to the untranslated source
+// name if this menu has no English translation for it yet.
+type MenuTranslations = { categories?: Record<string, { name?: string }>; items?: Record<string, { name?: string }> } | undefined;
+const STATS_LANGUAGE = 'en';
+function translateCategoryLabel(translations: MenuTranslations, sourceLabel: string): string {
+	return translations?.categories?.[sourceLabel]?.name || sourceLabel;
+}
+function translateItemLabel(translations: MenuTranslations, sourceLabel: string): string {
+	return translations?.items?.[sourceLabel]?.name || sourceLabel;
+}
+
 const COURSE_ORDER = ['starter', 'main', 'dessert', 'drink'];
 
 // sfm_reco labels are '<course>::<dish name>' (see menu.js). Sums per
@@ -96,12 +114,12 @@ Deno.serve(async (request) => {
 
 	const { data: subscription, error } = await supabase
 		.from('subscriptions')
-		.select('id, status, menu_slug, menus(name, analytics_reports_enabled, smart_food_match_enabled)')
+		.select('id, status, menu_slug, menus(name, analytics_reports_enabled, smart_food_match_enabled, translations)')
 		.eq('stats_token', token)
 		.maybeSingle();
 	if (error || !subscription) return json({ error: 'This link is no longer valid.' }, 404);
 
-	const menu = subscription.menus as { name: string; analytics_reports_enabled: boolean; smart_food_match_enabled: boolean } | null;
+	const menu = subscription.menus as { name: string; analytics_reports_enabled: boolean; smart_food_match_enabled: boolean; translations: Record<string, MenuTranslations> | null } | null;
 	if (!menu?.analytics_reports_enabled) {
 		return json({ addonActive: false });
 	}
@@ -122,6 +140,7 @@ Deno.serve(async (request) => {
 
 	const allRows = rows ?? [];
 	const sfm = topRecommendations(allRows, rangeStart, rangeEnd);
+	const translations = menu.translations?.[STATS_LANGUAGE];
 	return json({
 		addonActive: true,
 		menuName: menu.name,
@@ -129,10 +148,12 @@ Deno.serve(async (request) => {
 		rangeEnd,
 		totalVisits: sumVisits(allRows, rangeStart, rangeEnd),
 		previousWeekVisits: sumVisits(allRows, previousRangeStart, previousRangeEnd),
-		topCategories: topLabels(allRows, 'category', rangeStart, rangeEnd, 5),
-		topDishes: topLabels(allRows, 'dish', rangeStart, rangeEnd, 5),
+		topCategories: topLabels(allRows, 'category', rangeStart, rangeEnd, 5)
+			.map((item) => ({ ...item, label: translateCategoryLabel(translations, item.label) })),
+		topDishes: topLabels(allRows, 'dish', rangeStart, rangeEnd, 5)
+			.map((item) => ({ ...item, label: translateItemLabel(translations, item.label) })),
 		sfmEnabled: !!menu.smart_food_match_enabled,
-		topRecommendations: sfm.items,
+		topRecommendations: sfm.items.map((item) => ({ ...item, dish: translateItemLabel(translations, item.dish) })),
 		sfmTotalCompletions: sfm.totalCompletions
 	});
 });
