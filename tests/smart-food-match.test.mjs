@@ -29,12 +29,12 @@ test('courseTypeOf returns "other" for legacy categories with no courseType set'
 	assert.equal(courseTypeOf({ name: 'Old Section', courseType: '' }), 'other');
 });
 
-test('buildCourseCatalog buckets items by category courseType and ignores drink/other', () => {
+test('buildCourseCatalog buckets items by category courseType, including drink, and ignores other', () => {
 	const pools = buildCourseCatalog(fullyTaggedClient());
 	assert.equal(pools.starter.length, 2);
 	assert.equal(pools.main.length, 2);
 	assert.equal(pools.dessert.length, 1);
-	assert.ok(!('drink' in pools));
+	assert.equal(pools.drink.length, 1);
 });
 
 test('canRunSmartMatch is true only when all three courses have candidates', () => {
@@ -80,9 +80,9 @@ test('pickCourse returns null for an empty pool', () => {
 	assert.equal(pickCourse([], { style: 'fresh' }, () => 0), null);
 });
 
-test('matchSmartFoodMenu returns exactly one starter/main/dessert for a fully-tagged client', () => {
+test('matchSmartFoodMenu returns a starter/main/dessert/drink combo for a fully-tagged client', () => {
 	const result = matchSmartFoodMenu(fullyTaggedClient(), { appetiteSize: 'medium', style: 'fresh' }, () => 0);
-	assert.ok(result.starter && result.main && result.dessert);
+	assert.ok(result.starter && result.main && result.dessert && result.drink);
 	assert.deepEqual(result.skipped, []);
 });
 
@@ -93,4 +93,13 @@ test('matchSmartFoodMenu marks a course as skipped (not thrown) when its pool is
 	assert.equal(result.dessert, null);
 	assert.deepEqual(result.skipped, ['dessert']);
 	assert.ok(result.starter && result.main);
+});
+
+test('matchSmartFoodMenu leaves drink null (and out of skipped) when nothing is tagged as a drink', () => {
+	const client = fullyTaggedClient();
+	client.categories = client.categories.filter((category) => category.courseType !== 'drink');
+	const result = matchSmartFoodMenu(client, { appetiteSize: 'medium', style: 'fresh' }, () => 0);
+	assert.equal(result.drink, null);
+	assert.deepEqual(result.skipped, []);
+	assert.ok(result.starter && result.main && result.dessert);
 });

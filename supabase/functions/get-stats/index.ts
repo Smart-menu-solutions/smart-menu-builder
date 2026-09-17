@@ -48,7 +48,7 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 	return rows.reduce((sum, row) => row.metric_type === 'visit' && row.day >= from && row.day <= to ? sum + row.view_count : sum, 0);
 }
 
-const COURSE_ORDER = ['starter', 'main', 'dessert'];
+const COURSE_ORDER = ['starter', 'main', 'dessert', 'drink'];
 
 // sfm_reco labels are '<course>::<dish name>' (see menu.js). Sums per
 // (course, dish) across the range, then keeps only the single most-

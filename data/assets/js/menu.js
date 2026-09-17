@@ -116,7 +116,7 @@ function courseTypeOf(category) {
 }
 
 function buildCourseCatalog(client) {
-	const pools = { starter: [], main: [], dessert: [] };
+	const pools = { starter: [], main: [], dessert: [], drink: [] };
 	(client.categories || []).forEach((category) => {
 		const pool = pools[courseTypeOf(category)];
 		if (pool) pool.push(...(category.items || []));
@@ -160,8 +160,14 @@ function pickCourse(pool, { style, appetiteSize, favoritesOnly } = {}, rng = Mat
 // text, built where this is called from (it needs the language strings).
 function matchSmartFoodMenu(client, answers, rng = Math.random) {
 	const pools = buildCourseCatalog(client);
-	const result = { starter: null, main: null, dessert: null, skipped: [] };
-	['starter', 'main', 'dessert'].forEach((course) => {
+	const result = { starter: null, main: null, dessert: null, drink: null, skipped: [] };
+	// Drink is optional and only attempted when the menu actually has
+	// drink-tagged items - unlike starter/main/dessert (required by
+	// canRunSmartMatch's gate), so existing clients who haven't tagged any
+	// drinks yet keep getting a normal 3-course result instead of a
+	// "no drink available" message.
+	const courses = pools.drink.length > 0 ? ['starter', 'main', 'dessert', 'drink'] : ['starter', 'main', 'dessert'];
+	courses.forEach((course) => {
 		const pick = pickCourse(pools[course], answers, rng);
 		if (pick) result[course] = pick; else result.skipped.push(course);
 	});
@@ -221,7 +227,7 @@ function courseResultMarkup(client, strings, label, item) {
 // visit.
 function logSmartMatchRecommendations(result, recoLog) {
 	if (!recoLog) return;
-	['starter', 'main', 'dessert'].forEach((course) => {
+	['starter', 'main', 'dessert', 'drink'].forEach((course) => {
 		const item = result[course];
 		if (item) recoLog.add(`${course}::${item.name}`);
 	});
@@ -236,6 +242,7 @@ function renderSmartFoodResult(client, strings, answers, result, recoLog) {
 		${courseResultMarkup(client, strings, strings.starterLabel, result.starter)}
 		${courseResultMarkup(client, strings, strings.mainLabel, result.main)}
 		${courseResultMarkup(client, strings, strings.dessertLabel, result.dessert)}
+		${result.drink ? courseResultMarkup(client, strings, strings.drinkLabel, result.drink) : ''}
 		<p class="smart-match-why"><strong>${escapeHtml(strings.whyLabel)}</strong><br>${escapeHtml(why)}</p>
 		<button type="button" class="smart-match-submit" id="smartMatchRestart">${escapeHtml(strings.restartLabel)}</button>`;
 	document.getElementById('smartMatchQuiz').hidden = true;
