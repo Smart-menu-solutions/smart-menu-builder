@@ -58,7 +58,7 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 // demo clients that predate it). Falls back to the untranslated source
 // name if this menu has no English translation for it yet.
 type MenuTranslations = { categories?: Record<string, { name?: string }>; items?: Record<string, { name?: string }> } | undefined;
-const STATS_LANGUAGE = 'en';
+const SUPPORTED_LANGUAGES = ['en', 'de'];
 function translateCategoryLabel(translations: MenuTranslations, sourceLabel: string): string {
 	return translations?.categories?.[sourceLabel]?.name || sourceLabel;
 }
@@ -115,6 +115,8 @@ Deno.serve(async (request) => {
 	const url = new URL(request.url);
 	const token = url.searchParams.get('token') || '';
 	if (!TOKEN_PATTERN.test(token)) return json({ error: 'Invalid or missing link.' }, 400);
+	const requestedLanguage = url.searchParams.get('lang') || '';
+	const language = SUPPORTED_LANGUAGES.includes(requestedLanguage) ? requestedLanguage : 'en';
 
 	const { data: subscription, error } = await supabase
 		.from('subscriptions')
@@ -144,7 +146,7 @@ Deno.serve(async (request) => {
 
 	const allRows = rows ?? [];
 	const sfm = topRecommendations(allRows, rangeStart, rangeEnd);
-	const translations = menu.translations?.[STATS_LANGUAGE];
+	const translations = menu.translations?.[language];
 	return json({
 		addonActive: true,
 		menuName: menu.name,
