@@ -11,8 +11,13 @@ body{background:#fff7ef}.menu-container{background:#fff7ef}
 @media (max-width: 640px){
 	.menu-hero{padding:3rem 1rem 2.5rem}
 	.menu-hero h1{font-size:clamp(1.8rem,9vw,2.6rem);overflow-wrap:anywhere}
-	.actions,.menu-languages{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem}
-	.actions a,.menu-languages a{max-width:100%;overflow-wrap:anywhere}
+	.actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.7rem}
+	.actions a{max-width:100%;overflow-wrap:anywhere}
+	/* Keep all language codes on one row even with 6+ languages - shrink the
+	   buttons instead of letting the row wrap (a wrapped 2nd row with just
+	   one code left dangling reads as broken, not intentional). */
+	.menu-languages{display:flex;flex-wrap:nowrap;justify-content:center;gap:.3rem}
+	.menu-languages a{min-width:0;padding:.35rem .5rem;font-size:.76rem}
 	.menu-container{padding:2rem 1rem 3rem}
 	.item{padding:.95rem}
 	.item-header{align-items:flex-start;flex-wrap:wrap;gap:.35rem .75rem}
