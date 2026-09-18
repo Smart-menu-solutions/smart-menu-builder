@@ -72,14 +72,23 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 
 // Sent to the customer once the 7-day grace period has run out and the menu
 // has just been taken offline.
-async function sendDeactivatedEmail(subscriptionId: string, to: string, contactName: string, renewalToken: string) {
+async function sendDeactivatedEmail(subscriptionId: string, to: string, contactName: string, renewalToken: string, lang: string) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping deactivation customer email: no valid email on file', subscriptionId);
 		return;
 	}
-	const subject = 'Ihr Abo wurde deaktiviert';
+	const isEn = lang === 'en';
+	const subject = isEn ? 'Your subscription has been deactivated' : 'Ihr Abo wurde deaktiviert';
 	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}`;
-	const html = `
+	const html = isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>since the payment for your renewal didn't go through, your subscription has now been deactivated and your menu is no longer reachable via the QR code.</p>
+		<p>You can reactivate your subscription anytime via the link below:</p>
+		<p><a href="${renewalUrl}">Reactivate subscription</a></p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>da die Zahlung für Ihre Verlängerung ausblieb, wurde Ihr Abo nun deaktiviert und Ihr Menü ist über den QR-Code nicht mehr erreichbar.</p>
 		<p>Sie können Ihr Abo jederzeit über folgenden Link reaktivieren:</p>
@@ -101,7 +110,7 @@ Deno.serve(async (_request) => {
 
 	const { data: toDeactivate, error } = await supabase
 		.from('subscriptions')
-		.select('id, plan, renewal_token, menu_slug, customers(contact_name, email)')
+		.select('id, plan, renewal_token, menu_slug, lang, customers(contact_name, email)')
 		.eq('status', 'expired')
 		.lt('grace_until', today);
 
@@ -125,7 +134,7 @@ Deno.serve(async (_request) => {
 				Plan: subscription.plan,
 				'Renewal-Link': `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}`
 			}),
-			sendDeactivatedEmail(subscription.id, subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.renewal_token)
+			sendDeactivatedEmail(subscription.id, subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.renewal_token, subscription.lang)
 		]);
 	}
 

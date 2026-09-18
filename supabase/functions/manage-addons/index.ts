@@ -147,7 +147,7 @@ Deno.serve(async (request) => {
 async function lookupSubscription(token: string) {
 	return supabase
 		.from('subscriptions')
-		.select('id, status, plan, menu_slug, stripe_subscription_id, smart_food_match_item_id, analytics_reports_item_id, customers(stripe_customer_id, contact_name, email), menus(name, smart_food_match_enabled, analytics_reports_enabled, photo_addon_enabled)')
+		.select('id, status, plan, lang, menu_slug, stripe_subscription_id, smart_food_match_item_id, analytics_reports_item_id, customers(stripe_customer_id, contact_name, email), menus(name, smart_food_match_enabled, analytics_reports_enabled, photo_addon_enabled)')
 		.eq('addon_token', token)
 		.maybeSingle();
 }
@@ -299,14 +299,22 @@ async function handlePost(request: Request) {
 				customer.email,
 				subscription.id,
 				'Add-on hinzugefügt',
-				`${addon.label} wurde hinzugefügt`,
-				`<p>Hallo ${escapeHtml(customer.contact_name || '')},</p>
+				subscription.lang === 'en' ? `${addon.label} has been added` : `${addon.label} wurde hinzugefügt`,
+				subscription.lang === 'en' ? `<p>Hi ${escapeHtml(customer.contact_name || '')},</p>
+				<p><strong>${escapeHtml(addon.label)}</strong> is now active for <strong>${escapeHtml(menu?.name || '')}</strong>.</p>
+				<p>${addon.billing === 'recurring'
+					? `We've charged the pro-rated amount for the rest of your current plan year: <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. From your next renewal on, it's included automatically with your plan.`
+					: `We've charged the one-time amount of <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. We'll be in touch shortly to organise the photos for your menu.`
+				}</p>
+				<p>Best regards</p>
+				${EMAIL_SIGNATURE}` : `<p>Hallo ${escapeHtml(customer.contact_name || '')},</p>
 				<p><strong>${escapeHtml(addon.label)}</strong> ist jetzt für <strong>${escapeHtml(menu?.name || '')}</strong> aktiv.</p>
 				<p>${addon.billing === 'recurring'
 					? `Berechnet wurde der anteilige Betrag für den Rest Ihres laufenden Abo-Jahres: <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. Ab der nächsten Verlängerung läuft es automatisch mit Ihrem Tarif zusammen weiter.`
 					: `Berechnet wurde der einmalige Betrag von <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. Wir melden uns in Kürze, um die Fotos für Ihre Speisekarte zu organisieren.`
 				}</p>
-				<p>Mit freundlichen Grüßen<br>Smart Menu Solutions</p>`
+				<p>Mit freundlichen Grüßen</p>
+				${EMAIL_SIGNATURE}`
 			)
 			: Promise.resolve()
 	]);

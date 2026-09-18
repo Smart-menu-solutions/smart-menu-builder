@@ -139,7 +139,7 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 // single address verified on the Resend account — real customer inboxes
 // will silently fail (logged as a Resend API error in notifications_log,
 // provider_message_id stays null) until that domain verification is done.
-async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string) {
+async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string, lang: string) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping customer confirmation: no valid email on file', subscriptionId);
 		await supabase.from('notifications_log').insert({
@@ -151,13 +151,22 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		return;
 	}
 	const planLabel = PLAN_LABELS[plan] || plan;
-	const subject = kind === 'renewal'
-		? 'Ihre Verlängerung bei Smart Menu Solutions'
-		: 'Ihre Bestellung bei Smart Menu Solutions';
-	const intro = kind === 'renewal'
-		? 'vielen Dank für die Verlängerung Ihres Abos.'
-		: 'vielen Dank für Ihre Bestellung.';
-	const html = `
+	const isEn = lang === 'en';
+	const subject = isEn
+		? (kind === 'renewal' ? 'Your renewal at Smart Menu Solutions' : 'Your order at Smart Menu Solutions')
+		: (kind === 'renewal' ? 'Ihre Verlängerung bei Smart Menu Solutions' : 'Ihre Bestellung bei Smart Menu Solutions');
+	const intro = isEn
+		? (kind === 'renewal' ? 'thank you for renewing your subscription.' : 'thank you for your order.')
+		: (kind === 'renewal' ? 'vielen Dank für die Verlängerung Ihres Abos.' : 'vielen Dank für Ihre Bestellung.');
+	const html = isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>${intro} We've received your details and menu and will get back to you shortly with the next steps.</p>
+		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
+		<p>If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
@@ -172,14 +181,23 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 // Sent the moment an automatic renewal payment fails — this is the start of
 // the 7-day grace period, the menu is still online at this point (only
 // check-subscriptions taking it offline after the grace period runs out).
-async function sendPaymentFailedEmail(subscriptionId: string, to: string, contactName: string, renewalToken: string) {
+async function sendPaymentFailedEmail(subscriptionId: string, to: string, contactName: string, renewalToken: string, lang: string) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping payment-failed customer email: no valid email on file', subscriptionId);
 		return;
 	}
-	const subject = 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
+	const isEn = lang === 'en';
+	const subject = isEn ? 'Your renewal has failed – action needed' : 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
 	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}`;
-	const html = `
+	const html = isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>unfortunately, the automatic payment for renewing your subscription could not be processed.</p>
+		<p>Your menu will stay online for another 7 days so you have time to sort this out. Please renew your subscription via the link below to avoid any interruption:</p>
+		<p><a href="${renewalUrl}">Renew now</a></p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>leider konnte die automatische Zahlung für die Verlängerung Ihres Abos nicht durchgeführt werden.</p>
 		<p>Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden:</p>
@@ -251,6 +269,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	const plan = metadata.plan || 'start';
 	const pdfPath = metadata.pdfPath || '';
 	const email = metadata.email || session.customer_details?.email || '';
+	// Defaults to 'de' to match subscriptions.lang's column default - see
+	// create-checkout-session/renewal for where this is actually set.
+	const lang = metadata.lang === 'en' ? 'en' : 'de';
 	const today = new Date();
 	const periodStart = today.toISOString().slice(0, 10);
 	const periodEnd = addDays(today, 365);
@@ -273,6 +294,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			current_period_start: periodStart,
 			current_period_end: periodEnd,
 			grace_until: null,
+			lang,
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
 		// Paying via the renewal link is how a deactivated menu comes back online.
@@ -289,7 +311,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
 			}, renewalAttachment ? [renewalAttachment] : undefined),
-			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token)
+			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token, lang)
 		]);
 		return;
 	}
@@ -333,7 +355,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		status: 'active',
 		stripe_subscription_id: session.subscription as string,
 		current_period_start: periodStart,
-		current_period_end: periodEnd
+		current_period_end: periodEnd,
+		lang
 	}).select().single();
 	if (subscriptionError || !subscription) {
 		console.error('Failed to insert subscription', subscriptionError);
@@ -366,7 +389,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
 		}, orderAttachments),
-		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token)
+		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang)
 	]);
 }
 
@@ -401,7 +424,7 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 		sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
 			'Subscription-ID': subscription.id, Plan: subscription.plan
 		}),
-		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan, subscription.addon_token)
+		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan, subscription.addon_token, subscription.lang)
 	]);
 }
 
@@ -430,7 +453,7 @@ async function handleInvoiceFailed(invoice: Stripe.Invoice) {
 			Plan: subscription.plan,
 			'Renewal-Link': `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}`
 		}),
-		sendPaymentFailedEmail(subscription.id, subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.renewal_token)
+		sendPaymentFailedEmail(subscription.id, subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.renewal_token, subscription.lang)
 	]);
 }
 

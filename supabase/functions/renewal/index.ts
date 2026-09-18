@@ -80,6 +80,7 @@ async function handleCreateCheckout(request: Request) {
 		const companyName = String(body.companyName || '').trim();
 		const phone = String(body.phone || '').trim();
 		const pdfPath = String(body.pdfPath || '').trim();
+		const lang = String(body.lang || '') === 'en' ? 'en' : 'de';
 
 		const pricing = PLAN_PRICING[plan];
 		if (!TOKEN_PATTERN.test(token) || !pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email) || !pdfPath) {
@@ -116,10 +117,11 @@ async function handleCreateCheckout(request: Request) {
 				companyName,
 				phone,
 				email,
-				pdfPath
+				pdfPath,
+				lang
 			},
 			subscription_data: {
-				metadata: { type: 'renewal', subscriptionId: subscription.id, plan, firstName, lastName, companyName, phone, email, pdfPath }
+				metadata: { type: 'renewal', subscriptionId: subscription.id, plan, firstName, lastName, companyName, phone, email, pdfPath, lang }
 			}
 		});
 

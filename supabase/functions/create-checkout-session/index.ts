@@ -38,6 +38,11 @@ Deno.serve(async (request) => {
 		const photoZipPath = String(body.photoZipPath || '').trim();
 		const smartFoodMatchAddon = Boolean(body.smartFoodMatchAddon);
 		const analyticsReportsAddon = Boolean(body.analyticsReportsAddon);
+		// Defaults to 'de' (not 'en') to match subscriptions.lang's column
+		// default - every subscription before this feature existed was
+		// effectively German-only, so an unset/unexpected value should fall
+		// back to that same historical behavior, not flip to English.
+		const lang = String(body.lang || '') === 'en' ? 'en' : 'de';
 
 		const pricing = PLAN_PRICING[plan];
 		if (!pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email) || !pdfPath) {
@@ -119,10 +124,11 @@ Deno.serve(async (request) => {
 				photoAddon: String(photoAddon),
 				photoZipPath,
 				smartFoodMatchAddon: String(smartFoodMatchAddon),
-				analyticsReportsAddon: String(analyticsReportsAddon)
+				analyticsReportsAddon: String(analyticsReportsAddon),
+				lang
 			},
 			subscription_data: {
-				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon), analyticsReportsAddon: String(analyticsReportsAddon) }
+				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon), analyticsReportsAddon: String(analyticsReportsAddon), lang }
 			}
 		});
 
