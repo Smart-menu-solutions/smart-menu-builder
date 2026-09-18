@@ -496,9 +496,13 @@ function openEmail(lead) {
 }
 
 // Instagram has no equivalent of wa.me/mailto: - no URL scheme opens a DM
-// with prefilled text. Copies the message to the clipboard and opens the
-// profile instead, so the human just has to paste it into the DM box that
-// opens; same confirm-before-advancing pattern as the other two channels.
+// with prefilled text. Copies the message to the clipboard AND shows it in
+// a prompt() dialog (not just a toast - a silent clipboard copy with no
+// visible text left people unsure whether anything happened, or where to
+// find it), then opens the profile so the human can paste it into the DM
+// box - or select-and-copy straight out of the dialog if the clipboard
+// write silently failed. Same confirm-before-advancing pattern as the
+// other two channels.
 async function openInstagram(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
@@ -507,11 +511,12 @@ async function openInstagram(lead) {
 	const message = template.replace('{site}', SITE_URL);
 	try {
 		await navigator.clipboard.writeText(message);
-		notify('Message copied - paste it into the DM');
 	} catch {
-		notify('Could not copy the message - opening the profile anyway');
+		// Ignore - the prompt() below shows the text either way, so it can
+		// still be copied by hand even if this silently failed.
 	}
 	window.open(`https://instagram.com/${encodeURIComponent(lead.instagram)}`, '_blank');
+	prompt('Already copied to your clipboard - just paste it into the DM that opened.\nIf paste doesn\'t work, select all the text below and copy it (Ctrl/Cmd+C):', message);
 	if (!confirm(`Did that message actually go out to ${lead.name} on Instagram?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
 	lead.msgStage = action.nextStage;
 	lead.msgSentAt = Date.now();
