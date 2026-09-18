@@ -172,6 +172,7 @@ async function handleGet(url: URL) {
 			key,
 			label: addon.label,
 			priceLabel: priceLabelFor(addon, subscription.plan),
+			billing: addon.billing,
 			active: !!menu?.[addon.menusColumn as keyof MenuFlags]
 		}))
 	});
