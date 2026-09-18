@@ -25,6 +25,27 @@ function escapeHtml(value: string): string {
 	}[character] as string));
 }
 
+// Mirrors stripe-webhook/check-subscriptions/manage-addons's EMAIL_SIGNATURE
+// exactly - see scratch/email-signature.html for the source.
+const EMAIL_SIGNATURE = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;margin-top:18px;">
+<tr>
+<td style="padding:0 18px 0 0;vertical-align:middle;"><img src="https://smartmenusolutions.com/assets/images/logo-signature.png" width="64" height="64" alt="Smart Menu Solutions" style="display:block;border:0;width:64px;height:64px;"></td>
+<td style="padding:0 18px 0 0;vertical-align:middle;border-right:1px solid #E7E5E1;width:1px;"></td>
+<td style="padding:0 0 0 18px;vertical-align:middle;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+<tr><td style="padding:0;font-size:15px;font-weight:bold;color:#262421;line-height:1.4;">George Tsiafitsas</td></tr>
+<tr><td style="padding:0 0 10px 0;font-size:13px;color:#737373;line-height:1.4;">CEO&nbsp;&middot;&nbsp;<span style="color:#F66A09;font-weight:bold;">Smart</span><span style="color:#262421;font-weight:bold;">&nbsp;Menu Solutions</span></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="mailto:smartmenusolutions@outlook.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-email.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions@outlook.com</span></a></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://smartmenusolutions.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-website.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions.com</span></a></td></tr>
+<tr><td style="padding:9px 0 3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://instagram.com/smartmenusolutions/" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-instagram.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://www.tiktok.com/@smartmenusolutions" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-tiktok.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
+<tr><td style="padding:9px 0 0 23px;font-size:12.5px;color:#737373;line-height:1;">Greece</td></tr>
+</table>
+</td>
+</tr>
+</table>`;
+
 async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string) {
 	let providerMessageId: string | null = null;
 	try {
@@ -75,20 +96,33 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 	return rows.reduce((sum, row) => row.metric_type === 'visit' && row.day >= from && row.day <= to ? sum + row.view_count : sum, 0);
 }
 
-function trendLine(current: number, previous: number): string {
-	if (previous === 0) return current > 0 ? 'Neu diese Woche' : '';
+function trendLine(current: number, previous: number, lang: string): string {
+	const isEn = lang === 'en';
+	if (previous === 0) return current > 0 ? (isEn ? 'New this week' : 'Neu diese Woche') : '';
 	const change = Math.round(((current - previous) / previous) * 100);
-	if (change > 0) return `▲ ${change}% mehr als letzte Woche`;
-	if (change < 0) return `▼ ${Math.abs(change)}% weniger als letzte Woche`;
-	return 'Gleich wie letzte Woche';
+	if (change > 0) return isEn ? `▲ ${change}% more than last week` : `▲ ${change}% mehr als letzte Woche`;
+	if (change < 0) return isEn ? `▼ ${Math.abs(change)}% less than last week` : `▼ ${Math.abs(change)}% weniger als letzte Woche`;
+	return isEn ? 'Same as last week' : 'Gleich wie letzte Woche';
 }
 
-function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, totalVisits: number, previousWeekVisits: number, topCategories: { label: string; count: number }[], topDishes: { label: string; count: number }[], statsUrl: string): string {
-	const trend = trendLine(totalVisits, previousWeekVisits);
+function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, totalVisits: number, previousWeekVisits: number, topCategories: { label: string; count: number }[], topDishes: { label: string; count: number }[], statsUrl: string, lang: string): string {
+	const isEn = lang === 'en';
+	const trend = trendLine(totalVisits, previousWeekVisits, lang);
 	const listItems = (items: { label: string; count: number }[]) => items.length
 		? items.map((item) => `<li>${escapeHtml(item.label)} - ${item.count}×</li>`).join('')
-		: '<li>Noch keine Aufrufe diese Woche.</li>';
-	return `
+		: `<li>${isEn ? 'No views yet this week.' : 'Noch keine Aufrufe diese Woche.'}</li>`;
+	return isEn ? `
+		<p>Hi,</p>
+		<p>here's the weekly report for <strong>${escapeHtml(menuName)}</strong> (${rangeStart} to ${rangeEnd}):</p>
+		<p style="font-size:20px"><strong>${totalVisits}</strong> visits${trend ? ` <span style="color:#666">(${escapeHtml(trend)})</span>` : ''}</p>
+		<p><strong>Top categories</strong></p>
+		<ul>${listItems(topCategories)}</ul>
+		<p><strong>Top dishes</strong></p>
+		<ul>${listItems(topDishes)}</ul>
+		<p><a href="${statsUrl}">View full stats</a></p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
 		<p>Hallo,</p>
 		<p>hier ist der Wochenbericht für <strong>${escapeHtml(menuName)}</strong> (${rangeStart} bis ${rangeEnd}):</p>
 		<p style="font-size:20px"><strong>${totalVisits}</strong> Besuche${trend ? ` <span style="color:#666">(${escapeHtml(trend)})</span>` : ''}</p>
@@ -97,7 +131,8 @@ function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, tota
 		<p><strong>Meistgesehene Gerichte</strong></p>
 		<ul>${listItems(topDishes)}</ul>
 		<p><a href="${statsUrl}">Vollständige Statistik ansehen</a></p>
-		<p>Smart Menu Solutions</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
 	`;
 }
 
@@ -110,7 +145,7 @@ Deno.serve(async (_request) => {
 
 	const { data: subscriptions, error } = await supabase
 		.from('subscriptions')
-		.select('id, menu_slug, stats_token, customers(contact_name, email), menus!inner(name, analytics_reports_enabled)')
+		.select('id, menu_slug, stats_token, lang, customers(contact_name, email), menus!inner(name, analytics_reports_enabled)')
 		.eq('status', 'active')
 		.eq('menus.analytics_reports_enabled', true);
 
@@ -139,12 +174,13 @@ Deno.serve(async (_request) => {
 		const topDishes = topLabels(allRows, 'dish', rangeStart, rangeEnd, 3);
 		const statsUrl = `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}`;
 
+		const isEn = subscription.lang === 'en';
 		await sendEmail(
 			customer.email,
 			subscription.id,
 			'Wochenbericht: Analytics',
-			`Wochenbericht: ${menu.name}`,
-			reportHtml(menu.name, rangeStart, rangeEnd, totalVisits, previousWeekVisits, topCategories, topDishes, statsUrl)
+			isEn ? `Weekly Report: ${menu.name}` : `Wochenbericht: ${menu.name}`,
+			reportHtml(menu.name, rangeStart, rangeEnd, totalVisits, previousWeekVisits, topCategories, topDishes, statsUrl, subscription.lang)
 		);
 		sent += 1;
 	}
