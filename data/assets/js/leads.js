@@ -448,6 +448,28 @@ async function enrichAll() {
 	button.disabled = false;
 }
 
+// Chrome silently SUPPRESSES prompt()/confirm() (returns as if the user hit
+// Cancel, no dialog ever shown) when called while this tab isn't the active
+// one - see the chromestatus link in the console warning this used to
+// throw. window.open() below hands focus to the new tab the instant it
+// succeeds, so calling confirm() right after it in the same synchronous
+// run was silently discarding every "did it send" answer and leaving the
+// lead stuck at its current stage forever, even after a real send. This
+// waits for the 'focus' event (the user actually switching back here)
+// before ever showing that dialog, so it can never be suppressed.
+function askIfSent(lead, action, channelName) {
+	function ask() {
+		window.removeEventListener('focus', ask);
+		if (!confirm(`Did that message actually go out to ${lead.name} on ${channelName}?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
+		lead.msgStage = action.nextStage;
+		lead.msgSentAt = Date.now();
+		saveLeads();
+		render();
+	}
+	if (document.hasFocus()) ask();
+	else window.addEventListener('focus', ask);
+}
+
 function openWhatsapp(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
@@ -459,25 +481,15 @@ function openWhatsapp(lead) {
 	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const message = template.replace('{site}', SITE_URL);
 	const digits = String(lead.whatsapp).replace(/[^\d]/g, '');
+	// Shown before opening the chat tab, not after - a dialog fired once
+	// that tab has taken focus gets silently suppressed (see askIfSent()).
+	prompt('About to open the WhatsApp chat, pre-filled with this message.\nIf it doesn\'t come through, select all the text below and copy it (Ctrl/Cmd+C):', message);
 	// api.whatsapp.com/send is used directly instead of wa.me - wa.me is a
 	// redirect layer, and handing an emoji-bearing URL through it to the
 	// WhatsApp Desktop app on Windows has been observed to corrupt the emoji
 	// (mojibake) on the far side; the direct endpoint avoids that extra hop.
 	window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(message)}`, '_blank');
-	// The chat tab should already show this pre-filled, but shown here too
-	// in case that tab didn't open, the number isn't on WhatsApp, or the
-	// text didn't come through - same reasoning as openInstagram() below.
-	prompt('Should already be pre-filled in the WhatsApp chat that opened.\nIf not, select all the text below and copy it (Ctrl/Cmd+C):', message);
-	// Opening the chat only proves the number and template were valid, not
-	// that anything was actually sent - WhatsApp itself might say the number
-	// isn't on WhatsApp, or the tab could just be closed unsent. Confirming
-	// here (after switching over and back) is the only way this code can
-	// know before advancing the sequence.
-	if (!confirm(`Did that message actually go out to ${lead.name} on WhatsApp?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
-	lead.msgStage = action.nextStage;
-	lead.msgSentAt = Date.now();
-	saveLeads();
-	render();
+	askIfSent(lead, action, 'WhatsApp');
 }
 
 function openEmail(lead) {
@@ -487,49 +499,30 @@ function openEmail(lead) {
 	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const subject = action.subjects[lead.lang] || action.subjects[currentCountry.lang] || action.subjects.en;
 	const message = template.replace('{site}', SITE_URL);
+	// Shown before opening the mail app, not after - see askIfSent().
+	prompt(`About to open your mail app, pre-filled with this message.\nSubject: ${subject}\nIf nothing opens, select all the text below and copy it (Ctrl/Cmd+C):`, message);
 	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
-	// Should already be pre-filled in whatever mail app just opened, but
-	// shown here too in case no mail app is configured and nothing visibly
-	// opened - same reasoning as openInstagram() below.
-	prompt(`Should already be pre-filled in your mail app.\nSubject: ${subject}\nIf nothing opened, select all the text below and copy it (Ctrl/Cmd+C):`, message);
-	// Opening the draft doesn't mean it was sent - the mail app could still
-	// be closed unsent (e.g. while just testing which account it opens
-	// with). Confirming here is the only way this code can know before
-	// advancing the sequence.
-	if (!confirm(`Did that email actually get sent to ${lead.name}?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
-	lead.msgStage = action.nextStage;
-	lead.msgSentAt = Date.now();
-	saveLeads();
-	render();
+	askIfSent(lead, action, 'email');
 }
 
 // Instagram has no equivalent of wa.me/mailto: - no URL scheme opens a DM
 // with prefilled text. Copies the message to the clipboard AND shows it in
-// a prompt() dialog (not just a toast - a silent clipboard copy with no
-// visible text left people unsure whether anything happened, or where to
-// find it), then opens the profile so the human can paste it into the DM
-// box - or select-and-copy straight out of the dialog if the clipboard
-// write silently failed. Same confirm-before-advancing pattern as the
-// other two channels.
-async function openInstagram(lead) {
+// a prompt() dialog, then opens the profile so the human can paste it into
+// the DM box - or select-and-copy straight out of the dialog if the
+// clipboard write silently failed.
+function openInstagram(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
 	if (!lead.instagram) { notify('No Instagram handle for this lead yet'); return; }
 	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const message = template.replace('{site}', SITE_URL);
-	try {
-		await navigator.clipboard.writeText(message);
-	} catch {
-		// Ignore - the prompt() below shows the text either way, so it can
-		// still be copied by hand even if this silently failed.
-	}
+	// Best-effort, not awaited - the prompt() below (shown before opening
+	// the profile tab, see askIfSent()) shows the same text regardless, so
+	// this doesn't need to block on it.
+	navigator.clipboard.writeText(message).catch(() => {});
+	prompt('About to open the Instagram profile. This message is already on your clipboard - paste it into the DM.\nIf that doesn\'t work, select all the text below and copy it (Ctrl/Cmd+C):', message);
 	window.open(`https://instagram.com/${encodeURIComponent(lead.instagram)}`, '_blank');
-	prompt('Already copied to your clipboard - just paste it into the DM that opened.\nIf paste doesn\'t work, select all the text below and copy it (Ctrl/Cmd+C):', message);
-	if (!confirm(`Did that message actually go out to ${lead.name} on Instagram?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
-	lead.msgStage = action.nextStage;
-	lead.msgSentAt = Date.now();
-	saveLeads();
-	render();
+	askIfSent(lead, action, 'Instagram');
 }
 
 // Manual "this contact already converted / don't follow up" override -
