@@ -464,6 +464,10 @@ function openWhatsapp(lead) {
 	// WhatsApp Desktop app on Windows has been observed to corrupt the emoji
 	// (mojibake) on the far side; the direct endpoint avoids that extra hop.
 	window.open(`https://api.whatsapp.com/send?phone=${digits}&text=${encodeURIComponent(message)}`, '_blank');
+	// The chat tab should already show this pre-filled, but shown here too
+	// in case that tab didn't open, the number isn't on WhatsApp, or the
+	// text didn't come through - same reasoning as openInstagram() below.
+	prompt('Should already be pre-filled in the WhatsApp chat that opened.\nIf not, select all the text below and copy it (Ctrl/Cmd+C):', message);
 	// Opening the chat only proves the number and template were valid, not
 	// that anything was actually sent - WhatsApp itself might say the number
 	// isn't on WhatsApp, or the tab could just be closed unsent. Confirming
@@ -484,6 +488,10 @@ function openEmail(lead) {
 	const subject = action.subjects[lead.lang] || action.subjects[currentCountry.lang] || action.subjects.en;
 	const message = template.replace('{site}', SITE_URL);
 	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
+	// Should already be pre-filled in whatever mail app just opened, but
+	// shown here too in case no mail app is configured and nothing visibly
+	// opened - same reasoning as openInstagram() below.
+	prompt(`Should already be pre-filled in your mail app.\nSubject: ${subject}\nIf nothing opened, select all the text below and copy it (Ctrl/Cmd+C):`, message);
 	// Opening the draft doesn't mean it was sent - the mail app could still
 	// be closed unsent (e.g. while just testing which account it opens
 	// with). Confirming here is the only way this code can know before
