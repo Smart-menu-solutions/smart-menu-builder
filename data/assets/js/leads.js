@@ -1,10 +1,11 @@
 /* Free lead finder: searches OpenStreetMap (Overpass API, no key, no cost)
    for restaurants/bars/cafés in a chosen country, lets the user enrich a
-   contact's website for an email/WhatsApp link on demand (via a small
-   Edge Function, since fetching arbitrary websites needs to happen
+   contact's website for an email/WhatsApp/Instagram handle on demand (via a
+   small Edge Function, since fetching arbitrary websites needs to happen
    server-side to avoid CORS), export everything to CSV, and open a
-   pre-filled, country-appropriate WhatsApp chat or email one contact at a
-   time - whichever contact channel that lead has.
+   pre-filled, country-appropriate WhatsApp chat, email, or Instagram DM
+   (message copied to the clipboard, profile opened - see openInstagram())
+   one contact at a time - whichever contact channel that lead has.
    Deliberately no bulk/automatic sending - the outgoing message is only
    ever opened, never sent, by this code; a human clicks "send" each time. */
 
@@ -118,8 +119,9 @@ const FILTERS = {
 	whatsapp: (lead) => !!lead.whatsapp,
 	email: (lead) => !!lead.email,
 	phone: (lead) => !!lead.phone,
-	contact: (lead) => !!(lead.whatsapp || lead.email || lead.phone),
-	missing: (lead) => !(lead.whatsapp || lead.email || lead.phone)
+	instagram: (lead) => !!lead.instagram,
+	contact: (lead) => !!(lead.whatsapp || lead.email || lead.phone || lead.instagram),
+	missing: (lead) => !(lead.whatsapp || lead.email || lead.phone || lead.instagram)
 };
 
 let leads = [];
@@ -265,6 +267,19 @@ function normalizeWhatsapp(raw) {
 	return String(raw).replace('https://wa.me/', '').replace('https://api.whatsapp.com/send?phone=', '').replace(/[^\d+]/g, '');
 }
 
+// Stores just the bare handle (no @, no URL) so it prints cleanly in the
+// table/exports and openInstagram() can build the profile link itself -
+// strips a full instagram.com URL down to the handle if one was pasted in,
+// same idea as normalizeWhatsapp() above.
+function normalizeInstagram(raw) {
+	if (!raw) return '';
+	return String(raw).trim()
+		.replace(/^@/, '')
+		.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+		.replace(/\/.*$/, '')
+		.replace(/[?#].*$/, '');
+}
+
 // Numbers pulled from a site's tel: link (see the scrape-website Edge
 // Function) are usually written in local format with no country code,
 // which would produce a wa.me link for the wrong country. Prepends the
@@ -294,17 +309,18 @@ function elementToLead(element) {
 	const website = normalizeWebsite(tags.website || tags['contact:website'] || '');
 	const email = tags.email || tags['contact:email'] || '';
 	const whatsapp = normalizeWhatsapp(tags['contact:whatsapp']);
+	const instagram = normalizeInstagram(tags['contact:instagram'] || tags.instagram || '');
 
-	// No phone, website, email, or WhatsApp means there's no way to reach
-	// this place and nothing to enrich either - skip it instead of leaving
-	// a dead row (no working buttons) cluttering the results.
-	if (!phone && !website && !email && !whatsapp) return null;
+	// No phone, website, email, WhatsApp, or Instagram means there's no way
+	// to reach this place and nothing to enrich either - skip it instead of
+	// leaving a dead row (no working buttons) cluttering the results.
+	if (!phone && !website && !email && !whatsapp && !instagram) return null;
 
 	return {
 		id: `${element.type}/${element.id}`,
 		name: tags.name,
 		address: buildAddress(tags),
-		phone, website, email, whatsapp,
+		phone, website, email, whatsapp, instagram,
 		// Captured at search time, not read from currentCountry when a message
 		// is sent - otherwise switching the country dropdown after searching
 		// (without re-searching) would send a still-visible lead's message in
@@ -401,6 +417,7 @@ async function enrichLead(lead) {
 		lead.email = lead.email || data.email || '';
 		lead.whatsapp = lead.whatsapp || withCallingCode(normalizeWhatsapp(data.whatsapp)) || '';
 		lead.phone = lead.phone || data.phone || '';
+		lead.instagram = lead.instagram || normalizeInstagram(data.instagram) || '';
 		notify(`Enriched ${lead.name}`);
 		saveLeads();
 	} catch (error) {
@@ -478,6 +495,30 @@ function openEmail(lead) {
 	render();
 }
 
+// Instagram has no equivalent of wa.me/mailto: - no URL scheme opens a DM
+// with prefilled text. Copies the message to the clipboard and opens the
+// profile instead, so the human just has to paste it into the DM box that
+// opens; same confirm-before-advancing pattern as the other two channels.
+async function openInstagram(lead) {
+	const action = nextAction(lead);
+	if (!action) { notify('Not due yet'); return; }
+	if (!lead.instagram) { notify('No Instagram handle for this lead yet'); return; }
+	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
+	const message = template.replace('{site}', SITE_URL);
+	try {
+		await navigator.clipboard.writeText(message);
+		notify('Message copied - paste it into the DM');
+	} catch {
+		notify('Could not copy the message - opening the profile anyway');
+	}
+	window.open(`https://instagram.com/${encodeURIComponent(lead.instagram)}`, '_blank');
+	if (!confirm(`Did that message actually go out to ${lead.name} on Instagram?\nCancel keeps this lead where it is - only confirm if it was really sent.`)) return;
+	lead.msgStage = action.nextStage;
+	lead.msgSentAt = Date.now();
+	saveLeads();
+	render();
+}
+
 // Manual "this contact already converted / don't follow up" override -
 // see leadTab()'s comment for why this isn't detected automatically.
 function stopLead(lead) {
@@ -518,6 +559,7 @@ function addManualContact(event) {
 		website: normalizeWebsite($('#contactWebsite').value.trim()),
 		email: $('#contactEmail').value.trim(),
 		whatsapp: normalizeWhatsapp($('#contactWhatsapp').value.trim()),
+		instagram: normalizeInstagram($('#contactInstagram').value.trim()),
 		lang: currentCountry.lang,
 		selected: false,
 		enriching: false,
@@ -564,8 +606,8 @@ function exportNotice(rows) {
 function exportExcel() {
 	const rows = rowsToExport();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
-	const header = ['Name', 'Address', 'Phone', 'Email', 'WhatsApp', 'Website'];
-	const keys = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
+	const header = ['Name', 'Address', 'Phone', 'Email', 'WhatsApp', 'Instagram', 'Website'];
+	const keys = ['name', 'address', 'phone', 'email', 'whatsapp', 'instagram', 'website'];
 	const headRow = `<tr>${header.map((label) => `<th>${escapeHtml(label)}</th>`).join('')}</tr>`;
 	const bodyRows = rows.map((lead) => `<tr>${keys.map((key) => `<td>${escapeHtml(lead[key])}</td>`).join('')}</tr>`).join('');
 	const html = `<html><head><meta charset="UTF-8"></head><body><table border="1">${headRow}${bodyRows}</table></body></html>`;
@@ -588,7 +630,7 @@ function exportExcel() {
 function exportCsv() {
 	const rows = rowsToExport();
 	if (!rows.length) { notify('Nothing to export - run a search or loosen the filter'); return; }
-	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'website'];
+	const header = ['name', 'address', 'phone', 'email', 'whatsapp', 'instagram', 'website'];
 	const csv = [header.join(';')].concat(
 		rows.map((lead) => header.map((key) => `"${String(lead[key] || '').replace(/"/g, '""')}"`).join(';'))
 	).join('\r\n');
@@ -625,11 +667,11 @@ function render() {
 		: `${totalInTab} found`;
 
 	if (!leads.length) {
-		body.innerHTML = '<tr><td colspan="8" class="leads-empty">Run a search to see results here.</td></tr>';
+		body.innerHTML = '<tr><td colspan="9" class="leads-empty">Run a search to see results here.</td></tr>';
 		return;
 	}
 	if (!visible.length) {
-		body.innerHTML = `<tr><td colspan="8" class="leads-empty">${totalInTab ? 'No results match this filter.' : 'Nothing in this tab yet.'}</td></tr>`;
+		body.innerHTML = `<tr><td colspan="9" class="leads-empty">${totalInTab ? 'No results match this filter.' : 'Nothing in this tab yet.'}</td></tr>`;
 		return;
 	}
 
@@ -642,8 +684,11 @@ function render() {
 		const emailButton = action && lead.email
 			? `<button class="button button-primary" type="button" data-email="${lead.id}">${action.label} · Email</button>`
 			: '';
+		const igButton = action && lead.instagram
+			? `<button class="button button-primary" type="button" data-instagram="${lead.id}">${action.label} · Instagram</button>`
+			: '';
 		const actionButton = action
-			? (waButton || emailButton ? `${waButton}${emailButton}` : '<span class="leads-empty">No WhatsApp/email yet</span>')
+			? (waButton || emailButton || igButton ? `${waButton}${emailButton}${igButton}` : '<span class="leads-empty">No WhatsApp/email/Instagram yet</span>')
 			: waitingDays
 				? `<span class="leads-empty">Waiting ${waitingDays}d</span>`
 				: '';
@@ -660,6 +705,7 @@ function render() {
 			<td>${lead.website ? `<a href="${escapeHtml(lead.website)}" target="_blank" rel="noopener">link</a>` : '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
+			<td>${lead.instagram ? `<a href="https://instagram.com/${encodeURIComponent(lead.instagram)}" target="_blank" rel="noopener">@${escapeHtml(lead.instagram)}</a>` : '<span class="leads-empty">-</span>'}</td>
 			<td class="leads-actions-cell">${enrichButton}${actionButton}${stopButton}</td>
 		</tr>
 	`;
@@ -695,10 +741,12 @@ function wireEvents() {
 		const enrichId = event.target.dataset.enrich;
 		const whatsappId = event.target.dataset.whatsapp;
 		const emailId = event.target.dataset.email;
+		const instagramId = event.target.dataset.instagram;
 		const stopId = event.target.dataset.stop;
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
 		if (emailId) openEmail(leads.find((lead) => lead.id === emailId));
+		if (instagramId) openInstagram(leads.find((lead) => lead.id === instagramId));
 		if (stopId) stopLead(leads.find((lead) => lead.id === stopId));
 	});
 	$('#leadsBody').addEventListener('change', (event) => {

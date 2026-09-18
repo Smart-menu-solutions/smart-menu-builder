@@ -79,7 +79,7 @@ table.leads-table tr:hover td{background:var(--alt)}
         <ol>
             <li>Land + Kategorie wählen → <strong>Search</strong></li>
             <li><strong>Filter</strong> auf "Has any contact" stellen</li>
-            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp von der Website, ändert nichts an der Stufe) - oder Kontakte anhaken und oben <strong>Enrich all</strong> klicken, um mehrere auf einmal zu ergänzen</li>
+            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp/Instagram von der Website, ändert nichts an der Stufe) - oder Kontakte anhaken und oben <strong>Enrich all</strong> klicken, um mehrere auf einmal zu ergänzen</li>
             <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für die Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
             <li>Tab <strong>"New List"</strong>: pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
             <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → "Send reminder" klicken → Erinnerung senden</li>
@@ -91,7 +91,7 @@ table.leads-table tr:hover td{background:var(--alt)}
         <p style="margin:14px 0 4px;font-size:13px;font-weight:700;color:var(--ink)">Kontakt manuell hinzufügen (nicht aus der Suche):</p>
         <ol>
             <li>Neben <strong>"Leads"</strong> oben rechts auf das <strong>＋</strong> klicken</li>
-            <li><strong>Name</strong> eingeben (Pflichtfeld) - Address, Phone, Website, Email, WhatsApp sind optional</li>
+            <li><strong>Name</strong> eingeben (Pflichtfeld) - Address, Phone, Website, Email, WhatsApp, Instagram sind optional</li>
             <li>Unten rechts auf <strong>"Add contact"</strong> klicken</li>
             <li>Der Kontakt erscheint sofort im Tab <strong>"New List"</strong></li>
             <li>Ab dann läuft er durch dieselbe Sequenz wie ein gesuchter Kontakt (Enrich, Send message, Reminder, Final, Stop)</li>
@@ -113,6 +113,7 @@ table.leads-table tr:hover td{background:var(--alt)}
                 <option value="whatsapp">Has WhatsApp</option>
                 <option value="email">Has email</option>
                 <option value="phone">Has phone</option>
+                <option value="instagram">Has Instagram</option>
                 <option value="contact">Has any contact</option>
                 <option value="missing">Missing contact info</option>
             </select></label>
@@ -143,9 +144,9 @@ table.leads-table tr:hover td{background:var(--alt)}
         <div class="leads-table-wrap">
             <table class="leads-table">
                 <thead>
-                    <tr><th><input type="checkbox" id="leadsSelectAll"></th><th>Name</th><th>Address</th><th>Phone</th><th>Website</th><th>Email</th><th>WhatsApp</th><th>Actions</th></tr>
+                    <tr><th><input type="checkbox" id="leadsSelectAll"></th><th>Name</th><th>Address</th><th>Phone</th><th>Website</th><th>Email</th><th>WhatsApp</th><th>Instagram</th><th>Actions</th></tr>
                 </thead>
-                <tbody id="leadsBody"><tr><td colspan="8" class="leads-empty">Run a search to see results here.</td></tr></tbody>
+                <tbody id="leadsBody"><tr><td colspan="9" class="leads-empty">Run a search to see results here.</td></tr></tbody>
             </table>
         </div>
     </section>
@@ -162,6 +163,7 @@ table.leads-table tr:hover td{background:var(--alt)}
             <label>Website<input type="text" id="contactWebsite" placeholder="example.com"></label>
             <label>Email<input type="email" id="contactEmail"></label>
             <label>WhatsApp<input type="text" id="contactWhatsapp" placeholder="+49..."></label>
+            <label>Instagram<input type="text" id="contactInstagram" placeholder="@handle"></label>
             <div class="wide" style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:16px;border-top:1px solid var(--line)">
                 <button type="button" class="button button-ghost" id="cancelAddContact">Cancel</button>
                 <button type="submit" class="button button-primary">Add contact</button>
@@ -169,6 +171,6 @@ table.leads-table tr:hover td{background:var(--alt)}
         </form>
     </div>
 </div>
-<script src="data/assets/js/leads.js?v=manual-contact-1"></script>
+<script src="data/assets/js/leads.js?v=instagram-1"></script>
 </body>
 </html>

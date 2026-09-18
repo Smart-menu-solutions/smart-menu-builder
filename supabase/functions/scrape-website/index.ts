@@ -1,7 +1,8 @@
 // Fetches a lead's own website server-side and pulls out an email, phone
-// number, and WhatsApp link if present. Runs as an Edge Function rather
-// than client-side because arbitrary third-party sites don't send CORS
-// headers permitting our origin, so a browser fetch would just fail.
+// number, WhatsApp link, and Instagram handle if present. Runs as an Edge
+// Function rather than client-side because arbitrary third-party sites
+// don't send CORS headers permitting our origin, so a browser fetch would
+// just fail.
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
@@ -21,6 +22,11 @@ const WHATSAPP_LINK_PATTERN = /https:\/\/(?:wa\.me|api\.whatsapp\.com\/send\?pho
 // appears.
 const ANCHOR_TAG_PATTERN = /<a\b[^>]*>/gi;
 const TEL_HREF_PATTERN = /href=["']tel:([^"']+)["']/i;
+// Matches instagram.com/<handle>, with or without a leading www./trailing
+// slash - excludes the handful of non-profile path segments Instagram uses
+// for its own pages (p/, reel/, stories/, ...) so those don't get mistaken
+// for a business's handle.
+const INSTAGRAM_LINK_PATTERN = /instagram\.com\/(?!p\/|reel\/|reels\/|stories\/|explore\/|accounts\/|tv\/)([a-zA-Z0-9._]+)\/?/i;
 
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
@@ -65,7 +71,9 @@ Deno.serve(async (request) => {
 			}
 		}
 
-		return json({ email, phone, whatsapp });
+		const instagram = html.match(INSTAGRAM_LINK_PATTERN)?.[1] || '';
+
+		return json({ email, phone, whatsapp, instagram });
 	} catch (error) {
 		console.error(error);
 		const message = error instanceof Error && error.name === 'TimeoutError' ? 'Site took too long to respond' : 'Could not read that website';
