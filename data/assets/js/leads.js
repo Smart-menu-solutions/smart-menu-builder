@@ -678,14 +678,18 @@ function render() {
 	body.innerHTML = visible.map((lead) => {
 		const action = nextAction(lead);
 		const waitingDays = !action && (lead.msgStage || 0) > 0 && (lead.msgStage || 0) < 3 ? daysUntilDue(lead) : 0;
+		// Just the channel name on the button itself (was "Send message ·
+		// WhatsApp" etc.) - with three possible channels now, the longer
+		// labels no longer fit the Actions column and got visually clipped.
+		// The full "which stage" wording still shows on hover via title.
 		const waButton = action && lead.whatsapp
-			? `<button class="button button-primary" type="button" data-whatsapp="${lead.id}">${action.label} · WhatsApp</button>`
+			? `<button class="button button-primary" type="button" data-whatsapp="${lead.id}" title="${escapeHtml(action.label)}">WhatsApp</button>`
 			: '';
 		const emailButton = action && lead.email
-			? `<button class="button button-primary" type="button" data-email="${lead.id}">${action.label} · Email</button>`
+			? `<button class="button button-primary" type="button" data-email="${lead.id}" title="${escapeHtml(action.label)}">Email</button>`
 			: '';
 		const igButton = action && lead.instagram
-			? `<button class="button button-primary" type="button" data-instagram="${lead.id}">${action.label} · Instagram</button>`
+			? `<button class="button button-primary" type="button" data-instagram="${lead.id}" title="${escapeHtml(action.label)}">Instagram</button>`
 			: '';
 		const actionButton = action
 			? (waButton || emailButton || igButton ? `${waButton}${emailButton}${igButton}` : '<span class="leads-empty">No WhatsApp/email/Instagram yet</span>')
