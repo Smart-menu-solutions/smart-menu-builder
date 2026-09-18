@@ -19,10 +19,25 @@
 .leads-toolbar label{margin:0}
 .leads-status{color:var(--muted);font-size:12px;margin:0 0 14px}
 .leads-table-wrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:10px}
-table.leads-table{width:100%;border-collapse:collapse;font-size:13px}
-table.leads-table th{position:sticky;top:0;background:#fff;text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
-table.leads-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+/* table-layout:fixed so every column's width comes only from the rules
+   below - with the default "auto" layout, any one column with long enough
+   content (a long address, a long email) can still force the whole table
+   wider regardless of what other columns are capped to, which is why the
+   Actions column kept getting pushed out of view even after it got its own
+   width. Cells that can hold long text wrap it instead of clipping it. */
+table.leads-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:13px}
+table.leads-table th{position:sticky;top:0;background:#fff;text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1;overflow:hidden;text-overflow:ellipsis}
+table.leads-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;overflow-wrap:break-word}
 table.leads-table tr:hover td{background:var(--alt)}
+table.leads-table th:nth-child(1),table.leads-table td:nth-child(1){width:30px}
+table.leads-table th:nth-child(2),table.leads-table td:nth-child(2){width:13%}
+table.leads-table th:nth-child(3),table.leads-table td:nth-child(3){width:16%}
+table.leads-table th:nth-child(4),table.leads-table td:nth-child(4){width:11%}
+table.leads-table th:nth-child(5),table.leads-table td:nth-child(5){width:6%}
+table.leads-table th:nth-child(6),table.leads-table td:nth-child(6){width:15%}
+table.leads-table th:nth-child(7),table.leads-table td:nth-child(7){width:11%}
+table.leads-table th:nth-child(8),table.leads-table td:nth-child(8){width:11%}
+table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
 .leads-empty{color:var(--muted);font-size:11px}
 /* Fixed width is required here, not just a hint - a flex cell with no width
    constraint reports its "preferred" size as every button laid out in one
