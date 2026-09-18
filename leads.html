@@ -24,7 +24,12 @@ table.leads-table th{position:sticky;top:0;background:#fff;text-align:left;color
 table.leads-table td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 table.leads-table tr:hover td{background:var(--alt)}
 .leads-empty{color:var(--muted);font-size:11px}
-.leads-actions-cell{display:flex;gap:6px;flex-wrap:wrap}
+/* Fixed width is required here, not just a hint - a flex cell with no width
+   constraint reports its "preferred" size as every button laid out in one
+   unbroken line, so the table just kept growing wider with each channel
+   added (WhatsApp, then Email, then Instagram) instead of ever actually
+   wrapping. This caps it so flex-wrap has a boundary to wrap against. */
+.leads-actions-cell{display:flex;gap:6px;flex-wrap:wrap;width:170px;max-width:170px}
 .leads-actions-cell .button{padding:6px 10px;font-size:11px}
 .leads-count-badge{font-size:10px;font-weight:700;color:#1e6b3c;background:#e8f5ec;padding:5px 8px;border-radius:20px;white-space:nowrap}
 .leads-guide{background:var(--tint);border:1px solid #f8d3b3;border-radius:14px;padding:14px 18px;margin-bottom:16px}
