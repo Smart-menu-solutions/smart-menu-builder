@@ -441,9 +441,10 @@ function renderAddonBoard(client, clientSubscription) {
 	$('#addonStatusPhoto').classList.toggle('active', !!client.photo_addon_enabled);
 
 	const addonsUrl = clientSubscription?.addon_token ? `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}` : '';
-	[$('#addonSendAnalytics'), $('#addonSendSfm')].forEach((button) => { button.disabled = !addonsUrl; });
-	$('#addonSendAnalytics').dataset.link = addonsUrl;
-	$('#addonSendSfm').dataset.link = addonsUrl;
+	[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
+		button.disabled = !addonsUrl;
+		button.dataset.link = addonsUrl;
+	});
 }
 
 function render() {
@@ -770,7 +771,7 @@ if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('c
 	selectedClient().smart_food_match_enabled = $('#smartFoodMatchEnabled').checked;
 	saveClients().then(render).catch((error) => notify(error.message));
 });
-[$('#addonSendAnalytics'), $('#addonSendSfm')].forEach((button) => {
+[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
 	if (!button) return;
 	button.addEventListener('click', async () => {
 		if (!button.dataset.link) return;
@@ -778,6 +779,106 @@ if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('c
 		notify('Add-ons link copied');
 	});
 });
+
+// Read-only reference copy of what the Edge Functions actually send (see
+// stripe-webhook/check-subscriptions/manage-addons index.ts) - kept here as
+// plain text for pasting into a manual email, not wired to send anything
+// itself. Has to be updated by hand if the real template copy changes.
+const EMAIL_TEMPLATES = [
+	{
+		name: 'Order confirmation',
+		subject: 'Ihre Bestellung bei Smart Menu Solutions',
+		body: `Hallo [Vorname Nachname],
+
+vielen Dank für Ihre Bestellung. Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.
+
+Plan: [Smart Start/Pro/Premium]
+
+Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+
+Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
+		name: 'Renewal confirmation',
+		subject: 'Ihre Verlängerung bei Smart Menu Solutions',
+		body: `Hallo [Vorname Nachname],
+
+vielen Dank für die Verlängerung Ihres Abos. Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.
+
+Plan: [Smart Start/Pro/Premium]
+
+Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+
+Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
+		name: 'Renewal payment failed',
+		subject: 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln',
+		body: `Hallo [Vorname Nachname],
+
+leider konnte die automatische Zahlung für die Verlängerung Ihres Abos nicht durchgeführt werden.
+
+Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden: [Jetzt verlängern →]
+
+Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
+		name: 'Subscription deactivated',
+		subject: 'Ihr Abo wurde deaktiviert',
+		body: `Hallo [Vorname Nachname],
+
+da die Zahlung für Ihre Verlängerung ausblieb, wurde Ihr Abo nun deaktiviert und Ihr Menü ist über den QR-Code nicht mehr erreichbar.
+
+Sie können Ihr Abo jederzeit über folgenden Link reaktivieren: [Abo reaktivieren →]
+
+Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
+		name: 'Add-on added (mid-subscription)',
+		subject: '[Add-on] wurde hinzugefügt',
+		body: `Hallo [Vorname Nachname],
+
+[Add-on-Name] ist jetzt für [Menü-Name] aktiv.
+
+Berechnet wurde der anteilige Betrag für den Rest Ihres laufenden Abo-Jahres: [X,XX €]. Ab der nächsten Verlängerung läuft es automatisch mit Ihrem Tarif zusammen weiter.
+(Beim Foto-Zusatz stattdessen: einmaliger Betrag, kein Renewal-Hinweis.)
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	}
+];
+const templateBoard = $('#templateBoard');
+if (templateBoard) {
+	templateBoard.innerHTML = EMAIL_TEMPLATES.map((template, index) => `
+		<div class="template-card">
+			<div class="template-card-head">
+				<span class="template-card-name">${escapeHtml(template.name)}</span>
+				<button type="button" class="button button-ghost template-card-copy" data-template-index="${index}">Copy</button>
+			</div>
+			<p class="template-card-subject"><strong>Subject:</strong> ${escapeHtml(template.subject)}</p>
+			<pre class="template-card-body">${escapeHtml(template.body)}</pre>
+		</div>
+	`).join('');
+	templateBoard.querySelectorAll('[data-template-index]').forEach((button) => {
+		button.addEventListener('click', async () => {
+			const template = EMAIL_TEMPLATES[Number(button.dataset.templateIndex)];
+			await navigator.clipboard.writeText(`${template.subject}\n\n${template.body}`);
+			notify('Template copied');
+		});
+	});
+}
 
 if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', async () => {
 	const input = $('#photoLibraryInput');

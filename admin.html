@@ -50,6 +50,7 @@
                 <button type="button" class="editor-tab" data-tab="menu" role="tab" aria-selected="false">Menu &amp; Photos</button>
                 <button type="button" class="editor-tab" data-tab="languages" role="tab" aria-selected="false">Languages</button>
                 <button type="button" class="editor-tab" data-tab="addons" role="tab" aria-selected="false">Add-ons</button>
+                <button type="button" class="editor-tab" data-tab="emails" role="tab" aria-selected="false">Email templates</button>
             </div>
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
@@ -97,8 +98,13 @@
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusPhoto"></span>
                             <span class="addon-board-name">Photo add-on</span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendPhoto">Send link</button>
                         </div>
                     </div>
+                </div>
+                <div class="editor-tab-panel" data-tab-panel="emails" hidden>
+                    <p class="language-hint">Read-only reference for what's actually sent - copies the plain text so you can paste it into a manual email. Editing the real templates still needs a code change.</p>
+                    <div class="template-board" id="templateBoard"></div>
                 </div>
                 <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
             </form>
