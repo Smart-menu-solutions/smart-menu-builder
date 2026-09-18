@@ -33,6 +33,28 @@ const PLAN_LABELS: Record<string, string> = {
 	premium: 'Smart Premium'
 };
 
+// Customer-facing HTML signature (not used on the internal owner-notification
+// bullet-list emails). Mirrors scratch/email-signature.html exactly, image
+// URLs point at the live site so they render in any mail client.
+const EMAIL_SIGNATURE = `
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;margin-top:18px;">
+<tr>
+<td style="padding:0 18px 0 0;vertical-align:middle;"><img src="https://smartmenusolutions.com/assets/images/logo-signature.png" width="64" height="64" alt="Smart Menu Solutions" style="display:block;border:0;width:64px;height:64px;"></td>
+<td style="padding:0 18px 0 0;vertical-align:middle;border-right:1px solid #E7E5E1;width:1px;"></td>
+<td style="padding:0 0 0 18px;vertical-align:middle;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+<tr><td style="padding:0;font-size:15px;font-weight:bold;color:#262421;line-height:1.4;">George Tsiafitsas</td></tr>
+<tr><td style="padding:0 0 10px 0;font-size:13px;color:#737373;line-height:1.4;">CEO&nbsp;&middot;&nbsp;<span style="color:#F66A09;font-weight:bold;">Smart</span><span style="color:#262421;font-weight:bold;">&nbsp;Menu Solutions</span></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="mailto:smartmenusolutions@outlook.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-email.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions@outlook.com</span></a></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://smartmenusolutions.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-website.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions.com</span></a></td></tr>
+<tr><td style="padding:9px 0 3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://instagram.com/smartmenusolutions/" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-instagram.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://www.tiktok.com/@smartmenusolutions" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-tiktok.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
+<tr><td style="padding:9px 0 0 23px;font-size:12.5px;color:#737373;line-height:1;">Greece</td></tr>
+</table>
+</td>
+</tr>
+</table>`;
+
 function slugify(input: string): string {
 	return input
 		.toLowerCase()
@@ -139,9 +161,10 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
-		<p>Möchten Sie später Smart Food Match oder den Weekly Analytics Report dazubuchen? <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
+		<p>Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
-		<p>Smart Menu Solutions</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
 	`;
 	await sendEmail(to, subscriptionId, `Kundenbestätigung: ${subject}`, subject, html);
 }
@@ -162,7 +185,8 @@ async function sendPaymentFailedEmail(subscriptionId: string, to: string, contac
 		<p>Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden:</p>
 		<p><a href="${renewalUrl}">Jetzt verlängern</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
-		<p>Smart Menu Solutions</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
 	`;
 	await sendEmail(to, subscriptionId, 'Kundenmail: Zahlung fehlgeschlagen', subject, html);
 }
@@ -294,7 +318,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		languages: ['de', 'en'],
 		is_published: false,
 		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true',
-		photo_addon_enabled: metadata.photoAddon === 'true'
+		photo_addon_enabled: metadata.photoAddon === 'true',
+		smart_food_match_enabled: metadata.smartFoodMatchAddon === 'true'
 	});
 	if (menuError) {
 		console.error('Failed to insert draft menu', menuError);

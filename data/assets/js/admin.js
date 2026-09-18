@@ -493,10 +493,10 @@ function render() {
 		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
 	}
 	// Read-only board - none of these three flags have a click handler here,
-	// unlike smartFoodMatchEnabled above. analytics_reports_enabled and
-	// photo_addon_enabled are set entirely by stripe-webhook on purchase
-	// (smart_food_match_enabled is staff-editable via the checkbox above,
-	// but its purchased/not-purchased state still belongs on this board too).
+	// unlike smartFoodMatchEnabled above. All three are now set automatically
+	// by stripe-webhook on purchase (smart_food_match_enabled is also still
+	// staff-editable via the checkbox above, e.g. for accounts set up before
+	// this was automated, or manual comps).
 	const clientSubscription = subscriptionsBySlug[client.slug];
 	renderAddonBoard(client, clientSubscription);
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
