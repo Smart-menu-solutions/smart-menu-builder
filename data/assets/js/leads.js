@@ -596,6 +596,21 @@ function openInstagram(lead) {
 	askIfSent(lead, action, 'Instagram');
 }
 
+// Manual "I already sent this" - for when the askIfSent() dialog above never
+// got answered (or got lost among several tabs opened in a row) and a message
+// really did go out, so the lead is stuck in its old stage. Advances it the
+// same way a confirmed askIfSent() would, without reopening the channel.
+function markSent(lead) {
+	const action = nextAction(lead);
+	if (!action) return;
+	if (!confirm(`Mark the message to ${lead.name} as sent? Only do this if it really went out.`)) return;
+	lead.msgStage = action.nextStage;
+	lead.msgSentAt = Date.now();
+	saveLeads();
+	render();
+	notify(`Marked ${lead.name} as sent`);
+}
+
 // Manual "this contact already converted / don't follow up" override -
 // see leadTab()'s comment for why this isn't detected automatically.
 function stopLead(lead) {
@@ -798,6 +813,9 @@ function render() {
 			? `<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>`
 			: '';
 		const stopButton = `<button class="button button-danger" type="button" data-stop="${lead.id}" title="Already a customer, or otherwise stop contacting them">Stop</button>`;
+		const sentButton = action
+			? `<button class="button button-ghost" type="button" data-sent="${lead.id}" title="Already sent it yourself? Mark as sent without reopening the chat">Sent</button>`
+			: '';
 		const resetButton = ((lead.msgStage || 0) > 0 || lead.stopped)
 			? `<button class="button button-ghost" type="button" data-reset="${lead.id}" title="Undo an accidental stage advance - back to New">Reset</button>`
 			: '';
@@ -811,7 +829,7 @@ function render() {
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
 			<td>${lead.instagram ? `<a href="https://instagram.com/${encodeURIComponent(lead.instagram)}" target="_blank" rel="noopener">@${escapeHtml(lead.instagram)}</a>` : '<span class="leads-empty">-</span>'}</td>
-			<td class="leads-actions-cell">${enrichButton}${actionButton}${resetButton}${stopButton}</td>
+			<td class="leads-actions-cell">${enrichButton}${actionButton}${sentButton}${resetButton}${stopButton}</td>
 		</tr>
 	`;
 	}).join('');
@@ -849,6 +867,8 @@ function wireEvents() {
 		const instagramId = event.target.dataset.instagram;
 		const stopId = event.target.dataset.stop;
 		const resetId = event.target.dataset.reset;
+		const sentId = event.target.dataset.sent;
+		if (sentId) markSent(leads.find((lead) => lead.id === sentId));
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
 		if (emailId) openEmail(leads.find((lead) => lead.id === emailId));
