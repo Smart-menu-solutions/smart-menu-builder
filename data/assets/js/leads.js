@@ -1096,6 +1096,29 @@ function addManualContact(event) {
 	notify(`Added ${lead.name}`);
 }
 
+// Removes one list: its leads that haven't been messaged yet. Leads already
+// in Sequence/Reminder/Final stay (with their progress) - deleting those
+// would silently drop follow-ups that are still due - so the tab only
+// disappears once nothing is left in it.
+function deleteList(listName) {
+	const inList = leads.filter((lead) => leadListName(lead) === listName);
+	const removable = inList.filter((lead) => leadTab(lead) === 'new');
+	const kept = inList.length - removable.length;
+	if (!removable.length) {
+		notify(kept ? `Nothing to delete - the ${kept} lead${kept === 1 ? '' : 's'} left in "${listName}" already started the sequence` : `"${listName}" is already empty`);
+		return;
+	}
+	const keptNote = kept ? `
+${kept} lead${kept === 1 ? '' : 's'} already in the sequence stay in "${listName}".` : '';
+	if (!confirm(`Delete the list "${listName}"?
+${removable.length} lead${removable.length === 1 ? '' : 's'} not messaged yet will be removed.${keptNote}`)) return;
+	const removeIds = new Set(removable.map((lead) => lead.id));
+	leads = leads.filter((lead) => !removeIds.has(lead.id));
+	saveLeads();
+	render();
+	notify(`Deleted ${removable.length} lead${removable.length === 1 ? '' : 's'} from "${listName}"`);
+}
+
 function clearLeads() {
 	if (!leads.length) return;
 	if (!confirm(`Clear all ${leads.length} leads in every list? This can't be undone - outreach progress will be lost too.`)) return;
@@ -1186,11 +1209,17 @@ function escapeHtml(value) {
 // set of lists changes with each search.
 function updateStageTabs() {
 	const counts = stageTabCounts();
-	if (currentStageTab.startsWith('list:') && !counts.lists.has(currentStageTab.slice(5))) currentStageTab = 'all';
+	// A list tab only exists while it still has leads to message - once the last
+	// one is sent (or the list deleted) it disappears, and the view moves to All.
+	if (currentStageTab.startsWith('list:') && !counts.lists.get(currentStageTab.slice(5))) currentStageTab = 'all';
 	const tabs = [{ key: 'all', label: 'All', count: counts.all }]
-		.concat(Array.from(counts.lists, ([name, count]) => ({ key: listTabKey(name), label: name, count })))
+		.concat(Array.from(counts.lists).filter(([, count]) => count > 0).map(([name, count]) => ({ key: listTabKey(name), label: name, count })))
 		.concat(['sequence', 'reminder', 'final'].map((stage) => ({ key: stage, label: stage[0].toUpperCase() + stage.slice(1), count: counts[stage] })));
-	const html = tabs.map((tab) => `<button type="button" class="leads-stage-tab${tab.key === currentStageTab ? ' active' : ''}" data-stage="${escapeHtml(tab.key)}">${escapeHtml(tab.label)} <span class="leads-stage-count">${tab.count}</span></button>`).join('');
+	// A list tab gets a small × to delete that list (see deleteList()).
+	const html = tabs.map((tab) => {
+		const close = tab.key.startsWith('list:') ? `<span class="leads-stage-tab-close" role="button" aria-label="Delete list" title="Delete this list" data-delete-list="${escapeHtml(tab.label)}">×</span>` : '';
+		return `<button type="button" class="leads-stage-tab${tab.key === currentStageTab ? ' active' : ''}" data-stage="${escapeHtml(tab.key)}">${escapeHtml(tab.label)} <span class="leads-stage-count">${tab.count}</span>${close}</button>`;
+	}).join('');
 	document.querySelectorAll('[data-stage-tabs]').forEach((container) => { container.innerHTML = html; });
 }
 
@@ -1286,6 +1315,11 @@ function wireEvents() {
 	// instead of on each button.
 	document.querySelectorAll('[data-stage-tabs]').forEach((container) => {
 		container.addEventListener('click', (event) => {
+			const close = event.target.closest('.leads-stage-tab-close');
+			if (close) {
+				deleteList(close.dataset.deleteList);
+				return;
+			}
 			const tab = event.target.closest('.leads-stage-tab');
 			if (!tab) return;
 			currentStageTab = tab.dataset.stage;

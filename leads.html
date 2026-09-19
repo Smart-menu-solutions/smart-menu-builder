@@ -61,6 +61,8 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
 .leads-stage-tab:hover{border-color:var(--orange);color:var(--orange)}
 .leads-stage-tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
 .leads-stage-count{background:rgba(0,0,0,.08);border-radius:999px;padding:1px 7px;font-size:11px}
+.leads-stage-tab-close{margin-left:2px;padding:0 5px;border-radius:4px;font-size:16px;line-height:1.1;opacity:.55;cursor:pointer}
+.leads-stage-tab-close:hover{opacity:1;background:rgba(0,0,0,.14)}
 .leads-stage-tab.active .leads-stage-count{background:rgba(255,255,255,.25)}
 .leads-actions-cell .button:disabled{opacity:.4;cursor:not-allowed}
 /* This page's sidebar only has one nav link, so the note (normally
@@ -94,15 +96,15 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
     <details class="leads-guide">
         <summary>Lead-Finder in 9 Schritten</summary>
         <ol>
-            <li>Land wählen, dann eine <strong>Stadt</strong> aus der Liste (oder "Other city…" für eine andere; "Whole country" = ganzes Land, max. 500 pro Kategorie), Kategorie wählen → <strong>Search</strong>. Jede Suche wird zu einer eigenen Liste, z.B. <strong>"Germany - Hamburg"</strong> - frühere Listen bleiben erhalten</li>
-            <li><strong>Filter</strong> auf "Has any contact" stellen</li>
-            <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp/Instagram von der Website, ändert nichts an der Stufe) - oder Kontakte anhaken und oben <strong>Enrich all</strong> klicken, um mehrere auf einmal zu ergänzen</li>
-            <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für die Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
-            <li>Tab der Liste (z.B. <strong>"Germany - Hamburg"</strong>, zeigt die noch nicht angeschriebenen Kontakte): pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
-            <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → "Send reminder" klicken → Erinnerung senden</li>
-            <li>Nach weiteren 7 Tagen automatisch fällig in <strong>"Final"</strong> → "Send final" klicken → letzte Nachricht → Kontakt verschwindet danach aus der Liste</li>
-            <li>Schon bestellt oder soll nicht mehr angeschrieben werden? <strong>"Stop"</strong> klicken</li>
-            <li><strong>Clear</strong> löscht <em>alle</em> Listen auf einmal</li>
+            <li>Land wählen, dann eine <strong>Stadt</strong> aus der Liste (oder <strong>"Other city…"</strong> für eine andere; <strong>"Whole country"</strong> = ganzes Land, aber nur max. 500 pro Kategorie - eine Stadt bringt mehr). Kategorie wählen → <strong>Search</strong>. Jede Suche wird zu einer eigenen Liste, z.B. <strong>"Germany - Hamburg"</strong> - frühere Listen bleiben erhalten</li>
+            <li><strong>TomTom</strong> (bringt zusätzliche Betriebe, nur bei einer Stadt): einmal den Schlüssel in das Feld <strong>"TomTom API key"</strong> eintragen und <strong>"Also search TomTom"</strong> angehakt lassen. Ohne Schlüssel wird nur OpenStreetMap durchsucht</li>
+            <li><strong>"Auto-enrich after search"</strong> angehakt lassen: Nach der Suche liest das Programm die Websites und ergänzt fehlende E-Mail/WhatsApp/Instagram (Häkchen entfernen = stoppt). Einzelne Kontakte mit <strong>Enrich</strong> oder angehakte mit <strong>Enrich all</strong> ergänzen</li>
+            <li>In der Liste stehen nur Betriebe mit <strong>E-Mail, WhatsApp oder Instagram</strong> - Reihenfolge: WhatsApp + Instagram zuerst, dann WhatsApp, Instagram, E-Mail. Kontakte <strong>anhaken</strong> und <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
+            <li>Tab der Liste (zeigt die noch nicht angeschriebenen Kontakte): pro Kontakt einen Kanal-Button klicken (<strong>Email</strong>, <strong>WhatsApp</strong> oder <strong>Instagram</strong>) → Nachricht abschicken → zurück zur Seite und den Dialog <em>"Did that message go out?"</em> mit <strong>OK</strong> bestätigen. Erst das verschiebt den Kontakt nach <strong>"Sequence"</strong>. Ist der Dialog untergegangen: Button <strong>"Sent"</strong> klicken</li>
+            <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → Kanal-Button klicken → Erinnerung senden und bestätigen</li>
+            <li>Nach weiteren 7 Tagen automatisch fällig in <strong>"Final"</strong> → Kanal-Button klicken → letzte Nachricht → Kontakt verschwindet danach aus der Liste</li>
+            <li>Schon bestellt oder soll nicht mehr angeschrieben werden? <strong>"Stop"</strong> klicken. Versehentlich weitergeschoben? <strong>"Reset"</strong> setzt den Kontakt zurück auf neu</li>
+            <li>Liste löschen: das <strong>×</strong> im Tab der Liste (entfernt nur die noch nicht angeschriebenen Kontakte, angeschriebene bleiben in Sequence/Reminder/Final). Ein Listen-Tab verschwindet von selbst, wenn alle Kontakte angeschrieben sind. <strong>Clear</strong> löscht dagegen <em>alle</em> Listen auf einmal</li>
         </ol>
         <p style="margin:10px 0 0;font-size:12px;color:var(--muted)"><strong>"All"</strong>-Tab zeigt alle aktiven Kontakte aus allen Listen und Stufen zusammen (ohne Final/gestoppte). Sequence, Reminder und Final gelten ebenfalls für alle Listen.</p>
         <p style="margin:14px 0 4px;font-size:13px;font-weight:700;color:var(--ink)">Kontakt manuell hinzufügen (nicht aus der Suche):</p>
@@ -111,7 +113,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
             <li><strong>Name</strong> eingeben (Pflichtfeld) - Address, Phone, Website, Email, WhatsApp, Instagram sind optional</li>
             <li>Unten rechts auf <strong>"Add contact"</strong> klicken</li>
             <li>Der Kontakt erscheint sofort im Tab <strong>"Manual"</strong></li>
-            <li>Ab dann läuft er durch dieselbe Sequenz wie ein gesuchter Kontakt (Enrich, Send message, Reminder, Final, Stop)</li>
+            <li>Ab dann läuft er durch dieselbe Sequenz wie ein gesuchter Kontakt (Enrich, Nachricht per Email/WhatsApp/Instagram, Reminder, Final, Stop)</li>
         </ol>
     </details>
 
@@ -186,6 +188,6 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
         </form>
     </div>
 </div>
-<script src="data/assets/js/leads.js?v=lists-11"></script>
+<script src="data/assets/js/leads.js?v=lists-13"></script>
 </body>
 </html>
