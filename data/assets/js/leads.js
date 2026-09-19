@@ -114,6 +114,21 @@ const FINAL_SUBJECTS = {
 
 const STORAGE_KEY = 'smartmenu.leads.v1';
 
+// Separate from STORAGE_KEY (which only ever holds the CURRENT search's
+// result set for one country/type) - this is a running record of every
+// lead ever seen, keyed by OSM/manual id, that survives switching country
+// or type. Without it, searching a different country replaced `leads`
+// wholesale and any outreach progress or enrichment for the leads that had
+// been visible a moment ago vanished from both the screen and localStorage
+// the instant saveLeads() ran - there was no way back to it even by
+// re-searching the original country, since that fresh OSM fetch has no
+// memory of stage/msgSentAt either. archive[id] is kept in sync on every
+// saveLeads() call and consulted by runSearch() so a lead found again -
+// today, next week, or after switching countries and back - always comes
+// back with its real progress and any previously-enriched contact details.
+const ARCHIVE_KEY = 'smartmenu.leads.archive.v1';
+let archive = {};
+
 const FILTERS = {
 	all: () => true,
 	whatsapp: (lead) => !!lead.whatsapp,
@@ -197,6 +212,40 @@ function saveLeads() {
 	} catch {
 		// Storage full or unavailable - losing the cache on next refresh is
 		// harmless, so this is deliberately silent.
+	}
+	updateArchive();
+}
+
+// Upserts every current lead into the cross-search archive (see ARCHIVE_KEY
+// above) - called from saveLeads() so every place that already saves after
+// a stage change, enrichment, or manual add keeps the archive current too,
+// with no extra call sites to remember.
+function updateArchive() {
+	leads.forEach((lead) => {
+		archive[lead.id] = {
+			name: lead.name,
+			msgStage: lead.msgStage || 0,
+			msgSentAt: lead.msgSentAt || null,
+			stopped: !!lead.stopped,
+			email: lead.email || '',
+			phone: lead.phone || '',
+			whatsapp: lead.whatsapp || '',
+			instagram: lead.instagram || ''
+		};
+	});
+	try {
+		localStorage.setItem(ARCHIVE_KEY, JSON.stringify(archive));
+	} catch {
+		// Same reasoning as saveLeads() above.
+	}
+}
+
+function restoreArchive() {
+	try {
+		const saved = JSON.parse(localStorage.getItem(ARCHIVE_KEY));
+		if (saved && typeof saved === 'object') archive = saved;
+	} catch {
+		// Corrupt/old cache shape - ignore and start fresh.
 	}
 }
 
@@ -339,9 +388,12 @@ async function runSearch() {
 	const status = $('#leadsStatus');
 	$('#leadsSearch').disabled = true;
 
-	// Keep a lookup of the outgoing list so a re-search of the same
-	// country/type doesn't reset everyone's sequence progress back to "New"
-	// - a lead found again is the same business, not a new contact.
+	// Kept for two things: restoring the checkbox selection on a lead found
+	// again in this exact same-country/type re-search (selection is a
+	// throwaway UI convenience, not archived - see ARCHIVE_KEY), and as the
+	// fallback list to restore if this search comes back empty/failed
+	// (below). Actual outreach progress now comes from `archive`, which
+	// (unlike this) survives switching country/type and back.
 	const previousById = new Map(leads.map((lead) => [lead.id, lead]));
 
 	// Clear the old result set immediately instead of leaving it on screen
@@ -362,7 +414,26 @@ async function runSearch() {
 				const lead = elementToLead(element);
 				if (!lead || seen.has(lead.id)) return;
 				const previous = previousById.get(lead.id);
-				if (previous) Object.assign(lead, { msgStage: previous.msgStage, msgSentAt: previous.msgSentAt, selected: previous.selected, stopped: previous.stopped });
+				if (previous) Object.assign(lead, { selected: previous.selected });
+				// The archive (not `previous`, which only covers this exact
+				// country/type's currently-loaded list) is the one lookup that
+				// survives switching country/type and coming back later - see
+				// ARCHIVE_KEY's comment. Falls back to `previous` for a lead
+				// that was only ever added this session and not yet archived
+				// (shouldn't normally happen, since saveLeads() archives
+				// immediately, but costs nothing to be safe).
+				const archived = archive[lead.id] || previous;
+				if (archived) {
+					Object.assign(lead, {
+						msgStage: archived.msgStage || 0,
+						msgSentAt: archived.msgSentAt || null,
+						stopped: !!archived.stopped,
+						email: lead.email || archived.email || '',
+						phone: lead.phone || archived.phone || '',
+						whatsapp: lead.whatsapp || archived.whatsapp || '',
+						instagram: lead.instagram || archived.instagram || ''
+					});
+				}
 				seen.add(lead.id);
 				collected.push(lead);
 			});
@@ -535,6 +606,22 @@ function stopLead(lead) {
 	notify(`Stopped follow-ups for ${lead.name}`);
 }
 
+// Undo for a lead that got wrongly advanced - e.g. a WhatsApp/email/
+// Instagram draft was opened just to test something (or a number turned
+// out not to be on WhatsApp) and "did that send?" was mistakenly confirmed.
+// Before this, fixing that meant editing msgStage/msgSentAt by hand in the
+// browser console (see [[lead-finder-outreach]] memory). Puts the lead back
+// to msgStage 0 and clears stopped too, so it's fully back in "New".
+function resetLead(lead) {
+	if (!confirm(`Reset ${lead.name} back to "New"? Only do this if it was advanced by mistake - this can't be undone.`)) return;
+	lead.msgStage = 0;
+	lead.msgSentAt = null;
+	lead.stopped = false;
+	saveLeads();
+	render();
+	notify(`Reset ${lead.name} to New`);
+}
+
 function selectedLeads() {
 	return leads.filter((lead) => lead.selected);
 }
@@ -586,6 +673,11 @@ function clearLeads() {
 	if (!confirm(`Clear all ${leads.length} leads? This can't be undone - outreach progress will be lost too.`)) return;
 	leads = [];
 	localStorage.removeItem(STORAGE_KEY);
+	// Also wipes the archive (see ARCHIVE_KEY) - Clear is an explicit,
+	// confirmed "lose everything" action, so a lead re-found later should
+	// come back as genuinely new, not silently resume its old progress.
+	archive = {};
+	localStorage.removeItem(ARCHIVE_KEY);
 	$('#leadsStatus').textContent = 'Cleared - run a search to start again.';
 	render();
 }
@@ -706,6 +798,9 @@ function render() {
 			? `<button class="button button-ghost" type="button" data-enrich="${lead.id}" ${!lead.website || lead.enriching ? 'disabled' : ''}>${lead.enriching ? 'Enriching…' : 'Enrich'}</button>`
 			: '';
 		const stopButton = `<button class="button button-danger" type="button" data-stop="${lead.id}" title="Already a customer, or otherwise stop contacting them">Stop</button>`;
+		const resetButton = ((lead.msgStage || 0) > 0 || lead.stopped)
+			? `<button class="button button-ghost" type="button" data-reset="${lead.id}" title="Undo an accidental stage advance - back to New">Reset</button>`
+			: '';
 		return `
 		<tr>
 			<td><input type="checkbox" data-select="${lead.id}" ${lead.selected ? 'checked' : ''}></td>
@@ -716,7 +811,7 @@ function render() {
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
 			<td>${lead.instagram ? `<a href="https://instagram.com/${encodeURIComponent(lead.instagram)}" target="_blank" rel="noopener">@${escapeHtml(lead.instagram)}</a>` : '<span class="leads-empty">-</span>'}</td>
-			<td class="leads-actions-cell">${enrichButton}${actionButton}${stopButton}</td>
+			<td class="leads-actions-cell">${enrichButton}${actionButton}${resetButton}${stopButton}</td>
 		</tr>
 	`;
 	}).join('');
@@ -753,11 +848,13 @@ function wireEvents() {
 		const emailId = event.target.dataset.email;
 		const instagramId = event.target.dataset.instagram;
 		const stopId = event.target.dataset.stop;
+		const resetId = event.target.dataset.reset;
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
 		if (emailId) openEmail(leads.find((lead) => lead.id === emailId));
 		if (instagramId) openInstagram(leads.find((lead) => lead.id === instagramId));
 		if (stopId) stopLead(leads.find((lead) => lead.id === stopId));
+		if (resetId) resetLead(leads.find((lead) => lead.id === resetId));
 	});
 	$('#leadsBody').addEventListener('change', (event) => {
 		const selectId = event.target.dataset.select;
@@ -768,6 +865,7 @@ function wireEvents() {
 }
 
 populateCountrySelect();
+restoreArchive();
 restoreLeads();
 wireEvents();
 render();
