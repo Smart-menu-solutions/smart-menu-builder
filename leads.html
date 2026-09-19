@@ -17,6 +17,7 @@
 .leads-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:18px}
 .leads-toolbar label{display:grid;gap:6px;min-width:160px;flex:1}
 .leads-toolbar label{margin:0}
+.leads-toolbar label.leads-inline{display:flex;align-items:center;gap:8px;min-width:0;flex:0 0 auto;padding-bottom:11px}
 .leads-status{color:var(--muted);font-size:12px;margin:0 0 14px}
 .leads-table-wrap{overflow:auto;max-height:65vh;border:1px solid var(--line);border-radius:10px}
 /* table-layout:fixed so every column's width comes only from the rules
@@ -37,15 +38,17 @@ table.leads-table th:nth-child(5),table.leads-table td:nth-child(5){width:6%}
 table.leads-table th:nth-child(6),table.leads-table td:nth-child(6){width:15%}
 table.leads-table th:nth-child(7),table.leads-table td:nth-child(7){width:11%}
 table.leads-table th:nth-child(8),table.leads-table td:nth-child(8){width:11%}
-table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
+table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
 .leads-empty{color:var(--muted);font-size:11px}
 /* Fixed width is required here, not just a hint - a flex cell with no width
    constraint reports its "preferred" size as every button laid out in one
    unbroken line, so the table just kept growing wider with each channel
    added (WhatsApp, then Email, then Instagram) instead of ever actually
    wrapping. This caps it so flex-wrap has a boundary to wrap against. */
-.leads-actions-cell{display:flex;gap:6px;flex-wrap:wrap;width:170px;max-width:170px}
+.leads-actions-cell{display:flex;flex-direction:column;align-items:stretch;gap:6px;width:140px;max-width:140px}
 .leads-actions-cell .button{padding:6px 10px;font-size:11px}
+.leads-actions-secondary{display:flex;gap:6px;flex-wrap:wrap}
+.leads-actions-secondary .button{flex:1}
 .leads-count-badge{font-size:10px;font-weight:700;color:#1e6b3c;background:#e8f5ec;padding:5px 8px;border-radius:20px;white-space:nowrap}
 .leads-guide{background:var(--tint);border:1px solid #f8d3b3;border-radius:14px;padding:14px 18px;margin-bottom:16px}
 .leads-guide summary{cursor:pointer;font-weight:700;color:var(--ink);list-style:none}
@@ -82,13 +85,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
         <a class="nav-link active" href="leads.html"><span>⌕</span> Lead finder</a>
     </nav>
     <div class="sidebar-note"><span class="status-dot"></span><div><strong>Free lead search</strong><small>Powered by OpenStreetMap - no API key, no cost.</small></div></div>
-    <div class="leads-stage-tabs leads-stage-tabs--sidebar">
-        <button type="button" class="leads-stage-tab" data-stage="all">All <span class="leads-stage-count">0</span></button>
-        <button type="button" class="leads-stage-tab active" data-stage="new">New List <span class="leads-stage-count">0</span></button>
-        <button type="button" class="leads-stage-tab" data-stage="sequence">Sequence <span class="leads-stage-count">0</span></button>
-        <button type="button" class="leads-stage-tab" data-stage="reminder">Reminder <span class="leads-stage-count">0</span></button>
-        <button type="button" class="leads-stage-tab" data-stage="final">Final <span class="leads-stage-count">0</span></button>
-    </div>
+    <div class="leads-stage-tabs leads-stage-tabs--sidebar" data-stage-tabs></div>
 </aside>
 
 <main class="main">
@@ -97,23 +94,23 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
     <details class="leads-guide">
         <summary>Lead-Finder in 9 Schritten</summary>
         <ol>
-            <li>Land + Kategorie wählen → <strong>Search</strong></li>
+            <li>Land wählen, dann eine <strong>Stadt</strong> aus der Liste (oder "Other city…" für eine andere; "Whole country" = ganzes Land, max. 500 pro Kategorie), Kategorie wählen → <strong>Search</strong>. Jede Suche wird zu einer eigenen Liste, z.B. <strong>"Germany - Hamburg"</strong> - frühere Listen bleiben erhalten</li>
             <li><strong>Filter</strong> auf "Has any contact" stellen</li>
             <li>Fehlende Daten mit <strong>Enrich</strong> ergänzen (zieht nur E-Mail/WhatsApp/Instagram von der Website, ändert nichts an der Stufe) - oder Kontakte anhaken und oben <strong>Enrich all</strong> klicken, um mehrere auf einmal zu ergänzen</li>
             <li>Kontakte <strong>anhaken</strong>, <strong>Export Excel/CSV</strong> sichern (Häkchen ist nur für die Auswahl/Export, hat keinen Einfluss auf die Pipeline-Stufe)</li>
-            <li>Tab <strong>"New List"</strong>: pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
+            <li>Tab der Liste (z.B. <strong>"Germany - Hamburg"</strong>, zeigt die noch nicht angeschriebenen Kontakte): pro Kontakt <strong>"Send message"</strong> klicken → Nachricht 1 wird verschickt → <em>nur dieser Klick</em> verschiebt den Kontakt automatisch nach <strong>"Sequence"</strong></li>
             <li>Nach 7 Tagen automatisch fällig in <strong>"Reminder"</strong> → "Send reminder" klicken → Erinnerung senden</li>
             <li>Nach weiteren 7 Tagen automatisch fällig in <strong>"Final"</strong> → "Send final" klicken → letzte Nachricht → Kontakt verschwindet danach aus der Liste</li>
             <li>Schon bestellt oder soll nicht mehr angeschrieben werden? <strong>"Stop"</strong> klicken</li>
-            <li><strong>Clear</strong> zum Zurücksetzen der ganzen Liste</li>
+            <li><strong>Clear</strong> löscht <em>alle</em> Listen auf einmal</li>
         </ol>
-        <p style="margin:10px 0 0;font-size:12px;color:var(--muted)"><strong>"All"</strong>-Tab zeigt alle aktiven Kontakte über alle Stufen hinweg zusammen (ohne Final/gestoppte).</p>
+        <p style="margin:10px 0 0;font-size:12px;color:var(--muted)"><strong>"All"</strong>-Tab zeigt alle aktiven Kontakte aus allen Listen und Stufen zusammen (ohne Final/gestoppte). Sequence, Reminder und Final gelten ebenfalls für alle Listen.</p>
         <p style="margin:14px 0 4px;font-size:13px;font-weight:700;color:var(--ink)">Kontakt manuell hinzufügen (nicht aus der Suche):</p>
         <ol>
             <li>Neben <strong>"Leads"</strong> oben rechts auf das <strong>＋</strong> klicken</li>
             <li><strong>Name</strong> eingeben (Pflichtfeld) - Address, Phone, Website, Email, WhatsApp, Instagram sind optional</li>
             <li>Unten rechts auf <strong>"Add contact"</strong> klicken</li>
-            <li>Der Kontakt erscheint sofort im Tab <strong>"New List"</strong></li>
+            <li>Der Kontakt erscheint sofort im Tab <strong>"Manual"</strong></li>
             <li>Ab dann läuft er durch dieselbe Sequenz wie ein gesuchter Kontakt (Enrich, Send message, Reminder, Final, Stop)</li>
         </ol>
     </details>
@@ -121,6 +118,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
     <section class="panel" style="padding:21px;margin-bottom:20px">
         <div class="leads-toolbar">
             <label>Country<select id="leadsCountry"></select></label>
+            <label>City<select id="leadsCity"></select><input type="text" id="leadsCityOther" placeholder="Type the city name" autocomplete="off" hidden></label>
             <label>Type<select id="leadsType">
                 <option value="restaurant">Restaurants</option>
                 <option value="bar">Bars</option>
@@ -137,13 +135,16 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
                 <option value="contact">Has any contact</option>
                 <option value="missing">Missing contact info</option>
             </select></label>
+            <label class="leads-inline"><input type="checkbox" id="leadsAutoEnrich" checked> Auto-enrich after search</label>
+            <label class="leads-inline" title="Adds places OpenStreetMap doesn't have. Only for a chosen city, not a whole country."><input type="checkbox" id="leadsTomtom" checked> Also search TomTom (cities)</label>
+            <input type="password" id="leadsTomtomKey" placeholder="TomTom API key" autocomplete="off" style="max-width:190px" title="Your TomTom API key - saved in this browser only">
             <button class="button button-primary" type="button" id="leadsSearch">Search</button>
             <button class="button button-ghost" type="button" id="leadsEnrichAll">Enrich all</button>
             <button class="button button-ghost" type="button" id="leadsExport">Export Excel</button>
             <button class="button button-ghost" type="button" id="leadsExportCsv">Export CSV</button>
             <button class="button button-danger" type="button" id="leadsClear">Clear</button>
         </div>
-        <p class="leads-status" id="leadsStatus">Nationwide search via OpenStreetMap (Overpass API) - capped at 500 results per search, so very large countries may not be complete in one go.</p>
+        <p class="leads-status" id="leadsStatus">Search via OpenStreetMap (Overpass API). A whole country is capped at 500 results per category - pick a city to get the full list for that city. Every search becomes its own list tab.</p>
     </section>
 
     <section class="panel" style="padding:21px">
@@ -154,13 +155,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
                 <span class="leads-count-badge" id="leadsCount">0 found</span>
             </div>
         </div>
-        <div class="leads-stage-tabs">
-            <button type="button" class="leads-stage-tab" data-stage="all">All <span class="leads-stage-count">0</span></button>
-            <button type="button" class="leads-stage-tab active" data-stage="new">New List <span class="leads-stage-count">0</span></button>
-            <button type="button" class="leads-stage-tab" data-stage="sequence">Sequence <span class="leads-stage-count">0</span></button>
-            <button type="button" class="leads-stage-tab" data-stage="reminder">Reminder <span class="leads-stage-count">0</span></button>
-            <button type="button" class="leads-stage-tab" data-stage="final">Final <span class="leads-stage-count">0</span></button>
-        </div>
+        <div class="leads-stage-tabs" data-stage-tabs></div>
         <div class="leads-table-wrap">
             <table class="leads-table">
                 <thead>
@@ -191,6 +186,6 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:170px}
         </form>
     </div>
 </div>
-<script src="data/assets/js/leads.js?v=instagram-7"></script>
+<script src="data/assets/js/leads.js?v=lists-11"></script>
 </body>
 </html>
