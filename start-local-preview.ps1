@@ -23,26 +23,32 @@ Write-Host 'Press Ctrl+C to stop.'
 try {
     while ($listener.IsListening) {
         $context = $listener.GetContext()
-        $relativePath = [Uri]::UnescapeDataString($context.Request.Url.AbsolutePath.TrimStart('/'))
-        if ([string]::IsNullOrWhiteSpace($relativePath)) {
-            $relativePath = 'index.html'
-        }
+        try {
+            $relativePath = [Uri]::UnescapeDataString($context.Request.Url.AbsolutePath.TrimStart('/'))
+            if ([string]::IsNullOrWhiteSpace($relativePath)) {
+                $relativePath = 'index.html'
+            }
 
-        $filePath = [IO.Path]::GetFullPath((Join-Path $root $relativePath))
-        if (-not $filePath.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path $filePath -PathType Leaf)) {
-            $context.Response.StatusCode = 404
-            $body = [Text.Encoding]::UTF8.GetBytes('Not found')
+            $filePath = [IO.Path]::GetFullPath((Join-Path $root $relativePath))
+            if (-not $filePath.StartsWith($root, [StringComparison]::OrdinalIgnoreCase) -or -not (Test-Path $filePath -PathType Leaf)) {
+                $context.Response.StatusCode = 404
+                $body = [Text.Encoding]::UTF8.GetBytes('Not found')
+                $context.Response.OutputStream.Write($body, 0, $body.Length)
+                $context.Response.Close()
+                continue
+            }
+
+            $extension = [IO.Path]::GetExtension($filePath).ToLowerInvariant()
+            $context.Response.ContentType = if ($contentTypes.ContainsKey($extension)) { $contentTypes[$extension] } else { 'application/octet-stream' }
+            $body = [IO.File]::ReadAllBytes($filePath)
+            $context.Response.ContentLength64 = $body.Length
             $context.Response.OutputStream.Write($body, 0, $body.Length)
             $context.Response.Close()
-            continue
         }
-
-        $extension = [IO.Path]::GetExtension($filePath).ToLowerInvariant()
-        $context.Response.ContentType = if ($contentTypes.ContainsKey($extension)) { $contentTypes[$extension] } else { 'application/octet-stream' }
-        $body = [IO.File]::ReadAllBytes($filePath)
-        $context.Response.ContentLength64 = $body.Length
-        $context.Response.OutputStream.Write($body, 0, $body.Length)
-        $context.Response.Close()
+        catch {
+            # A browser that cancels a request mid-transfer (reload, closed tab) throws here - ignore it and keep serving.
+            try { $context.Response.Abort() } catch { }
+        }
     }
 }
 finally {
