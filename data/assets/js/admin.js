@@ -425,6 +425,50 @@ async function translateMenu() {
 // page (analytics/smart-food-match both live on the same addons.html, sfm
 // via manage-addons; photo has no purchase page of its own yet, so it gets
 // a status dot but no send button).
+// One "Gratis" checkbox per add-on. Ticking it turns that add-on on for the
+// client without a purchase; unticking turns it off - and the database only
+// has one yes/no per add-on, so this can't tell a free add-on from a paid one
+// (unticking asks first).
+const ADDON_FREE_TOGGLES = [
+	{ checkbox: '#addonFreeAnalytics', flag: 'analytics_reports_enabled', label: 'Weekly Analytics Report' },
+	{ checkbox: '#addonFreeSfm', flag: 'smart_food_match_enabled', label: 'Smart Food Match' },
+	{ checkbox: '#addonFreePhoto', flag: 'photo_addon_enabled', label: 'Photo add-on' }
+];
+
+// Writes just this one column. saveClients() deliberately never sends the
+// analytics/photo flags (a stale copy in memory could overwrite what
+// stripe-webhook set), so a Gratis toggle updates only its own column.
+async function setAddonFlag(client, flag, value) {
+	if (typeof supabaseClient !== 'undefined') {
+		const { data, error } = await supabaseClient.from('menus').update({ [flag]: value, updated_at: new Date().toISOString() }).eq('slug', client.slug).select('slug');
+		if (error) throw new Error(`Could not save: ${error.message}`);
+		if (!data?.length) throw new Error('Save this client first (it is not in the cloud yet), then tick the add-on.');
+	}
+	client[flag] = value;
+	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+}
+
+function wireAddonFreeCheckboxes() {
+	ADDON_FREE_TOGGLES.forEach(({ checkbox, flag, label }) => {
+		const input = $(checkbox);
+		if (!input) return;
+		input.addEventListener('change', async () => {
+			const client = selectedClient();
+			if (!client) return;
+			const wanted = input.checked;
+			if (!wanted && !confirm(`Turn off "${label}" for ${client.name}?\nIf the customer paid for it, they lose it.`)) { input.checked = true; return; }
+			try {
+				await setAddonFlag(client, flag, wanted);
+				notify(`${label} ${wanted ? 'given for free to' : 'turned off for'} ${client.name}`);
+			} catch (error) {
+				input.checked = !wanted;
+				notify(error.message);
+			}
+			renderAddonBoard(client, subscriptionsBySlug[client.slug]);
+		});
+	});
+}
+
 function renderAddonBoard(client, clientSubscription) {
 	const analyticsStatus = $('#addonStatusAnalytics');
 	if (!analyticsStatus) return; // Add-ons tab not present in this markup version
@@ -439,6 +483,18 @@ function renderAddonBoard(client, clientSubscription) {
 
 	$('#addonStatusSfm').classList.toggle('active', !!client.smart_food_match_enabled);
 	$('#addonStatusPhoto').classList.toggle('active', !!client.photo_addon_enabled);
+	ADDON_FREE_TOGGLES.forEach(({ checkbox, flag }) => { const input = $(checkbox); if (input) input.checked = !!client[flag]; });
+
+	// Smart Food Match only shows up on the live menu once the sections are
+	// tagged (see smartFoodMatchQualifies()), so say whether it's ready.
+	const hint = $('#smartFoodMatchHint');
+	if (hint) {
+		const qualifies = smartFoodMatchQualifies(client);
+		hint.textContent = qualifies
+			? 'Ready - starter, main and dessert sections are all tagged.'
+			: 'Not ready yet - needs at least one tagged starter, main and dessert section (Menu & Photos tab).';
+		hint.classList.toggle('smart-match-not-ready', !qualifies);
+	}
 
 	const addonsUrl = clientSubscription?.addon_token ? `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}` : '';
 	[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
@@ -485,20 +541,12 @@ function render() {
 	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : '<span class="header-bg-empty">No custom background — using default</span>';
 	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
 	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
-	if ($('#smartFoodMatchEnabled')) {
-		$('#smartFoodMatchEnabled').checked = !!client.smart_food_match_enabled;
-		const qualifies = smartFoodMatchQualifies(client);
-		$('#smartFoodMatchHint').textContent = qualifies
-			? 'Ready - starter, main and dessert sections are all tagged.'
-			: 'Not ready yet - needs at least one tagged starter, main and dessert section (see the dropdown on each section above).';
-		$('#smartFoodMatchHint').classList.toggle('smart-match-not-ready', !qualifies);
-	}
-	// Read-only board - none of these three flags have a click handler here,
-	// unlike smartFoodMatchEnabled above. All three are now set automatically
-	// by stripe-webhook on purchase (smart_food_match_enabled is also still
-	// staff-editable via the checkbox above, e.g. for accounts set up before
-	// this was automated, or manual comps).
+	// The three add-on flags are set automatically by stripe-webhook on
+	// purchase; staff can also give any of them for free with the "Gratis"
+	// checkboxes on the Add-ons tab (see renderAddonBoard() and
+	// wireAddonFreeCheckboxes()).
 	const clientSubscription = subscriptionsBySlug[client.slug];
+	updateDishCount(client, clientSubscription);
 	renderAddonBoard(client, clientSubscription);
 	const isLocked = !!clientSubscription && clientSubscription.status !== 'active';
 	const banner = $('#subscriptionBanner');
@@ -534,8 +582,6 @@ function render() {
 		saveClients().then(render).catch((error) => notify(error.message));
 	}));
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
-	const dishCount = client.categories.reduce((total, category) => total + category.items.length, 0);
-	if ($('#dishCountBadge')) $('#dishCountBadge').textContent = `${dishCount} dish${dishCount === 1 ? '' : 'es'} total`;
 	function imageControl(kind, index, imageUrl) {
 		const noun = kind === 'category' ? 'section' : 'dish';
 		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
@@ -673,6 +719,38 @@ async function syncFromSupabase() {
 		try { await saveClients(); render(); } catch (error) { notify(error.message); }
 	}
 }
+// How many menu items each plan includes (same numbers as the pricing page).
+const PLAN_DISH_LIMITS = { start: { label: 'Smart Start', limit: 50 }, pro: { label: 'Smart Pro', limit: 150 }, premium: { label: 'Smart Premium', limit: 450 } };
+
+function planKey(plan) {
+	const value = String(plan || '').toLowerCase();
+	if (value.includes('premium')) return 'premium';
+	if (value.includes('pro')) return 'pro';
+	if (value.includes('start')) return 'start';
+	return '';
+}
+
+// Total dishes across all sections, next to the "Sections & dishes" title -
+// "23 / 50 dishes" when the menu's plan is known, orange from 90% of the
+// limit and red once it's exceeded. Without a subscription there is no plan
+// to compare against, so only the count is shown.
+function updateDishCount(client, subscription) {
+	const badge = $('#dishCount');
+	if (!badge) return;
+	const total = client.categories.reduce((sum, category) => sum + (category.items?.length || 0), 0);
+	const plan = PLAN_DISH_LIMITS[planKey(subscription?.plan)];
+	badge.classList.remove('dish-count--near', 'dish-count--over');
+	if (!plan) {
+		badge.textContent = `${total} dish${total === 1 ? '' : 'es'}`;
+		badge.title = 'No subscription found for this menu, so no plan limit is shown';
+		return;
+	}
+	badge.textContent = `${total} / ${plan.limit} dishes`;
+	badge.title = `${plan.label} includes up to ${plan.limit} menu items`;
+	if (total > plan.limit) badge.classList.add('dish-count--over');
+	else if (total >= plan.limit * 0.9) badge.classList.add('dish-count--near');
+}
+
 async function syncSubscriptions() {
 	if (typeof supabaseClient === 'undefined') return;
 	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token').order('created_at', { ascending: false });
@@ -767,10 +845,7 @@ if ($('#headerTextColor')) $('#headerTextColor').addEventListener('change', () =
 	selectedClient().header_text_color = $('#headerTextColor').value;
 	saveClients().then(render).catch((error) => notify(error.message));
 });
-if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('change', () => {
-	selectedClient().smart_food_match_enabled = $('#smartFoodMatchEnabled').checked;
-	saveClients().then(render).catch((error) => notify(error.message));
-});
+wireAddonFreeCheckboxes();
 [$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
 	if (!button) return;
 	button.addEventListener('click', async () => {
@@ -783,7 +858,9 @@ if ($('#smartFoodMatchEnabled')) $('#smartFoodMatchEnabled').addEventListener('c
 // Read-only reference copy of what the Edge Functions actually send (see
 // stripe-webhook/check-subscriptions/manage-addons index.ts) - kept here as
 // plain text for pasting into a manual email, not wired to send anything
-// itself. Has to be updated by hand if the real template copy changes.
+// itself. Has to be updated by hand if the real template copy changes. The
+// entries marked "(manual)" are not sent by the system at all - they exist
+// only here, for writing by hand.
 const EMAIL_TEMPLATES = [
 	{
 		name: 'Order confirmation',
@@ -797,6 +874,33 @@ Plan: [Smart Start/Pro/Premium]
 Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
 Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
+		// Manual - not sent by any Edge Function. Written by hand and sent
+		// with the client's QR code attached once the menu is finished.
+		name: 'Finished menu: QR code delivery (manual)',
+		subject: 'Ihr individueller QR-Code für [Menü-Name] ist fertig',
+		body: `Hallo [Vorname Nachname],
+
+vielen Dank für Ihr Vertrauen! Ihre digitale Speisekarte für [Menü-Name] ist fertig und ab sofort online.
+
+Anbei erhalten Sie Ihren individuellen QR-Code (als [PNG/PDF] im Anhang). Ihr Menü erreichen Sie auch direkt über diesen Link: [Menü-Link →]
+
+So geht es weiter:
+• Drucken Sie den QR-Code aus und platzieren Sie ihn dort, wo Ihre Gäste ihn sehen – zum Beispiel auf den Tischen, an der Theke oder am Eingang.
+• Ihre Gäste scannen den Code mit der Kamera ihres Smartphones und sehen sofort Ihre aktuelle Speisekarte – ganz ohne App.
+• Bitte prüfen Sie Ihr Menü in Ruhe und geben Sie uns Bescheid, falls etwas angepasst werden soll.
+
+Änderungen an Ihrer Speisekarte, wie neue Gerichte oder geänderte Preise, senden Sie uns einfach per E-Mail. Die Updates sind in Ihrem Plan ([Smart Start/Pro/Premium]) enthalten.
+
+Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+
+Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+
+Wir wünschen Ihnen viel Erfolg mit Ihrer neuen digitalen Speisekarte und freuen uns über Ihr Vertrauen.
 
 Mit freundlichen Grüßen
 [+ HTML-Signatur]`
@@ -859,25 +963,144 @@ Mit freundlichen Grüßen
 [+ HTML-Signatur]`
 	}
 ];
+// English versions of the templates above, keyed by template name. The Edge
+// Functions send the English text to customers whose menu language is
+// English (their `lang` is 'en'); the German text above is the default.
+const EMAIL_TEMPLATES_EN = {
+	'Order confirmation': {
+		subject: 'Your order at Smart Menu Solutions',
+		body: `Hi [First name Last name],
+
+thank you for your order. We've received your details and menu and will get back to you shortly with the next steps.
+
+Plan: [Smart Start/Pro/Premium]
+
+If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+
+If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+
+Best regards
+[+ HTML signature]`
+	},
+	'Finished menu: QR code delivery (manual)': {
+		subject: 'Your personal QR code for [Menu name] is ready',
+		body: `Hi [First name Last name],
+
+thank you for your trust! Your digital menu for [Menu name] is finished and live from now on.
+
+Attached you'll find your personal QR code (as [PNG/PDF]). You can also reach your menu directly via this link: [Menu link →]
+
+What happens next:
+• Print the QR code and place it where your guests will see it – for example on the tables, at the counter or at the entrance.
+• Your guests scan the code with their phone's camera and instantly see your current menu – no app needed.
+• Please take your time to check your menu and let us know if anything needs to be adjusted.
+
+You can send us changes to your menu, such as new dishes or changed prices, simply by email. The updates are included in your plan ([Smart Start/Pro/Premium]).
+
+If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+
+If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+
+We wish you every success with your new digital menu and thank you for your trust.
+
+Best regards
+[+ HTML signature]`
+	},
+	'Renewal confirmation': {
+		subject: 'Your renewal at Smart Menu Solutions',
+		body: `Hi [First name Last name],
+
+thank you for renewing your subscription. We've received your details and menu and will get back to you shortly with the next steps.
+
+Plan: [Smart Start/Pro/Premium]
+
+If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+
+If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+
+Best regards
+[+ HTML signature]`
+	},
+	'Renewal payment failed': {
+		subject: 'Your renewal has failed – action needed',
+		body: `Hi [First name Last name],
+
+unfortunately, the automatic payment for renewing your subscription could not be processed.
+
+Your menu will stay online for another 7 days so you have time to sort this out. Please renew your subscription via the link below to avoid any interruption: [Renew now →]
+
+If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+
+Best regards
+[+ HTML signature]`
+	},
+	'Subscription deactivated': {
+		subject: 'Your subscription has been deactivated',
+		body: `Hi [First name Last name],
+
+since the payment for your renewal didn't go through, your subscription has now been deactivated and your menu is no longer reachable via the QR code.
+
+You can reactivate your subscription anytime via the link below: [Reactivate subscription →]
+
+If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+
+Best regards
+[+ HTML signature]`
+	},
+	'Add-on added (mid-subscription)': {
+		subject: '[Add-on] has been added',
+		body: `Hi [First name Last name],
+
+[Add-on name] is now active for [Menu name].
+
+We've charged the pro-rated amount for the rest of your current plan year: [X.XX €]. From your next renewal on, it's included automatically with your plan.
+(For the photo add-on instead: one-time amount, no renewal note.)
+
+Best regards
+[+ HTML signature]`
+	}
+};
+
+// Which language the template cards show and copy - German by default.
+let templateLang = 'de';
+
+function templateText(template) {
+	return templateLang === 'en' && EMAIL_TEMPLATES_EN[template.name] ? EMAIL_TEMPLATES_EN[template.name] : template;
+}
+
 const templateBoard = $('#templateBoard');
-if (templateBoard) {
-	templateBoard.innerHTML = EMAIL_TEMPLATES.map((template, index) => `
+function renderTemplateBoard() {
+	if (!templateBoard) return;
+	document.querySelectorAll('[data-template-lang]').forEach((button) => button.classList.toggle('active', button.dataset.templateLang === templateLang));
+	templateBoard.innerHTML = EMAIL_TEMPLATES.map((template, index) => {
+		const text = templateText(template);
+		return `
 		<div class="template-card">
 			<div class="template-card-head">
 				<span class="template-card-name">${escapeHtml(template.name)}</span>
 				<button type="button" class="button button-ghost template-card-copy" data-template-index="${index}">Copy</button>
 			</div>
-			<p class="template-card-subject"><strong>Subject:</strong> ${escapeHtml(template.subject)}</p>
-			<pre class="template-card-body">${escapeHtml(template.body)}</pre>
+			<p class="template-card-subject"><strong>Subject:</strong> ${escapeHtml(text.subject)}</p>
+			<pre class="template-card-body">${escapeHtml(text.body)}</pre>
 		</div>
-	`).join('');
-	templateBoard.querySelectorAll('[data-template-index]').forEach((button) => {
-		button.addEventListener('click', async () => {
-			const template = EMAIL_TEMPLATES[Number(button.dataset.templateIndex)];
-			await navigator.clipboard.writeText(`${template.subject}\n\n${template.body}`);
-			notify('Template copied');
-		});
+	`;
+	}).join('');
+}
+if (templateBoard) {
+	renderTemplateBoard();
+	// Copy buttons and the language switch are wired once on the containers,
+	// since the cards are rebuilt whenever the language changes.
+	templateBoard.addEventListener('click', async (event) => {
+		const button = event.target.closest('[data-template-index]');
+		if (!button) return;
+		const text = templateText(EMAIL_TEMPLATES[Number(button.dataset.templateIndex)]);
+		await navigator.clipboard.writeText(`${text.subject}\n\n${text.body}`);
+		notify(`Template copied (${templateLang === 'en' ? 'English' : 'Deutsch'})`);
 	});
+	document.querySelectorAll('[data-template-lang]').forEach((button) => button.addEventListener('click', () => {
+		templateLang = button.dataset.templateLang;
+		renderTemplateBoard();
+	}));
 }
 
 if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', async () => {

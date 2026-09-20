@@ -27,7 +27,6 @@
 }
 
 .backup-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;align-items:center}
-.dish-count-badge{cursor:default}
 
 .activity-section .panel + .panel{margin-top:18px}
 .pictures-section{margin-top:24px}
@@ -88,7 +87,7 @@
 .language-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .language-row.lang-missing{background:#fdecea;border-color:#f3c6c2}
 .language-move{display:flex;gap:4px;flex-shrink:0}
-.language-move .move-language{width:26px;height:26px;padding:0;line-height:1;font-size:11px;border-radius:6px}
+.language-move .move-language{width:26px;height:26px;padding:0;line-height:1;font-size:11px;border-radius:6px;border:1px solid #f66a09;cursor:pointer}
 .language-move .move-language:disabled{opacity:.3;cursor:not-allowed}
 .language-check{display:flex!important;align-items:center;gap:8px;margin:0;flex:1}
 .language-check input[type="checkbox"]{width:16px;height:16px;margin:0;flex-shrink:0;accent-color:#f66a09}
@@ -103,10 +102,6 @@
 .item-tags select{font-size:11px;padding:6px 8px;min-width:0}
 .item-favorite-check{display:flex!important;align-items:center;gap:5px;margin:0;font-size:11px;white-space:nowrap}
 .item-favorite-check input{width:14px;height:14px;margin:0;accent-color:#f66a09}
-.smart-match-toggle{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:11px;font-size:12px;color:var(--muted)}
-.smart-match-toggle label{display:flex!important;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--ink)}
-.smart-match-toggle input{width:16px;height:16px;margin:0;accent-color:#f66a09}
-#smartFoodMatchHint.smart-match-not-ready{color:#b3261e}
 #renewalFilterCard.active-filter{border-color:var(--orange);box-shadow:0 0 0 2px var(--tint)}
 .editor-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto}
 .editor-tab{padding:10px 16px;border:0;background:none;cursor:pointer;font-weight:700;font-size:13px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap}
@@ -127,3 +122,18 @@
 
 /* Match the rectangular button shape used across smart-menu-solutions.github.io */
 .button{border-radius:6px!important}
+.menu-heading{gap:10px}
+.menu-heading-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px}
+.menu-heading-title h3{margin:0}
+.dish-count{font-size:12px;font-weight:700;color:#d85d06;background:#fff1e4;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.dish-count:empty{display:none}
+.dish-count--near{color:#8a4b00;background:#ffe3b8}
+.dish-count--over{color:#c9403a;background:#fdecea}
+.addon-board-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.addon-board-free{display:flex!important;align-items:center;gap:6px;margin:0;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer}
+.addon-board-free input{width:14px;height:14px;margin:0;accent-color:#f66a09}
+.addon-board-hint{font-size:11px;color:var(--muted)}
+.addon-board-hint.smart-match-not-ready{color:#b3261e}
+.template-lang{display:flex;gap:8px;margin-top:14px}
+.template-lang-btn{font-size:12px;padding:6px 14px}
+.template-lang-btn.active{background:#f66a09!important;color:#fff!important}
