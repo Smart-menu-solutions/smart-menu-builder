@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=email-en-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=email-manage-2">
 </head>
 <body>
 <aside class="sidebar">
@@ -103,7 +103,18 @@
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="emails" hidden>
                     <p class="language-hint">Read-only reference for what's actually sent - copies the plain text so you can paste it into a manual email. Editing the real templates still needs a code change. Templates marked "(manual)" are not sent automatically - they are only here for you to send yourself.</p>
-                    <div class="template-lang" role="group" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button></div>
+                    <div class="template-toolbar">
+                        <div class="template-lang" role="group" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button></div>
+                        <div class="template-actions"><button type="button" class="button button-ghost" id="templateAdd">＋ Add template</button><button type="button" class="button button-danger" id="templateDelete" disabled>Delete template</button><button type="button" class="button button-ghost" id="templateRestore" hidden>Restore deleted</button></div>
+                    </div>
+                    <div class="template-form" id="templateForm" hidden>
+                        <label class="wide">Template name<input id="templateName" placeholder="e.g. Thank you after the first order"></label>
+                        <label class="wide">Subject (Deutsch)<input id="templateSubjectDe" placeholder="Betreff"></label>
+                        <label class="wide">Text (Deutsch)<textarea id="templateBodyDe" rows="7" placeholder="Hallo [Vorname Nachname],"></textarea></label>
+                        <label class="wide">Subject (English) - optional<input id="templateSubjectEn" placeholder="Subject"></label>
+                        <label class="wide">Text (English) - optional<textarea id="templateBodyEn" rows="7" placeholder="Hi [First name Last name],"></textarea></label>
+                        <div class="template-form-actions"><button type="button" class="button button-ghost" id="templateCancel">Cancel</button><button type="button" class="button button-primary" id="templateSave">Save template</button></div>
+                    </div>
                     <div class="template-board" id="templateBoard"></div>
                 </div>
                 <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
@@ -138,6 +149,6 @@
     </div>
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=email-en-1"></script>
+<script src="data/assets/js/admin.js?v=email-manage-3"></script>
 </body>
 </html>

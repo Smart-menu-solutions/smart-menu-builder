@@ -643,7 +643,11 @@ function render() {
 	document.querySelectorAll('[data-item-style]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemStyle.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].style = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-item-favorite]').forEach((checkbox) => checkbox.addEventListener('change', () => { const [categoryIndex, itemIndex] = checkbox.dataset.itemFavorite.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].isFavorite = checkbox.checked; saveClients().then(render).catch((error) => notify(error.message)); }));
 	const url = menuUrl(client); $('#qrUrl').textContent = url; $('#previewMenu').href = url; if ($('#previewMenuTop')) $('#previewMenuTop').href = url; $('#qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(url)}`;
-	document.querySelectorAll('#clientForm input, #clientForm select, #clientForm button, #clientForm textarea').forEach((element) => { if (element.id !== 'deleteClient') element.disabled = isLocked; });
+	// The Email templates tab isn't about this client (it's the shared template
+	// list), so a locked client must not switch its buttons off - that also
+	// keeps the template toolbar's own disabled states (e.g. Delete with nothing
+	// ticked) from being overwritten here on every render.
+	document.querySelectorAll('#clientForm input, #clientForm select, #clientForm button, #clientForm textarea').forEach((element) => { if (element.id !== 'deleteClient' && !element.closest('[data-tab-panel="emails"]')) element.disabled = isLocked; });
 }
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
@@ -1064,43 +1068,160 @@ Best regards
 // Which language the template cards show and copy - German by default.
 let templateLang = 'de';
 
+// Staff can delete templates and write new ones. That's kept in this browser
+// only (localStorage): deleting a built-in template just hides it (it can be
+// restored), a custom template is removed for good.
+const TEMPLATE_STORE_KEY = 'smartmenu.emailtemplates.v1';
+
+function loadTemplateStore() {
+	try {
+		const saved = JSON.parse(localStorage.getItem(TEMPLATE_STORE_KEY));
+		return { hidden: Array.isArray(saved?.hidden) ? saved.hidden : [], custom: Array.isArray(saved?.custom) ? saved.custom : [] };
+	} catch {
+		return { hidden: [], custom: [] };
+	}
+}
+
+let templateStore = loadTemplateStore();
+
+function saveTemplateStore() {
+	try {
+		localStorage.setItem(TEMPLATE_STORE_KEY, JSON.stringify(templateStore));
+	} catch {
+		notify('Could not save the template changes in this browser');
+	}
+}
+
+// Built-in templates that haven't been deleted, then the custom ones. Each
+// entry: { key, name, custom, de: {subject, body}, en: {subject, body} | null }.
+function visibleTemplates() {
+	const builtIn = EMAIL_TEMPLATES
+		.filter((template) => !templateStore.hidden.includes(template.name))
+		.map((template) => ({ key: template.name, name: template.name, custom: false, de: { subject: template.subject, body: template.body }, en: EMAIL_TEMPLATES_EN[template.name] || null }));
+	const custom = templateStore.custom.map((template) => ({ key: template.id, name: template.name, custom: true, de: template.de, en: template.en?.subject || template.en?.body ? template.en : null }));
+	return builtIn.concat(custom);
+}
+
+// Text to show/copy in the current language. A template without an English
+// version falls back to its German text (and is flagged as such on its card).
 function templateText(template) {
-	return templateLang === 'en' && EMAIL_TEMPLATES_EN[template.name] ? EMAIL_TEMPLATES_EN[template.name] : template;
+	return templateLang === 'en' && template.en ? template.en : template.de;
 }
 
 const templateBoard = $('#templateBoard');
+const selectedTemplateKeys = new Set();
+
+function updateTemplateToolbar() {
+	const deleteButton = $('#templateDelete');
+	if (deleteButton) {
+		deleteButton.disabled = !selectedTemplateKeys.size;
+		deleteButton.textContent = selectedTemplateKeys.size ? `Delete template (${selectedTemplateKeys.size})` : 'Delete template';
+	}
+	const restoreButton = $('#templateRestore');
+	if (restoreButton) restoreButton.hidden = !templateStore.hidden.length;
+}
+
 function renderTemplateBoard() {
 	if (!templateBoard) return;
 	document.querySelectorAll('[data-template-lang]').forEach((button) => button.classList.toggle('active', button.dataset.templateLang === templateLang));
-	templateBoard.innerHTML = EMAIL_TEMPLATES.map((template, index) => {
+	const templates = visibleTemplates();
+	[...selectedTemplateKeys].forEach((key) => { if (!templates.some((template) => template.key === key)) selectedTemplateKeys.delete(key); });
+	templateBoard.innerHTML = templates.map((template) => {
 		const text = templateText(template);
+		const missingEnglish = templateLang === 'en' && !template.en;
 		return `
 		<div class="template-card">
 			<div class="template-card-head">
-				<span class="template-card-name">${escapeHtml(template.name)}</span>
-				<button type="button" class="button button-ghost template-card-copy" data-template-index="${index}">Copy</button>
+				<label class="template-card-select" title="Tick to delete"><input type="checkbox" data-template-select="${escapeAttr(template.key)}"${selectedTemplateKeys.has(template.key) ? ' checked' : ''}><span class="template-card-name">${escapeHtml(template.name)}</span>${template.custom ? '<span class="template-card-tag">Own</span>' : ''}</label>
+				<button type="button" class="button button-ghost template-card-copy" data-template-key="${escapeAttr(template.key)}">Copy</button>
 			</div>
+			${missingEnglish ? '<p class="template-card-note">No English version yet - showing the German text.</p>' : ''}
 			<p class="template-card-subject"><strong>Subject:</strong> ${escapeHtml(text.subject)}</p>
 			<pre class="template-card-body">${escapeHtml(text.body)}</pre>
 		</div>
 	`;
-	}).join('');
+	}).join('') || '<p class="client-empty">No templates. Use "Add template" to write one, or "Restore deleted" to bring the built-in ones back.</p>';
+	updateTemplateToolbar();
 }
+
+// The form is a plain <div>, not a <form>: it sits inside the client's own
+// <form>, and nested forms aren't allowed (the browser drops the inner one).
+const TEMPLATE_FORM_FIELDS = ['#templateName', '#templateSubjectDe', '#templateBodyDe', '#templateSubjectEn', '#templateBodyEn'];
+
+function openTemplateForm() {
+	TEMPLATE_FORM_FIELDS.forEach((selector) => { $(selector).value = ''; });
+	$('#templateForm').hidden = false;
+	$('#templateName').focus();
+}
+
+function closeTemplateForm() {
+	$('#templateForm').hidden = true;
+}
+
 if (templateBoard) {
 	renderTemplateBoard();
-	// Copy buttons and the language switch are wired once on the containers,
-	// since the cards are rebuilt whenever the language changes.
+	// Everything is wired once on the containers, since the cards are rebuilt
+	// whenever the language, the selection or the list changes.
 	templateBoard.addEventListener('click', async (event) => {
-		const button = event.target.closest('[data-template-index]');
+		const button = event.target.closest('[data-template-key]');
 		if (!button) return;
-		const text = templateText(EMAIL_TEMPLATES[Number(button.dataset.templateIndex)]);
+		const template = visibleTemplates().find((item) => item.key === button.dataset.templateKey);
+		if (!template) return;
+		const text = templateText(template);
 		await navigator.clipboard.writeText(`${text.subject}\n\n${text.body}`);
-		notify(`Template copied (${templateLang === 'en' ? 'English' : 'Deutsch'})`);
+		notify(`Template copied (${templateLang === 'en' && template.en ? 'English' : 'Deutsch'})`);
+	});
+	templateBoard.addEventListener('change', (event) => {
+		const key = event.target.dataset?.templateSelect;
+		if (key === undefined) return;
+		if (event.target.checked) selectedTemplateKeys.add(key); else selectedTemplateKeys.delete(key);
+		updateTemplateToolbar();
 	});
 	document.querySelectorAll('[data-template-lang]').forEach((button) => button.addEventListener('click', () => {
 		templateLang = button.dataset.templateLang;
 		renderTemplateBoard();
 	}));
+	$('#templateAdd').addEventListener('click', openTemplateForm);
+	$('#templateCancel').addEventListener('click', closeTemplateForm);
+	// Enter inside a single-line field would otherwise submit the whole client form.
+	$('#templateForm').addEventListener('keydown', (event) => {
+		if (event.key === 'Enter' && event.target.tagName === 'INPUT') event.preventDefault();
+	});
+	$('#templateSave').addEventListener('click', () => {
+		const name = $('#templateName').value.trim();
+		if (!name) { notify('Give the template a name first'); $('#templateName').focus(); return; }
+		templateStore.custom.push({
+			id: `custom-${Date.now()}`,
+			name,
+			de: { subject: $('#templateSubjectDe').value.trim(), body: $('#templateBodyDe').value.trim() },
+			en: { subject: $('#templateSubjectEn').value.trim(), body: $('#templateBodyEn').value.trim() }
+		});
+		saveTemplateStore();
+		closeTemplateForm();
+		renderTemplateBoard();
+		notify(`Template "${name}" added`);
+	});
+	$('#templateDelete').addEventListener('click', () => {
+		if (!selectedTemplateKeys.size) return;
+		const chosen = visibleTemplates().filter((template) => selectedTemplateKeys.has(template.key));
+		const builtInCount = chosen.filter((template) => !template.custom).length;
+		const note = builtInCount ? `\n${builtInCount === chosen.length ? 'They are' : `${builtInCount} of them are`} built-in and can be brought back with "Restore deleted".` : '';
+		if (!confirm(`Delete ${chosen.length} template${chosen.length === 1 ? '' : 's'}?\n${chosen.map((template) => `• ${template.name}`).join('\n')}${note}`)) return;
+		chosen.forEach((template) => {
+			if (template.custom) templateStore.custom = templateStore.custom.filter((item) => item.id !== template.key);
+			else if (!templateStore.hidden.includes(template.key)) templateStore.hidden.push(template.key);
+		});
+		selectedTemplateKeys.clear();
+		saveTemplateStore();
+		renderTemplateBoard();
+		notify(`Deleted ${chosen.length} template${chosen.length === 1 ? '' : 's'}`);
+	});
+	$('#templateRestore').addEventListener('click', () => {
+		templateStore.hidden = [];
+		saveTemplateStore();
+		renderTemplateBoard();
+		notify('Built-in templates restored');
+	});
 }
 
 if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', async () => {

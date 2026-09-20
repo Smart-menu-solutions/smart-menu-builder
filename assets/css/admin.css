@@ -134,6 +134,19 @@
 .addon-board-free input{width:14px;height:14px;margin:0;accent-color:#f66a09}
 .addon-board-hint{font-size:11px;color:var(--muted)}
 .addon-board-hint.smart-match-not-ready{color:#b3261e}
-.template-lang{display:flex;gap:8px;margin-top:14px}
 .template-lang-btn{font-size:12px;padding:6px 14px}
 .template-lang-btn.active{background:#f66a09!important;color:#fff!important}
+.template-toolbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}
+.template-lang{display:flex;gap:8px}
+.template-actions{display:flex;flex-wrap:wrap;gap:8px}
+.template-actions .button{font-size:12px;padding:6px 14px}
+.template-actions .button:disabled{opacity:.4;cursor:not-allowed}
+.template-form{display:grid;gap:12px;margin-top:14px;padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--alt)}
+.template-form textarea{border:1px solid var(--line);border-radius:10px;padding:10px 11px;font:inherit;font-size:13px;resize:vertical;min-width:0}
+.template-form textarea:focus{outline:3px solid var(--tint);border-color:var(--orange)}
+.template-form-actions{display:flex;justify-content:flex-end;gap:8px}
+.template-card-select{display:flex!important;align-items:center;gap:8px;margin:0;min-width:0;cursor:pointer}
+.template-card-select input{width:16px;height:16px;margin:0;flex-shrink:0;accent-color:#f66a09}
+.template-card-tag{font-size:10px;font-weight:700;color:#d85d06;background:#fff1e4;border-radius:999px;padding:2px 8px}
+.template-card-note{font-size:11px;color:#8a4b00;background:#ffe3b8;border-radius:6px;padding:4px 8px;margin:0 0 8px}
+.template-form[hidden],.template-actions [hidden]{display:none!important}
