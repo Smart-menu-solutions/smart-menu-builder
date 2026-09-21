@@ -59,21 +59,21 @@ const ADDONS: Record<string, { label: string; menusColumn: string } & (
 	| { billing: 'one_time' }
 )> = {
 	smart_food_match: {
-		label: 'Smart Food Match',
+		label: 'Smart FoodMatch™',
 		menusColumn: 'smart_food_match_enabled',
 		billing: 'recurring',
 		itemIdColumn: 'smart_food_match_item_id',
 		priceId: Deno.env.get('STRIPE_PRICE_SMART_FOOD_MATCH') ?? ''
 	},
 	analytics_reports: {
-		label: 'Weekly Analytics Report',
+		label: 'Smart WeeklyReport™',
 		menusColumn: 'analytics_reports_enabled',
 		billing: 'recurring',
 		itemIdColumn: 'analytics_reports_item_id',
 		priceId: Deno.env.get('STRIPE_PRICE_ANALYTICS_REPORTS') ?? ''
 	},
 	smartservice_hub: {
-		label: 'Smart ServiceHub',
+		label: 'Smart ServiceHub™',
 		menusColumn: 'smartservice_hub_enabled',
 		billing: 'recurring',
 		itemIdColumn: 'smartservice_hub_item_id',
@@ -81,7 +81,7 @@ const ADDONS: Record<string, { label: string; menusColumn: string } & (
 		unitAmountCents: 8900
 	},
 	photos: {
-		label: 'Professional dish photos',
+		label: 'Smart DishPhoto™',
 		menusColumn: 'photo_addon_enabled',
 		billing: 'one_time'
 	}

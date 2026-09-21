@@ -179,7 +179,7 @@ Deno.serve(async (_request) => {
 			customer.email,
 			subscription.id,
 			'Wochenbericht: Analytics',
-			isEn ? `Weekly Report: ${menu.name}` : `Wochenbericht: ${menu.name}`,
+			isEn ? `Smart WeeklyReport™: ${menu.name}` : `Smart WeeklyReport™: ${menu.name}`,
 			reportHtml(menu.name, rangeStart, rangeEnd, totalVisits, previousWeekVisits, topCategories, topDishes, statsUrl, subscription.lang)
 		);
 		sent += 1;

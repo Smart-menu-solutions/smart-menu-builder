@@ -456,10 +456,10 @@ async function translateMenu() {
 // has one yes/no per add-on, so this can't tell a free add-on from a paid one
 // (unticking asks first).
 const ADDON_FREE_TOGGLES = [
-	{ checkbox: '#addonFreeAnalytics', flag: 'analytics_reports_enabled', label: 'Weekly Analytics Report' },
-	{ checkbox: '#addonFreeSfm', flag: 'smart_food_match_enabled', label: 'Smart Food Match' },
-	{ checkbox: '#addonFreePhoto', flag: 'photo_addon_enabled', label: 'Photo add-on' },
-	{ checkbox: '#addonFreeSmartServiceHub', flag: 'smartservice_hub_enabled', label: 'Smart ServiceHub' }
+	{ checkbox: '#addonFreeAnalytics', flag: 'analytics_reports_enabled', label: 'Smart WeeklyReport™' },
+	{ checkbox: '#addonFreeSfm', flag: 'smart_food_match_enabled', label: 'Smart FoodMatch™' },
+	{ checkbox: '#addonFreePhoto', flag: 'photo_addon_enabled', label: 'Smart DishPhoto™' },
+	{ checkbox: '#addonFreeSmartServiceHub', flag: 'smartservice_hub_enabled', label: 'Smart ServiceHub™' }
 ];
 
 const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
@@ -479,7 +479,7 @@ function onboardingTemplateText(client, lang) {
 	const base = window.location.href.replace(/admin\.html.*$/, '');
 	const access = smartServiceAccessBySlug[client.slug] || {};
 	const tables = smartServiceTablesBySlug[client.slug] || [];
-	const heading = (strings.onboardingHeading || 'Smart ServiceHub – {name}').replace('{name}', client.name);
+	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const tableLines = tables.length
 		? tables.map((table) => `${strings.table || 'Table'} ${table.table_number}: ${base}menu.html?t=${table.qr_token}`).join('\n')
 		: '-';
@@ -501,7 +501,7 @@ function onboardingTemplateHtml(client, lang) {
 	const base = window.location.href.replace(/admin\.html.*$/, '');
 	const access = smartServiceAccessBySlug[client.slug] || {};
 	const tables = smartServiceTablesBySlug[client.slug] || [];
-	const heading = (strings.onboardingHeading || 'Smart ServiceHub – {name}').replace('{name}', client.name);
+	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
 	const tableRows = tables.length
 		? tables.map((table) => {
@@ -773,13 +773,13 @@ function render() {
 	// courseType is tagged once per section (not per dish) - it's what Smart
 	// Food Match uses to know which section counts as starters/mains/desserts.
 	function courseTypeControl(category, categoryIndex) {
-		const options = [['', 'Smart Food Match: not classified'], ['starter', 'Starter'], ['main', 'Main'], ['dessert', 'Dessert'], ['drink', 'Drink'], ['other', 'Other (ignored)']];
-		return `<select data-category-course-type="${categoryIndex}" class="course-type-select" title="Which course this section counts as for Smart Food Match">${selectOptions(options, category.courseType)}</select>`;
+		const options = [['', 'Smart FoodMatch™: not classified'], ['starter', 'Starter'], ['main', 'Main'], ['dessert', 'Dessert'], ['drink', 'Drink'], ['other', 'Other (ignored)']];
+		return `<select data-category-course-type="${categoryIndex}" class="course-type-select" title="Which course this section counts as for Smart FoodMatch™">${selectOptions(options, category.courseType)}</select>`;
 	}
 	function itemTagsControl(item, categoryIndex, itemIndex) {
 		const sizeOptions = [['', 'Size: not set'], ['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['very-large', 'Very large']];
 		const styleOptions = [['', 'Style: not set'], ['fresh', 'Fresh & light'], ['hearty', 'Hearty & rich'], ['special', 'Something special'], ['quick', 'Quick & simple']];
-		return `<div class="item-tags"><select data-item-appetite-size="${categoryIndex}-${itemIndex}" title="Portion size, for Smart Food Match">${selectOptions(sizeOptions, item.appetiteSize)}</select><select data-item-style="${categoryIndex}-${itemIndex}" title="Dish style, for Smart Food Match">${selectOptions(styleOptions, item.style)}</select><label class="item-favorite-check"><input type="checkbox" data-item-favorite="${categoryIndex}-${itemIndex}"${item.isFavorite ? ' checked' : ''}> Favorite</label></div>`;
+		return `<div class="item-tags"><select data-item-appetite-size="${categoryIndex}-${itemIndex}" title="Portion size, for Smart FoodMatch™">${selectOptions(sizeOptions, item.appetiteSize)}</select><select data-item-style="${categoryIndex}-${itemIndex}" title="Dish style, for Smart Food Match">${selectOptions(styleOptions, item.style)}</select><label class="item-favorite-check"><input type="checkbox" data-item-favorite="${categoryIndex}-${itemIndex}"${item.isFavorite ? ' checked' : ''}> Favorite</label></div>`;
 	}
 	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}${courseTypeControl(category, categoryIndex)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}${itemTagsControl(item, categoryIndex, itemIndex)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
 	const uploadClientId = client.id;
@@ -1112,7 +1112,7 @@ vielen Dank für Ihre Bestellung. Wir haben Ihre Angaben und Ihr Menü erhalten 
 
 Plan: [Smart Start/Pro/Premium]
 
-Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
 Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
 
@@ -1137,7 +1137,7 @@ So geht es weiter:
 
 Änderungen an Ihrer Speisekarte, wie neue Gerichte oder geänderte Preise, senden Sie uns einfach per E-Mail. Die Updates sind in Ihrem Plan ([Smart Start/Pro/Premium]) enthalten.
 
-Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
 Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
 
@@ -1155,7 +1155,7 @@ vielen Dank für die Verlängerung Ihres Abos. Wir haben Ihre Angaben und Ihr Me
 
 Plan: [Smart Start/Pro/Premium]
 
-Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
+Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
 Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
 
@@ -1216,7 +1216,7 @@ thank you for your order. We've received your details and menu and will get back
 
 Plan: [Smart Start/Pro/Premium]
 
-If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
 If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
 
@@ -1238,7 +1238,7 @@ What happens next:
 
 You can send us changes to your menu, such as new dishes or changed prices, simply by email. The updates are included in your plan ([Smart Start/Pro/Premium]).
 
-If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
 If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
 
@@ -1255,7 +1255,7 @@ thank you for renewing your subscription. We've received your details and menu a
 
 Plan: [Smart Start/Pro/Premium]
 
-If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: [Manage add-ons →]
+If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
 If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
 

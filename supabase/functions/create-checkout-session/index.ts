@@ -76,7 +76,7 @@ Deno.serve(async (request) => {
 				price_data: {
 					currency: 'eur',
 					unit_amount: pricing.photoAddOnCents,
-					product_data: { name: 'Professional dish photos (one-time)' }
+					product_data: { name: 'Smart DishPhoto™ (one-time)' }
 				},
 				quantity: 1
 			});
@@ -91,7 +91,7 @@ Deno.serve(async (request) => {
 					currency: 'eur',
 					unit_amount: pricing.smartFoodMatchAddOnCents,
 					recurring: { interval: 'year' },
-					product_data: { name: 'Smart Food Match add-on' }
+					product_data: { name: 'Smart FoodMatch™ add-on' }
 				},
 				quantity: 1
 			});
@@ -105,7 +105,7 @@ Deno.serve(async (request) => {
 					currency: 'eur',
 					unit_amount: pricing.analyticsReportsAddOnCents,
 					recurring: { interval: 'year' },
-					product_data: { name: 'Weekly Analytics Report add-on' }
+					product_data: { name: 'Smart WeeklyReport™ add-on' }
 				},
 				quantity: 1
 			});
@@ -118,7 +118,7 @@ Deno.serve(async (request) => {
 					currency: 'eur',
 					unit_amount: SMARTSERVICE_HUB_ADDON_CENTS,
 					recurring: { interval: 'year' },
-					product_data: { name: 'Smart ServiceHub add-on' }
+					product_data: { name: 'Smart ServiceHub™ add-on' }
 				},
 				quantity: 1
 			});

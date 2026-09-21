@@ -12,7 +12,7 @@
 window.SMART_FOOD_MATCH_STRINGS = {
 	de: {
 		openButton: '✨ Empfehlung finden',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Finde deine perfekte Empfehlung in 10 Sekunden.',
 		closeLabel: 'Schließen',
 		nextLabel: 'Weiter',
@@ -59,7 +59,7 @@ window.SMART_FOOD_MATCH_STRINGS = {
 	},
 	en: {
 		openButton: '✨ Find my recommendation',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Find your perfect recommendation in 10 seconds.',
 		closeLabel: 'Close',
 		nextLabel: 'Next',
@@ -105,7 +105,7 @@ window.SMART_FOOD_MATCH_STRINGS = {
 	},
 	el: {
 		openButton: '✨ Βρες την πρότασή σου',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Βρες την τέλεια πρότασή σου σε 10 δευτερόλεπτα.',
 		closeLabel: 'Κλείσιμο',
 		nextLabel: 'Επόμενο',
@@ -151,7 +151,7 @@ window.SMART_FOOD_MATCH_STRINGS = {
 	},
 	it: {
 		openButton: '✨ Trova il mio consiglio',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Trova il tuo consiglio perfetto in 10 secondi.',
 		closeLabel: 'Chiudi',
 		nextLabel: 'Avanti',
@@ -197,7 +197,7 @@ window.SMART_FOOD_MATCH_STRINGS = {
 	},
 	es: {
 		openButton: '✨ Encontrar mi recomendación',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Encuentra tu recomendación perfecta en 10 segundos.',
 		closeLabel: 'Cerrar',
 		nextLabel: 'Siguiente',
@@ -243,7 +243,7 @@ window.SMART_FOOD_MATCH_STRINGS = {
 	},
 	fr: {
 		openButton: '✨ Trouver ma recommandation',
-		title: '🍽️ Smart Food Match',
+		title: '🍽️ Smart FoodMatch™',
 		intro: 'Trouvez votre recommandation parfaite en 10 secondes.',
 		closeLabel: 'Fermer',
 		nextLabel: 'Suivant',

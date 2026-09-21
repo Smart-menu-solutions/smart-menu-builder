@@ -15,7 +15,7 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 Ruft an einem Tisch', resolveCall: 'Erledigt',
 			removeItem: 'Position löschen', removeConfirm: '{item} wirklich löschen?',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
-		onboardingHeading: 'Smart ServiceHub – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
+		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
 		roleLabels: { waiter: 'Waiter', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
@@ -28,7 +28,7 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 A table is calling', resolveCall: 'Done',
 			removeItem: 'Delete item', removeConfirm: 'Really delete {item}?',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
-		onboardingHeading: 'Smart ServiceHub – access details for {name}', tablesHeading: 'Tables (guest QR codes)', staffHeading: 'Staff access'
+		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', tablesHeading: 'Tables (guest QR codes)', staffHeading: 'Staff access'
 	},
 	el: {
 		roleLabels: { waiter: 'Σερβιτόρος', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
@@ -41,7 +41,7 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 Ένα τραπέζι καλεί', resolveCall: 'Έγινε',
 			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή του {item};',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
-		onboardingHeading: 'Smart ServiceHub – στοιχεία πρόσβασης για {name}', tablesHeading: 'Τραπέζια (QR κωδικοί για πελάτες)', staffHeading: 'Πρόσβαση προσωπικού'
+		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', tablesHeading: 'Τραπέζια (QR κωδικοί για πελάτες)', staffHeading: 'Πρόσβαση προσωπικού'
 	},
 	it: {
 		roleLabels: { waiter: 'Cameriere', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
@@ -54,7 +54,7 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 Un tavolo sta chiamando', resolveCall: 'Fatto',
 			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero {item}?',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
-		onboardingHeading: 'Smart ServiceHub – dati di accesso per {name}', tablesHeading: 'Tavoli (codici QR per gli ospiti)', staffHeading: 'Accesso per il personale'
+		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', tablesHeading: 'Tavoli (codici QR per gli ospiti)', staffHeading: 'Accesso per il personale'
 	},
 	es: {
 		roleLabels: { waiter: 'Camarero', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
@@ -67,7 +67,7 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 Una mesa está llamando', resolveCall: 'Hecho',
 			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar {item} de verdad?',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
-		onboardingHeading: 'Smart ServiceHub – datos de acceso para {name}', tablesHeading: 'Mesas (códigos QR para clientes)', staffHeading: 'Acceso del personal'
+		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', tablesHeading: 'Mesas (códigos QR para clientes)', staffHeading: 'Acceso del personal'
 	},
 	fr: {
 		roleLabels: { waiter: 'Serveur', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
@@ -80,6 +80,6 @@ window.STAFF_STRINGS = {
 		callRow: '🔔 Une table appelle', resolveCall: 'Fait',
 			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer {item} ?',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
-		onboardingHeading: 'Smart ServiceHub – informations d’accès pour {name}', tablesHeading: 'Tables (codes QR pour les clients)', staffHeading: 'Accès du personnel'
+		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', tablesHeading: 'Tables (codes QR pour les clients)', staffHeading: 'Accès du personnel'
 	}
 };

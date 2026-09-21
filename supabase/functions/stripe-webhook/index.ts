@@ -162,7 +162,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>${intro} We've received your details and menu and will get back to you shortly with the next steps.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
-		<p>If you haven't booked Smart Food Match, the Weekly Analytics Report or the photo add-on yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
+		<p>If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
 		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
@@ -170,7 +170,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
-		<p>Falls Sie Smart Food Match, den Weekly Analytics Report oder den Foto-Zusatz noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
+		<p>Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
@@ -383,10 +383,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			Email: email,
 			Telefon: metadata.phone || '-',
 			Plan: plan,
-			'Foto-Zusatz': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
-			'Smart Food Match': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
-			'Analytics Report': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
-			'Smart ServiceHub': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart DishPhoto™': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart FoodMatch™': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart WeeklyReport™': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart ServiceHub™': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein',
 			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath
