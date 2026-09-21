@@ -60,7 +60,7 @@ function itemRowMarkup(item, withPrice, clickable) {
 		<span class="status-dot ${item.dispatched ? 'dot-green' : 'dot-red'}"></span>
 		<span class="staff-item-name">${item.quantity}× ${escapeHtml(translateName(item.name))}${item.notes ? ` <em>(${escapeHtml(item.notes)})</em>` : ''}</span>
 		${priceMarkup}
-		${ROLE === 'cashier' ? `<button type="button" class="staff-item-remove" data-remove-item="${item.id}" title="${escapeHtml(strings().removeItem)}" aria-label="${escapeHtml(strings().removeItem)}">✕</button>` : ''}
+		${ROLE === 'cashier' ? `<button type="button" class="staff-item-remove" data-remove-item="${item.id}" data-remove-label="${escapeHtml(`${item.quantity}× ${translateName(item.name)}`)}" title="${escapeHtml(strings().removeItem)}" aria-label="${escapeHtml(strings().removeItem)}">✕</button>` : ''}
 	</div>`;
 }
 
@@ -193,7 +193,7 @@ async function onAppClick(event) {
 			openAddFormFor = null;
 			await refresh();
 		} else if (removeItem && ROLE === 'cashier') {
-			if (!confirm(strings().removeConfirm)) return;
+			if (!confirm(strings().removeConfirm.replace('{item}', removeItem.dataset.removeLabel))) return;
 			await callStaff({ action: 'remove_item', itemId: removeItem.dataset.removeItem });
 			await refresh();
 		} else if (closeTable) {
