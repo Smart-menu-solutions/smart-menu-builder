@@ -130,6 +130,10 @@ function render(data) {
 	menuState = data.menu || menuState;
 	allTablesState = data.allTables || allTablesState;
 	if (data.languages?.length) languagesState = data.languages;
+	// The client's language order puts the main language first (see
+	// languageDisplayOrder in admin.js) - a saved or default language that
+	// isn't one of the client's enabled ones falls back to that main one.
+	if (!languagesState.includes(currentLang)) currentLang = languagesState[0];
 	if (data.translations) translationsState = data.translations;
 	const tables = data.tables || [];
 	const allCalls = (data.tables || []).flatMap((table) => table.waiterCalls || []);
