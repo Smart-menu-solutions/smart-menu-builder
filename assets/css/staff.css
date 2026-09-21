@@ -1,0 +1,48 @@
+/* Shared look for waiter/kitchen/bar/cashier - same visual language as the
+   Weekly Analytics Report's dash-grid/d-card cards (paper background,
+   rounded corners, soft shadow), but the grid auto-flows to however many
+   tables are active instead of a fixed layout, and each card auto-sizes to
+   its own content. */
+:root{--ink:#262421;--muted:#737373;--line:#e7e5e1;--alt:#fafaf9;--paper:#fff;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--shadow:0 14px 30px -18px rgba(38,36,33,.35)}
+*{box-sizing:border-box}
+body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',system-ui,sans-serif}
+.staff-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
+.staff-header h1{font-size:1.1rem;margin:0}
+.staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;margin:.15rem 0 0}
+.staff-languages{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
+.staff-lang-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:.35rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer}
+.staff-lang-btn.is-active{background:var(--orange);border-color:var(--orange);color:#fff}
+.staff-refresh-dot{width:8px;height:8px;border-radius:50%;background:#2fa360;display:inline-block;margin-right:.4rem;animation:staff-pulse 2s infinite}
+@keyframes staff-pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:min-content;gap:1rem;padding:1.5rem;max-width:1400px;margin:0 auto}
+.staff-card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:1.1rem 1.2rem;box-shadow:var(--shadow)}
+.staff-card.is-bill-requested{border-color:var(--orange)}
+.staff-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem}
+.staff-card-head h3{margin:0;font-size:1rem}
+.staff-card-total{font-weight:700;color:var(--orange);font-size:.9rem}
+.staff-bill-flag{display:inline-block;background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;margin-left:.5rem}
+.staff-item-row{display:flex;align-items:center;gap:.55rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.9rem;cursor:pointer}
+.staff-item-row:last-child{border-bottom:0}
+.staff-item-row.is-done{color:var(--muted)}
+.staff-item-name{flex:1}
+.staff-item-name em{color:var(--muted);font-style:normal;font-size:.85em}
+.staff-item-price{font-weight:700;font-size:.85rem;color:var(--muted)}
+.status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.status-dot.dot-red{background:#c9403a}
+.status-dot.dot-green{background:#2fa360}
+.staff-secondary{margin-top:.7rem;padding-top:.6rem;border-top:1px dashed var(--line)}
+.staff-secondary-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0 0 .3rem}
+.staff-secondary .staff-item-row{cursor:default;opacity:.75}
+.staff-card-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
+.staff-btn{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;padding:.45rem 1rem;font-weight:700;font-size:.8rem;cursor:pointer}
+.staff-btn:hover{background:var(--tint)}
+.staff-btn.staff-btn-primary{background:var(--orange);color:#fff}
+.staff-btn.staff-btn-primary:hover{background:var(--orange-dark)}
+.staff-btn:disabled{opacity:.5;cursor:default}
+.staff-empty{padding:4rem 1.5rem;text-align:center;color:var(--muted)}
+.staff-calls{max-width:1400px;margin:0 auto;padding:0 1.5rem}
+.staff-call-row{display:flex;justify-content:space-between;align-items:center;background:var(--tint);border:1px solid var(--orange);border-radius:12px;padding:.7rem 1rem;margin-bottom:.6rem;font-size:.9rem}
+.staff-add-form{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed var(--line);display:none;gap:.5rem;flex-direction:column}
+.staff-add-form.is-open{display:flex}
+.staff-add-form select,.staff-add-form input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
+@media(max-width:480px){.staff-grid{grid-template-columns:1fr;padding:1rem}.staff-header{padding:1rem}}

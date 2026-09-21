@@ -80,6 +80,16 @@ function smartFoodMatchQualifies(client) {
 	return hasCourse('starter') && hasCourse('main') && hasCourse('dessert');
 }
 
+// SmartService Hub routes every ordered dish to Küche or Bar by reading the
+// same courseType field Smart Food Match uses ('drink' -> Bar, anything
+// else -> Küche) - so unlike Smart Food Match it needs *every* non-empty
+// section classified, not just one starter/main/dessert each, or orders
+// from an untagged section would have nowhere correct to go.
+function smartServiceHubQualifies(client) {
+	const sections = (client.categories || []).filter((category) => (category.items || []).length > 0);
+	return sections.length > 0 && sections.every((category) => !!category.courseType);
+}
+
 function normalizeClient(client) {
 	return {
 		...client,
@@ -94,6 +104,12 @@ function normalizeClient(client) {
 			// every Smart Food Match pool until an owner explicitly tags them.
 			courseType: category.courseType || '',
 			items: Array.isArray(category.items) ? category.items.map((item) => ({
+				// id is SmartService Hub's stable reference for this exact dish
+				// (order_items.product_id) - must survive normalization, or every
+				// save-to-cloud silently wipes it and breaks ordering for that
+				// dish. Backfilled once for pre-existing items (see the 2026-09
+				// migration note); every dish created from here on already has one.
+				id: item.id || crypto.randomUUID(),
 				name: item.name || 'Unnamed dish', description: item.description || '', price: item.price || '', image: item.image || '',
 				appetiteSize: item.appetiteSize || '', style: item.style || '', isFavorite: !!item.isFavorite
 			})) : []
@@ -142,6 +158,16 @@ async function saveClients() {
 		selectedId = clients.find((client) => client.slug === selectedSlug)?.id || selectedId;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	}
+	// Lets an already-open guest ordering tab (SmartService Hub) pick up a
+	// price/dish change without needing a manual reload - see menu.js's
+	// subscribeRealtime(). Every saveClients() call broadcasts for every
+	// hub-enabled client touched, even when the actual edit wasn't to the
+	// menu (e.g. a language reorder) - a spurious refetch on the guest side
+	// is harmless, missing a real one wouldn't be.
+	data?.filter((row) => row.smartservice_hub_enabled).forEach((row) => {
+		const channel = supabaseClient.channel(`restaurant:${row.slug}`);
+		channel.send({ type: 'broadcast', event: 'menu_updated', payload: {} }).finally(() => supabaseClient.removeChannel(channel));
+	});
 }
 function isUuid(value) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function selectedClient() { return clients.find((client) => client.id === selectedId); }
@@ -233,14 +259,14 @@ function parsePdfText(text) {
 			.trim();
 		if (name) {
 			if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
-			lastItem = { name, description: '', price };
+			lastItem = { id: crypto.randomUUID(), name, description: '', price };
 			category.items.push(lastItem);
 		} else {
 			lastItem = null;
 		}
 	});
 	const nonEmptyCategories = categories.filter((c) => c.items.length);
-	return nonEmptyCategories.length ? nonEmptyCategories : [{ name: 'Imported menu', items: [{ name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
+	return nonEmptyCategories.length ? nonEmptyCategories : [{ name: 'Imported menu', items: [{ id: crypto.randomUUID(), name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
 }
 
 function pdfPageText(content) {
@@ -432,8 +458,98 @@ async function translateMenu() {
 const ADDON_FREE_TOGGLES = [
 	{ checkbox: '#addonFreeAnalytics', flag: 'analytics_reports_enabled', label: 'Weekly Analytics Report' },
 	{ checkbox: '#addonFreeSfm', flag: 'smart_food_match_enabled', label: 'Smart Food Match' },
-	{ checkbox: '#addonFreePhoto', flag: 'photo_addon_enabled', label: 'Photo add-on' }
+	{ checkbox: '#addonFreePhoto', flag: 'photo_addon_enabled', label: 'Photo add-on' },
+	{ checkbox: '#addonFreeSmartServiceHub', flag: 'smartservice_hub_enabled', label: 'Smart ServiceHub' }
 ];
+
+const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
+let smartServiceAccessBySlug = {};
+let smartServiceTablesBySlug = {};
+
+// Onboarding template: one plain-text block combining every table's guest
+// QR link and all 4 staff links, in whichever of the 6 menu languages the
+// owner picks - meant to be copied straight into an email to the client.
+// Reuses staff-strings.js's translations (roleLabels/table) rather than
+// keeping a second copy of the same words.
+const ONBOARDING_LANGS = ['de', 'en', 'el', 'it', 'es', 'fr'];
+let onboardingTemplateLang = 'de';
+
+function onboardingTemplateText(client, lang) {
+	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	const access = smartServiceAccessBySlug[client.slug] || {};
+	const tables = smartServiceTablesBySlug[client.slug] || [];
+	const heading = (strings.onboardingHeading || 'Smart ServiceHub – {name}').replace('{name}', client.name);
+	const tableLines = tables.length
+		? tables.map((table) => `${strings.table || 'Table'} ${table.table_number}: ${base}menu.html?t=${table.qr_token}`).join('\n')
+		: '-';
+	const staffLines = STAFF_ROLES.map((role) => {
+		const token = access[role];
+		const label = strings.roleLabels?.[role] || role;
+		return `${label}: ${token ? `${base}${role}.html?t=${token}` : '-'}`;
+	}).join('\n');
+	return `${heading}\n\n${strings.tablesHeading || 'Tables'}:\n${tableLines}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}`;
+}
+
+// Rich version of the same content, with real QR code images (not just
+// links) - used both for the on-screen preview and, via the clipboard's
+// text/html entry, for pasting into an email client that keeps images
+// (onboardingTemplateText's plain-text version rides along as the
+// text/plain fallback for clients that don't).
+function onboardingTemplateHtml(client, lang) {
+	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	const access = smartServiceAccessBySlug[client.slug] || {};
+	const tables = smartServiceTablesBySlug[client.slug] || [];
+	const heading = (strings.onboardingHeading || 'Smart ServiceHub – {name}').replace('{name}', client.name);
+	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
+	const tableRows = tables.length
+		? tables.map((table) => {
+			const url = `${base}menu.html?t=${table.qr_token}`;
+			const qr = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=6&data=${encodeURIComponent(url)}`;
+			return `<tr><td style="padding:0 12px 12px 0;vertical-align:top"><img src="${escapeAttr(qr)}" width="90" height="90" alt="QR"></td><td style="padding:0 0 12px 0;vertical-align:top"><strong>${escapeHtml(strings.table || 'Table')} ${escapeHtml(String(table.table_number))}</strong><br><a href="${escapeAttr(url)}">${escapeHtml(url)}</a></td></tr>`;
+		}).join('')
+		: '<tr><td>-</td></tr>';
+	const staffRows = STAFF_ROLES.map((role) => {
+		const token = access[role];
+		const label = strings.roleLabels?.[role] || role;
+		const url = token ? `${base}${role}.html?t=${token}` : '';
+		return `<tr><td style="padding:0 0 6px 0"><strong>${escapeHtml(label)}:</strong> ${url ? `<a href="${escapeAttr(url)}">${escapeHtml(url)}</a>` : '-'}</td></tr>`;
+	}).join('');
+	return `<div style="font-family:Arial,Helvetica,sans-serif">
+		<p style="font-weight:700;font-size:15px;margin:0 0 16px">${escapeHtml(heading)}</p>
+		<p style="${sectionLabelStyle}">${escapeHtml(strings.tablesHeading || 'Tables')}</p>
+		<table cellpadding="0" cellspacing="0" style="margin:0 0 16px">${tableRows}</table>
+		<p style="${sectionLabelStyle}">${escapeHtml(strings.staffHeading || 'Staff access')}</p>
+		<table cellpadding="0" cellspacing="0">${staffRows}</table>
+	</div>`;
+}
+
+// restaurant_access/restaurant_tables aren't in the `clients` (menus) rows
+// or subscriptionsBySlug - separate tables, own fetch, same "map keyed by
+// menu_slug then render()" shape as syncSubscriptions().
+async function syncSmartServiceHub() {
+	if (typeof supabaseClient === 'undefined') return;
+	const [{ data: access }, { data: tables }] = await Promise.all([
+		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
+		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, qr_token').order('table_number')
+	]);
+	smartServiceAccessBySlug = {};
+	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
+	smartServiceTablesBySlug = {};
+	(tables || []).forEach((row) => { (smartServiceTablesBySlug[row.menu_slug] ||= []).push(row); });
+	render();
+}
+
+// Creates the 4 role links the first time SmartService Hub is switched on
+// for a client - a plain insert with `unique (menu_slug, role)` on the
+// table, so it's safe to call again later and just no-op on conflict.
+async function provisionSmartServiceAccess(client) {
+	const rows = STAFF_ROLES.map((role) => ({ menu_slug: client.slug, role }));
+	const { error } = await supabaseClient.from('restaurant_access').upsert(rows, { onConflict: 'menu_slug,role', ignoreDuplicates: true });
+	if (error) { notify(`Could not set up staff links: ${error.message}`); return; }
+	await syncSmartServiceHub();
+}
 
 // Writes just this one column. saveClients() deliberately never sends the
 // analytics/photo flags (a stale copy in memory could overwrite what
@@ -460,6 +576,7 @@ function wireAddonFreeCheckboxes() {
 			try {
 				await setAddonFlag(client, flag, wanted);
 				notify(`${label} ${wanted ? 'given for free to' : 'turned off for'} ${client.name}`);
+				if (flag === 'smartservice_hub_enabled' && wanted) await provisionSmartServiceAccess(client);
 			} catch (error) {
 				input.checked = !wanted;
 				notify(error.message);
@@ -497,10 +614,74 @@ function renderAddonBoard(client, clientSubscription) {
 	}
 
 	const addonsUrl = clientSubscription?.addon_token ? `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}` : '';
-	[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
+	[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto'), $('#addonSendSmartServiceHub')].forEach((button) => {
+		if (!button) return;
 		button.disabled = !addonsUrl;
 		button.dataset.link = addonsUrl;
 	});
+
+	renderSmartServiceHubExtra(client);
+}
+
+// Same "Ready/Not ready" hint pattern as Smart Food Match, plus - only once
+// the add-on is actually active - the 4 staff links and the table list.
+// Both come from syncSmartServiceHub(), not from `client` itself.
+function renderSmartServiceHubExtra(client) {
+	const statusEl = $('#addonStatusSmartServiceHub');
+	if (statusEl) statusEl.classList.toggle('active', !!client.smartservice_hub_enabled);
+
+	const hint = $('#smartServiceHubHint');
+	if (hint) {
+		const qualifies = smartServiceHubQualifies(client);
+		hint.textContent = qualifies
+			? 'Ready - every menu section is tagged Küche or Bar (Menu & Photos tab).'
+			: 'Not ready yet - every section with dishes needs a Küche/Bar/etc. tag (Menu & Photos tab), or orders from an untagged section have nowhere to go.';
+		hint.classList.toggle('smart-match-not-ready', !qualifies);
+	}
+
+	const extra = $('#smartServiceHubExtra');
+	if (!extra) return;
+	extra.hidden = !client.smartservice_hub_enabled;
+	if (!client.smartservice_hub_enabled) return;
+
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	const access = smartServiceAccessBySlug[client.slug] || {};
+	const linksList = $('#smartServiceHubLinks');
+	if (linksList) {
+		linksList.innerHTML = STAFF_ROLES.map((role) => {
+			const token = access[role];
+			const link = token ? `${base}${role}.html?t=${token}` : '';
+			const label = role.charAt(0).toUpperCase() + role.slice(1);
+			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${label}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>Copy link</button></div>`;
+		}).join('');
+	}
+
+	const tables = smartServiceTablesBySlug[client.slug] || [];
+	const tableList = $('#smartServiceHubTables');
+	if (tableList) {
+		// Same on-demand QR image service the main "Client QR code" panel
+		// already uses (see #qrImage) - a small inline thumbnail here so the
+		// owner can see/print each table's actual QR code, not just copy a
+		// raw link.
+		tableList.innerHTML = tables.length
+			? tables.map((table) => {
+				const tableUrl = `${base}menu.html?t=${table.qr_token}`;
+				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
+				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="QR code for table ${escapeAttr(table.table_number)}"><span class="addon-board-main"><span class="addon-board-name">Tisch ${escapeHtml(table.table_number)}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">Open QR</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">Copy link</button></div>`;
+			}).join('')
+			: '<p class="client-empty">No tables yet - add the first one below.</p>';
+	}
+
+	renderOnboardingTemplate(client);
+}
+
+function renderOnboardingTemplate(client) {
+	const langRow = $('#onboardingTemplateLangs');
+	if (langRow) {
+		langRow.innerHTML = ONBOARDING_LANGS.map((lang) => `<button type="button" class="button button-ghost template-lang-btn ${lang === onboardingTemplateLang ? 'active' : ''}" data-onboarding-lang="${lang}">${lang.toUpperCase()}</button>`).join('');
+	}
+	const preview = $('#onboardingTemplatePreview');
+	if (preview) preview.innerHTML = onboardingTemplateHtml(client, onboardingTemplateLang);
 }
 
 function render() {
@@ -637,7 +818,7 @@ function render() {
 	document.querySelectorAll('[data-remove-category]').forEach((button) => button.addEventListener('click', () => { client.categories.splice(Number(button.dataset.removeCategory), 1); saveClients(); render(); }));
 	document.querySelectorAll('[data-move-category]').forEach((button) => button.addEventListener('click', () => { const [direction, indexText] = button.dataset.moveCategory.split('-'); const index = Number(indexText); const target = direction === 'up' ? index - 1 : index + 1; if (target < 0 || target >= client.categories.length) return; [client.categories[index], client.categories[target]] = [client.categories[target], client.categories[index]]; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-remove-item]').forEach((button) => button.addEventListener('click', () => { const [categoryIndex, itemIndex] = button.dataset.removeItem.split('-').map(Number); client.categories[categoryIndex].items.splice(itemIndex, 1); saveClients(); render(); }));
-	document.querySelectorAll('[data-add-item]').forEach((button) => button.addEventListener('click', () => { client.categories[Number(button.dataset.addItem)].items.push({ name: 'New dish', description: '', price: '0.00', appetiteSize: '', style: '', isFavorite: false }); saveClients(); render(); }));
+	document.querySelectorAll('[data-add-item]').forEach((button) => button.addEventListener('click', () => { client.categories[Number(button.dataset.addItem)].items.push({ id: crypto.randomUUID(), name: 'New dish', description: '', price: '0.00', appetiteSize: '', style: '', isFavorite: false }); saveClients(); render(); }));
 	document.querySelectorAll('[data-category-course-type]').forEach((select) => select.addEventListener('change', () => { client.categories[Number(select.dataset.categoryCourseType)].courseType = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-item-appetite-size]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemAppetiteSize.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].appetiteSize = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-item-style]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemStyle.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].style = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
@@ -850,13 +1031,69 @@ if ($('#headerTextColor')) $('#headerTextColor').addEventListener('change', () =
 	saveClients().then(render).catch((error) => notify(error.message));
 });
 wireAddonFreeCheckboxes();
-[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto')].forEach((button) => {
+[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto'), $('#addonSendSmartServiceHub')].forEach((button) => {
 	if (!button) return;
 	button.addEventListener('click', async () => {
 		if (!button.dataset.link) return;
 		await navigator.clipboard.writeText(button.dataset.link);
 		notify('Add-ons link copied');
 	});
+});
+
+// The 4 staff links and each table's QR link are rebuilt into fresh
+// buttons on every render() (see renderSmartServiceHubExtra()), so this is
+// delegated on the tab panel rather than bound to specific buttons.
+const smartServiceHubPanel = document.querySelector('[data-tab-panel="addons"]');
+if (smartServiceHubPanel) {
+	smartServiceHubPanel.addEventListener('click', async (event) => {
+		const langButton = event.target.closest('[data-onboarding-lang]');
+		if (langButton) {
+			onboardingTemplateLang = langButton.dataset.onboardingLang;
+			const client = selectedClient();
+			if (client) renderOnboardingTemplate(client);
+			return;
+		}
+		if (event.target.closest('#onboardingTemplateCopy')) {
+			const client = selectedClient();
+			if (!client) return;
+			const html = onboardingTemplateHtml(client, onboardingTemplateLang);
+			const text = onboardingTemplateText(client, onboardingTemplateLang);
+			try {
+				// text/html so a rich email client (Gmail, Outlook web, Apple
+				// Mail) pastes the actual QR code images, not just links -
+				// text/plain rides along as the fallback for anything that
+				// only accepts plain text.
+				await navigator.clipboard.write([
+					new ClipboardItem({
+						'text/html': new Blob([html], { type: 'text/html' }),
+						'text/plain': new Blob([text], { type: 'text/plain' })
+					})
+				]);
+				notify('Kopiert (mit QR-Code-Bildern) - in ein E-Mail-Programm einfügen');
+			} catch (error) {
+				await navigator.clipboard.writeText(text);
+				notify('Text kopiert (Bilder konnten in diesem Browser nicht mitkopiert werden)');
+			}
+			return;
+		}
+		const button = event.target.closest('[data-staff-link], [data-table-link]');
+		if (!button) return;
+		const link = button.dataset.staffLink || button.dataset.tableLink;
+		if (!link) return;
+		await navigator.clipboard.writeText(link);
+		notify('Link copied');
+	});
+}
+if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {
+	const client = selectedClient();
+	const input = $('#smartServiceHubNewTable');
+	const tableNumber = input.value.trim();
+	if (!client || !tableNumber) return;
+	const { error } = await supabaseClient.from('restaurant_tables').insert({ menu_slug: client.slug, table_number: tableNumber });
+	if (error) { notify(`Could not add table: ${error.message}`); return; }
+	input.value = '';
+	notify(`Table ${tableNumber} added`);
+	await syncSmartServiceHub();
 });
 
 // Read-only reference copy of what the Edge Functions actually send (see
@@ -1242,6 +1479,7 @@ if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', 
 render();
 syncFromSupabase();
 syncSubscriptions();
+syncSmartServiceHub();
 loadActivity();
 loadPhotoLibrary();
 

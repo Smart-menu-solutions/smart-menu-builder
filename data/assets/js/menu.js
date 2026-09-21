@@ -1,6 +1,10 @@
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const app = isBrowser ? document.querySelector('#app') : null;
 const slug = isBrowser ? new URLSearchParams(location.search).get('client') : null;
+// SmartService Hub ordering mode: a table's QR code links here with ?t=
+// instead of ?client= - see order-session Edge Function. Mutually exclusive
+// with the plain read-only ?client= mode.
+const qrToken = isBrowser ? new URLSearchParams(location.search).get('t') : null;
 const urlLanguageParam = isBrowser ? new URLSearchParams(location.search).get('lang') : null;
 // No explicit ?lang= in the URL (the normal case when a customer scans the
 // QR code) — falls back to 'en' until renderMenu() swaps it for the menu's
@@ -39,10 +43,19 @@ function logoMarkup(client) {
 	return `<img class="menu-logo" src="${escapeHtml(source)}" alt="${escapeHtml(client.name)} logo">`;
 }
 
+// Ordering mode links stay on the same table (?t=) across a language
+// switch; read-only mode keeps today's ?client= links. Either way this is a
+// full navigation/reload - the draft cart survives it via localStorage
+// keyed by qrToken (see loadCart/saveCart), not by keeping the cart in memory.
+function pageUrl(client, language, hash) {
+	const base = qrToken ? `?t=${encodeURIComponent(qrToken)}` : `?client=${encodeURIComponent(client.slug)}`;
+	return `${base}&lang=${encodeURIComponent(language)}${hash ? `#${hash}` : ''}`;
+}
+
 function languageMarkup(client) {
 	return (client.languages || ['en']).map((language) => {
 		const current = language === requestedLanguage ? ' aria-current="page"' : '';
-		return `<a href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(language)}"${current}>${escapeHtml(language.toUpperCase())}</a>`;
+		return `<a href="${pageUrl(client, language)}"${current}>${escapeHtml(language.toUpperCase())}</a>`;
 	}).join('');
 }
 
@@ -85,7 +98,7 @@ function categoryId(name) {
 	return encodeURIComponent(name.toLowerCase().replace(/[^a-z0-9]+/g, '-'));
 }
 
-function buildCategory(client, category) {
+function buildCategory(client, category, ordering) {
 	const categoryImage = category.image && /^https?:\/\//i.test(category.image) ? `<img class="category-image" src="${escapeHtml(category.image)}" alt="">` : '';
 	return `
 		<section class="category" id="category-${categoryId(category.name)}" data-category-name="${escapeHtml(category.name)}">
@@ -95,12 +108,19 @@ function buildCategory(client, category) {
 				const translation = itemTranslation(client, item);
 				const description = translation.description || item.description;
 				const itemImage = item.image && /^https?:\/\//i.test(item.image) ? `<img class="item-image" src="${escapeHtml(item.image)}" alt="">` : '';
+				// item.id only exists once a client's dishes have gone through the
+				// stable-id backfill (see admin.js) - ordering silently has no
+				// button for a not-yet-backfilled item rather than erroring.
+				const addButton = ordering && item.id
+					? `<button type="button" class="item-add" data-add-product="${escapeHtml(item.id)}" data-add-name="${escapeHtml(translation.name || item.name)}" data-add-price="${escapeHtml(item.price)}">${escapeHtml(orderStrings().addToCart)}</button>`
+					: '';
 				return `
 				<article class="item" data-item-name="${escapeHtml(item.name)}">
 					${itemImage}
 					<div class="item-body">
 						<div class="item-header"><h3>${escapeHtml(translation.name || item.name)}</h3><span class="price">${escapeHtml(item.price)} ${escapeHtml(client.currency || '€')}</span></div>
 						${description ? `<p>${escapeHtml(description)}</p>` : ''}
+						${addButton}
 					</div>
 				</article>`;
 			}).join('')}
@@ -323,13 +343,13 @@ function startViewTracking(client, recoLog) {
 	document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
 }
 
-function renderMenu(client) {
+function renderMenu(client, ordering) {
 	if (!urlLanguageParam) {
 		requestedLanguage = ((client.languages && client.languages[0]) || client.sourceLanguage || 'en').toLowerCase();
 	}
 	document.title = `${client.name} — Digital menu`;
 	const visibleCategories = (client.categories || []).filter((category) => Array.isArray(category.items) && category.items.length);
-	const categories = visibleCategories.map((category) => buildCategory(client, category)).join('');
+	const categories = visibleCategories.map((category) => buildCategory(client, category, ordering)).join('');
 	const heroBackground = client.header_background_url && /^https?:\/\//i.test(client.header_background_url)
 		? ` style="background-image:linear-gradient(rgba(38,36,33,.5),rgba(38,36,33,.5)), url('${escapeHtml(client.header_background_url)}')"`
 		: '';
@@ -342,22 +362,293 @@ function renderMenu(client) {
 	const headerTextAttr = headerTextStyle ? ` style="${headerTextStyle}"` : '';
 	const smartMatchStrings = client.smart_food_match_enabled && canRunSmartMatch(client) ? smartFoodMatchStrings() : null;
 	app.innerHTML = `
-		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(requestedLanguage)}#menu-top">← Back to menu</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
+		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="${pageUrl(client, requestedLanguage, 'menu-top')}">← Back to menu</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p${headerTextAttr}>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${buildContactLinks(client)}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
 		</header>
+		<div id="orderPanelSlot"></div>
 		${smartMatchStrings ? smartFoodMatchButtonMarkup(smartMatchStrings) : ''}
-		<nav class="category-nav" aria-label="Menu categories">${visibleCategories.map((category) => `<a href="#category-${categoryId(category.name)}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
+		<div class="category-nav-row">
+			<nav class="category-nav" aria-label="Menu categories">${visibleCategories.map((category) => `<a href="#category-${categoryId(category.name)}">${escapeHtml(categoryName(client, category))}</a>`).join('')}</nav>
+			${ordering ? cartButtonMarkup() : ''}
+		</div>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
 		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>
-		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}`;
+		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}
+		${ordering ? cartPopupMarkup() : ''}`;
 	const smartMatchRecoLog = new Set();
 	if (smartMatchStrings) wireSmartFoodMatch(client, smartMatchStrings, smartMatchRecoLog);
 	startViewTracking(client, smartMatchRecoLog);
+	if (ordering) { wireCart(); renderOrderPanel(); }
+}
+
+// --- SmartService Hub: guest ordering (only active with ?t=<qr_token>) ---
+// orderState holds the table/menu/order this page is bound to; cart is the
+// not-yet-sent draft. Both order-session calls below deliberately send no
+// apikey header - Supabase's Edge Function gateway doesn't require one
+// (confirmed against the live project), same as this codebase's other
+// self-service pages (see addons.js).
+const CART_STORAGE_PREFIX = 'smartmenu.cart.';
+let orderState = null;
+const cart = new Map();
+
+function orderEndpoint() { return `${AUTH_CONFIG.supabaseUrl}/functions/v1/order-session`; }
+
+function loadCart() {
+	if (!qrToken) return;
+	try {
+		const raw = localStorage.getItem(CART_STORAGE_PREFIX + qrToken);
+		if (raw) JSON.parse(raw).forEach((item) => cart.set(item.productId, item));
+	} catch { /* storage unavailable or corrupt - start empty */ }
+}
+function saveCart() {
+	if (!qrToken) return;
+	try { localStorage.setItem(CART_STORAGE_PREFIX + qrToken, JSON.stringify([...cart.values()])); } catch { /* convenience only */ }
+}
+function cartCount() { return [...cart.values()].reduce((sum, item) => sum + item.quantity, 0); }
+
+function addToCart(productId, name, price) {
+	const existing = cart.get(productId);
+	if (existing) existing.quantity += 1;
+	else cart.set(productId, { productId, name, price, quantity: 1, notes: '' });
+	saveCart();
+	renderCartRows();
+}
+
+// Dish names come from itemTranslation()/orderItemDisplayName() (per-menu
+// data); this is only the surrounding chrome (buttons, labels) - see
+// order-strings.js, same 6-language set as quiz-strings.js/staff-strings.js.
+function orderStrings() {
+	const catalog = window.ORDER_STRINGS || {};
+	return catalog[requestedLanguage] || catalog.de || {};
+}
+
+function cartButtonMarkup() {
+	return `<button type="button" class="cart-button" id="cartButton">🛒 <span id="cartCount">${cartCount()}</span></button>`;
+}
+
+function cartPopupMarkup() {
+	return `
+	<div class="smart-match-overlay" id="cartOverlay" hidden>
+		<div class="smart-match-box" role="dialog" aria-modal="true" aria-label="${escapeHtml(orderStrings().cartTitle)}">
+			<button type="button" class="smart-match-close" id="cartClose" aria-label="Close">✕</button>
+			<div class="smart-match-scroll">
+				<h2>${escapeHtml(orderStrings().cartTitle)}</h2>
+				<div id="cartRows"></div>
+				<p class="message error" id="cartError" hidden></p>
+				<button type="button" class="smart-match-submit" id="cartSubmit">${escapeHtml(orderStrings().sendOrder)}</button>
+			</div>
+		</div>
+	</div>`;
+}
+
+function renderCartRows() {
+	const container = document.getElementById('cartRows');
+	const rows = [...cart.values()];
+	if (container) {
+		container.innerHTML = rows.length ? rows.map((item) => `
+			<div class="cart-row" data-cart-product="${escapeHtml(item.productId)}">
+				<div class="cart-row-top">
+					<span class="cart-row-name">${escapeHtml(item.name)} × ${item.quantity}</span>
+					<span class="cart-row-qty">
+						<button type="button" data-cart-action="decrease" aria-label="Weniger">−</button>
+						<button type="button" data-cart-action="increase" aria-label="Mehr">+</button>
+					</span>
+				</div>
+				<input type="text" class="cart-row-notes" data-cart-notes placeholder="${escapeHtml(orderStrings().notesPlaceholder)}" value="${escapeHtml(item.notes || '')}">
+			</div>`).join('') : `<p class="message">${escapeHtml(orderStrings().cartEmpty)}</p>`;
+	}
+	const submit = document.getElementById('cartSubmit');
+	if (submit) submit.disabled = !rows.length;
+	const count = document.getElementById('cartCount');
+	if (count) count.textContent = String(cartCount());
+}
+
+function wireCart() {
+	const cartButton = document.getElementById('cartButton');
+	const overlay = document.getElementById('cartOverlay');
+	if (cartButton && overlay) {
+		cartButton.addEventListener('click', () => { renderCartRows(); overlay.hidden = false; });
+		document.getElementById('cartClose').addEventListener('click', () => { overlay.hidden = true; });
+		overlay.addEventListener('click', (event) => { if (event.target === overlay) overlay.hidden = true; });
+		overlay.addEventListener('click', (event) => {
+			const actionButton = event.target.closest('[data-cart-action]');
+			if (!actionButton) return;
+			const productId = actionButton.closest('[data-cart-product]').dataset.cartProduct;
+			const item = cart.get(productId);
+			if (!item) return;
+			if (actionButton.dataset.cartAction === 'increase') item.quantity += 1;
+			else { item.quantity -= 1; if (item.quantity <= 0) cart.delete(productId); }
+			saveCart();
+			renderCartRows();
+		});
+		overlay.addEventListener('input', (event) => {
+			const input = event.target.closest('[data-cart-notes]');
+			if (!input) return;
+			const item = cart.get(input.closest('[data-cart-product]').dataset.cartProduct);
+			if (item) { item.notes = input.value; saveCart(); }
+		});
+		document.getElementById('cartSubmit').addEventListener('click', submitCart);
+	}
+	// Add-to-cart buttons live inside .menu-container, rebuilt only on a full
+	// page load (not on every order-panel refresh), so one delegated
+	// listener on the container is enough for the page's lifetime.
+	const container = document.querySelector('.menu-container');
+	if (container) container.addEventListener('click', (event) => {
+		const button = event.target.closest('[data-add-product]');
+		if (!button) return;
+		addToCart(button.dataset.addProduct, button.dataset.addName, button.dataset.addPrice);
+		button.textContent = orderStrings().added;
+		setTimeout(() => { button.textContent = orderStrings().addToCart; }, 900);
+	});
+}
+
+async function submitCart() {
+	if (!cart.size || !orderState) return;
+	const submit = document.getElementById('cartSubmit');
+	const errorBox = document.getElementById('cartError');
+	submit.disabled = true;
+	submit.textContent = orderStrings().sending;
+	errorBox.hidden = true;
+	try {
+		const response = await fetch(orderEndpoint(), {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				token: orderState.token,
+				items: [...cart.values()].map((item) => ({ productId: item.productId, quantity: item.quantity, notes: item.notes || undefined }))
+			})
+		});
+		const data = await response.json().catch(() => ({}));
+		if (!response.ok) throw new Error(data.error || orderStrings().orderFailed);
+		cart.clear();
+		saveCart();
+		orderState.order = data.order;
+		document.getElementById('cartOverlay').hidden = true;
+		renderOrderPanel();
+	} catch (error) {
+		errorBox.textContent = error.message;
+		errorBox.hidden = false;
+	} finally {
+		submit.disabled = false;
+		submit.textContent = orderStrings().sendOrder;
+	}
+}
+
+// order_items.product_name is stored as a source-language snapshot (see
+// 0015_smartservice_hub.sql), so it's looked up through the same
+// itemTranslation() the menu browse view already uses (by source text, not
+// an id) rather than being shown untranslated on this panel.
+function orderItemDisplayName(productName) {
+	return (orderState.menu && itemTranslation(orderState.menu, { name: productName }).name) || productName;
+}
+
+// Recently-ordered items double as the "Nachbestellen" quick tray - one tap
+// re-adds the same dish to the cart, no need to hunt through the menu again.
+function orderPanelMarkup() {
+	if (!orderState?.order?.items?.length) return '';
+	const items = orderState.order.items;
+	const sorted = [...items].sort((a, b) => (!!a.dispatched_at === !!b.dispatched_at ? 0 : a.dispatched_at ? 1 : -1));
+	const rows = sorted.map((item) => `
+		<div class="order-panel-row">
+			<span class="status-dot ${item.dispatched_at ? 'dot-green' : 'dot-red'}"></span>
+			<span>${item.quantity}× ${escapeHtml(orderItemDisplayName(item.product_name))}</span>
+		</div>`).join('');
+	const recent = [...new Map(items.map((item) => [item.product_name, item])).values()];
+	const quickTray = recent.map((item) => `<button type="button" class="quick-add" data-add-product="${escapeHtml(item.product_id)}" data-add-name="${escapeHtml(item.product_name)}" data-add-price="0">${escapeHtml(orderItemDisplayName(item.product_name))} +</button>`).join('');
+	const billRequested = orderState.order.billRequestedAt;
+	return `
+	<section class="order-panel" id="orderPanel">
+		<h2>${escapeHtml(orderStrings().currentOrder)}</h2>
+		<div class="order-panel-rows">${rows}</div>
+		${quickTray ? `<p class="order-panel-label">${escapeHtml(orderStrings().recentlyOrdered)}</p><div class="quick-tray">${quickTray}</div>` : ''}
+		<div class="order-panel-actions">
+			<button type="button" class="order-action-btn" id="callWaiterButton">${escapeHtml(orderStrings().callWaiter)}</button>
+			<button type="button" class="order-action-btn" id="requestBillButton" ${billRequested ? 'disabled' : ''}>${escapeHtml(billRequested ? orderStrings().billRequested : orderStrings().requestBill)}</button>
+		</div>
+	</section>`;
+}
+
+function wireOrderPanel() {
+	const callButton = document.getElementById('callWaiterButton');
+	if (callButton) callButton.addEventListener('click', async () => {
+		callButton.disabled = true;
+		callButton.textContent = orderStrings().waiterCalled;
+		await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: orderState.token, action: 'call_waiter' }) }).catch(() => {});
+	});
+	const billButton = document.getElementById('requestBillButton');
+	if (billButton) billButton.addEventListener('click', async () => {
+		billButton.disabled = true;
+		const response = await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: orderState.token, action: 'request_bill' }) }).catch(() => null);
+		if (response && response.ok) { orderState.order.billRequestedAt = new Date().toISOString(); renderOrderPanel(); }
+		else billButton.disabled = false;
+	});
+}
+
+function renderOrderPanel() {
+	const slot = document.getElementById('orderPanelSlot');
+	if (!slot) return;
+	slot.innerHTML = orderPanelMarkup();
+	wireOrderPanel();
+	renderCartRows();
+}
+
+function loadSupabaseJs() {
+	return new Promise((resolve, reject) => {
+		if (window.supabase) { resolve(); return; }
+		const script = document.createElement('script');
+		script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+		script.onload = () => resolve();
+		script.onerror = () => reject(new Error('realtime script failed to load'));
+		document.head.appendChild(script);
+	});
+}
+
+// Broadcast-only (see 0015_smartservice_hub.sql / order-session's
+// broadcast()) - on any order update for this restaurant, just refetch this
+// table's own order rather than trusting the payload, so it's naturally
+// correct even if two updates land close together. 'menu_updated' is a
+// second, separate event admin.js sends after a save (see saveClients()) -
+// on that one, the whole page re-renders with the fresh menu, not just the
+// order panel, so a guest's already-open tab picks up a price/dish change
+// without needing to reload.
+async function subscribeRealtime(menuSlug) {
+	try {
+		await loadSupabaseJs();
+		const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
+		const channel = client.channel(`restaurant:${menuSlug}`);
+		channel.on('broadcast', { event: 'update' }, async () => {
+			const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`).catch(() => null);
+			const data = response ? await response.json().catch(() => null) : null;
+			if (data?.order !== undefined) { orderState.order = data.order; renderOrderPanel(); }
+		});
+		channel.on('broadcast', { event: 'menu_updated' }, async () => {
+			const cartOpen = document.getElementById('cartOverlay') && !document.getElementById('cartOverlay').hidden;
+			const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`).catch(() => null);
+			const data = response ? await response.json().catch(() => null) : null;
+			if (!data?.menu) return;
+			orderState.order = data.order;
+			orderState.menu = data.menu;
+			renderMenu(data.menu, true);
+			if (cartOpen) { renderCartRows(); document.getElementById('cartOverlay').hidden = false; }
+		});
+		channel.subscribe();
+	} catch { /* live push is a nice-to-have; the page still works, just without auto-refresh */ }
+}
+
+async function loadOrderSession() {
+	const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`);
+	const data = await response.json().catch(() => ({}));
+	if (!response.ok) throw new Error(data.error || 'This menu link is no longer valid.');
+	orderState = { token: qrToken, tableId: data.table.id, order: data.order, menu: data.menu };
+	loadCart();
+	renderMenu(data.menu, true);
+	subscribeRealtime(data.menu.slug);
 }
 
 async function loadMenu() {
+	if (qrToken) { await loadOrderSession(); return; }
 	if (!slug) throw new Error('This menu link is missing its client identifier.');
 	const FALLBACK_CLIENTS = {
 		'gute-laune': {

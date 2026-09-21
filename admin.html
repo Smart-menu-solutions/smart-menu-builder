@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=email-manage-2">
+<link rel="stylesheet" href="assets/css/admin.css?v=smartservice-hub-4">
 </head>
 <body>
 <aside class="sidebar">
@@ -99,6 +99,33 @@
                             <span class="addon-board-main"><span class="addon-board-name">Photo add-on</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreePhoto"> Gratis</label></span>
                             <button type="button" class="button button-ghost addon-board-send" id="addonSendPhoto">Send link</button>
                         </div>
+                        <div class="addon-board-row">
+                            <span class="addon-board-status" id="addonStatusSmartServiceHub"></span>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart ServiceHub</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreeSmartServiceHub"> Gratis</label><small class="addon-board-hint" id="smartServiceHubHint"></small></span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSmartServiceHub">Send link</button>
+                        </div>
+                        <div class="addon-extra" id="smartServiceHubExtra" hidden>
+                            <div class="addon-extra-block">
+                                <p class="addon-extra-heading">Staff links</p>
+                                <div id="smartServiceHubLinks"></div>
+                            </div>
+                            <div class="addon-extra-block">
+                                <p class="addon-extra-heading">Tables</p>
+                                <div id="smartServiceHubTables"></div>
+                                <div class="addon-extra-add">
+                                    <input type="text" id="smartServiceHubNewTable" placeholder="Table number, e.g. 12">
+                                    <button type="button" class="button button-ghost" id="smartServiceHubAddTable">＋ Add table</button>
+                                </div>
+                            </div>
+                            <div class="addon-extra-block">
+                                <div class="addon-extra-heading-row">
+                                    <p class="addon-extra-heading">Onboarding template</p>
+                                    <div class="template-lang" id="onboardingTemplateLangs"></div>
+                                </div>
+                                <div class="onboarding-template-preview" id="onboardingTemplatePreview"></div>
+                                <button type="button" class="button button-primary" id="onboardingTemplateCopy">Copy for email</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="emails" hidden>
@@ -149,6 +176,7 @@
     </div>
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
-<script src="data/assets/js/admin.js?v=email-manage-3"></script>
+<script src="data/assets/js/staff-strings.js?v=2"></script>
+<script src="data/assets/js/admin.js?v=smartservice-hub-6"></script>
 </body>
 </html>
