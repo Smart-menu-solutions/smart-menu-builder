@@ -341,7 +341,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		is_published: false,
 		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true',
 		photo_addon_enabled: metadata.photoAddon === 'true',
-		smart_food_match_enabled: metadata.smartFoodMatchAddon === 'true'
+		smart_food_match_enabled: metadata.smartFoodMatchAddon === 'true',
+		smartservice_hub_enabled: metadata.smartServiceHubAddon === 'true'
 	});
 	if (menuError) {
 		console.error('Failed to insert draft menu', menuError);
@@ -385,6 +386,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Foto-Zusatz': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart Food Match': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
 			'Analytics Report': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart ServiceHub': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein',
 			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
 			'PDF-Pfad': pdfPath

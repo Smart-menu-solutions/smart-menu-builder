@@ -44,13 +44,18 @@ const CORS_HEADERS = {
 const PHOTO_ADDON_CENTS_BY_PLAN: Record<string, number> = { start: 1000, pro: 3000, premium: 9000 };
 
 // One entry per purchasable add-on.
-// - 'recurring' add-ons use a real, persistent Stripe Price (priceId) added
-//   as a Subscription Item, so Stripe prorates it now and renews it with the
-//   base plan every year after (itemIdColumn tracks that item for the record).
+// - 'recurring' add-ons are added as a Subscription Item so Stripe prorates
+//   the charge now and renews it with the base plan every year after
+//   (itemIdColumn tracks that item for the record). Priced either via a
+//   real, persistent Stripe Price (priceId) or, for a flat cross-plan
+//   amount that was never worth pre-creating a Price object for, inline
+//   price_data (unitAmountCents) - same technique create-checkout-session
+//   already uses for every add-on at initial signup.
 // - 'one_time' (currently just photos) has no persistent Price and nothing
 //   to track for renewal - it's a single invoice item at today's plan price.
 const ADDONS: Record<string, { label: string; menusColumn: string } & (
 	| { billing: 'recurring'; itemIdColumn: string; priceId: string }
+	| { billing: 'recurring'; itemIdColumn: string; unitAmountCents: number }
 	| { billing: 'one_time' }
 )> = {
 	smart_food_match: {
@@ -67,6 +72,14 @@ const ADDONS: Record<string, { label: string; menusColumn: string } & (
 		itemIdColumn: 'analytics_reports_item_id',
 		priceId: Deno.env.get('STRIPE_PRICE_ANALYTICS_REPORTS') ?? ''
 	},
+	smartservice_hub: {
+		label: 'Smart ServiceHub',
+		menusColumn: 'smartservice_hub_enabled',
+		billing: 'recurring',
+		itemIdColumn: 'smartservice_hub_item_id',
+		// Flat €89/year across every plan, unlike the photo add-on below.
+		unitAmountCents: 8900
+	},
 	photos: {
 		label: 'Professional dish photos',
 		menusColumn: 'photo_addon_enabled',
@@ -74,7 +87,7 @@ const ADDONS: Record<string, { label: string; menusColumn: string } & (
 	}
 };
 
-type MenuFlags = { name: string; smart_food_match_enabled: boolean; analytics_reports_enabled: boolean; photo_addon_enabled: boolean };
+type MenuFlags = { name: string; smart_food_match_enabled: boolean; analytics_reports_enabled: boolean; photo_addon_enabled: boolean; smartservice_hub_enabled: boolean };
 
 function escapeHtml(value: string): string {
 	return value.replace(/[&<>"']/g, (character) => ({
@@ -147,13 +160,16 @@ Deno.serve(async (request) => {
 async function lookupSubscription(token: string) {
 	return supabase
 		.from('subscriptions')
-		.select('id, status, plan, lang, menu_slug, stripe_subscription_id, smart_food_match_item_id, analytics_reports_item_id, customers(stripe_customer_id, contact_name, email), menus(name, smart_food_match_enabled, analytics_reports_enabled, photo_addon_enabled)')
+		.select('id, status, plan, lang, menu_slug, stripe_subscription_id, smart_food_match_item_id, analytics_reports_item_id, smartservice_hub_item_id, customers(stripe_customer_id, contact_name, email), menus(name, smart_food_match_enabled, analytics_reports_enabled, photo_addon_enabled, smartservice_hub_enabled)')
 		.eq('addon_token', token)
 		.maybeSingle();
 }
 
 function priceLabelFor(addon: typeof ADDONS[string], plan: string): string {
-	if (addon.billing === 'recurring') return '€5.00 / year';
+	if (addon.billing === 'recurring') {
+		const cents = 'unitAmountCents' in addon ? addon.unitAmountCents : 500;
+		return `€${(cents / 100).toFixed(2)} / year`;
+	}
 	const cents = PHOTO_ADDON_CENTS_BY_PLAN[plan] ?? 0;
 	return `€${(cents / 100).toFixed(2)} (one-time)`;
 }
@@ -190,7 +206,7 @@ async function handlePost(request: Request) {
 	const addonKey = String(body.addon || '');
 	const addon = ADDONS[addonKey];
 	if (!TOKEN_PATTERN.test(token) || !addon) return json({ error: 'Invalid request.' }, 400);
-	if (addon.billing === 'recurring' && !addon.priceId) {
+	if (addon.billing === 'recurring' && 'priceId' in addon && !addon.priceId) {
 		console.error(`Missing Stripe price id for add-on ${addonKey}`);
 		return json({ error: 'This add-on is not available right now.' }, 500);
 	}
@@ -213,7 +229,13 @@ async function handlePost(request: Request) {
 	if (addon.billing === 'recurring') {
 		try {
 			item = await stripe.subscriptionItems.create(
-				{ subscription: subscription.stripe_subscription_id, price: addon.priceId, proration_behavior: 'create_prorations' },
+				{
+					subscription: subscription.stripe_subscription_id,
+					proration_behavior: 'create_prorations',
+					...('priceId' in addon
+						? { price: addon.priceId }
+						: { price_data: { currency: 'eur', unit_amount: addon.unitAmountCents, recurring: { interval: 'year' }, product_data: { name: `${addon.label} add-on` } } })
+				},
 				{ idempotencyKey: `addon-item:${subscription.id}:${addonKey}` }
 			);
 		} catch (stripeError) {

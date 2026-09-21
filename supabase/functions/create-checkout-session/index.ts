@@ -13,6 +13,10 @@ const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAd
 	premium: { amountCents: 16900, label: 'Smart Premium', photoAddOnCents: 9000, smartFoodMatchAddOnCents: 500, analyticsReportsAddOnCents: 500 }
 };
 
+// Flat across every plan (unlike the photo add-on, which scales with plan
+// size) - same €89/year regardless of Start/Pro/Premium.
+const SMARTSERVICE_HUB_ADDON_CENTS = 8900;
+
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -38,6 +42,7 @@ Deno.serve(async (request) => {
 		const photoZipPath = String(body.photoZipPath || '').trim();
 		const smartFoodMatchAddon = Boolean(body.smartFoodMatchAddon);
 		const analyticsReportsAddon = Boolean(body.analyticsReportsAddon);
+		const smartServiceHubAddon = Boolean(body.smartServiceHubAddon);
 		// Defaults to 'de' (not 'en') to match subscriptions.lang's column
 		// default - every subscription before this feature existed was
 		// effectively German-only, so an unset/unexpected value should fall
@@ -105,6 +110,19 @@ Deno.serve(async (request) => {
 				quantity: 1
 			});
 		}
+		if (smartServiceHubAddon) {
+			// Same recurring shape again, but flat across all plans - not looked
+			// up from `pricing` like the other add-ons above.
+			lineItems.push({
+				price_data: {
+					currency: 'eur',
+					unit_amount: SMARTSERVICE_HUB_ADDON_CENTS,
+					recurring: { interval: 'year' },
+					product_data: { name: 'Smart ServiceHub add-on' }
+				},
+				quantity: 1
+			});
+		}
 
 		const session = await stripe.checkout.sessions.create({
 			mode: 'subscription',
@@ -125,10 +143,11 @@ Deno.serve(async (request) => {
 				photoZipPath,
 				smartFoodMatchAddon: String(smartFoodMatchAddon),
 				analyticsReportsAddon: String(analyticsReportsAddon),
+				smartServiceHubAddon: String(smartServiceHubAddon),
 				lang
 			},
 			subscription_data: {
-				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon), analyticsReportsAddon: String(analyticsReportsAddon), lang }
+				metadata: { type: 'initial', plan, firstName, lastName, companyName, phone, email, pdfPath, photoAddon: String(photoAddon), photoZipPath, smartFoodMatchAddon: String(smartFoodMatchAddon), analyticsReportsAddon: String(analyticsReportsAddon), smartServiceHubAddon: String(smartServiceHubAddon), lang }
 			}
 		});
 
