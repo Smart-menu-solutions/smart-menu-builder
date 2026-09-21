@@ -16,6 +16,7 @@ let allTablesState = [];
 let languagesState = ['de'];
 let translationsState = {};
 let openAddFormFor = null;
+let guideOpen = false;
 
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
@@ -127,6 +128,21 @@ function languageSwitcherMarkup() {
 	return `<nav class="staff-languages" aria-label="Language">${languagesState.map((language) => `<button type="button" class="staff-lang-btn ${language === currentLang ? 'is-active' : ''}" data-lang="${escapeHtml(language)}">${escapeHtml(language.toUpperCase())}</button>`).join('')}</nav>`;
 }
 
+// Small "? Guide" dropdown in the header: a few short bullets per role
+// (staff-strings.js -> guide). guideOpen lives outside render() because the
+// page re-renders on every live update and would otherwise close it.
+function guideMarkup() {
+	const points = strings().guide?.[ROLE] || [];
+	if (!points.length) return '';
+	return `<div class="staff-guide">
+		<button type="button" class="staff-guide-btn ${guideOpen ? 'is-open' : ''}" data-guide-toggle aria-expanded="${guideOpen}" aria-controls="staffGuidePanel">? ${escapeHtml(strings().guideButton)}</button>
+		<div class="staff-guide-panel" id="staffGuidePanel" ${guideOpen ? '' : 'hidden'}>
+			<h2>${escapeHtml(strings().guideTitle)}</h2>
+			<ul>${points.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}</ul>
+		</div>
+	</div>`;
+}
+
 function render(data) {
 	menuState = data.menu || menuState;
 	allTablesState = data.allTables || allTablesState;
@@ -141,7 +157,7 @@ function render(data) {
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
-			${languageSwitcherMarkup()}
+			<div class="staff-header-tools">${languageSwitcherMarkup()}${guideMarkup()}</div>
 		</header>
 		${callsMarkup(allCalls)}
 		${tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`}
@@ -154,6 +170,7 @@ function wireActions() {
 }
 
 async function onAppClick(event) {
+	const guideToggle = event.target.closest('[data-guide-toggle]');
 	const langButton = event.target.closest('[data-lang]');
 	const dispatchItem = event.target.closest('[data-item-id]');
 	const dispatchAll = event.target.closest('[data-dispatch-all]');
@@ -162,6 +179,12 @@ async function onAppClick(event) {
 	const closeTable = event.target.closest('[data-close-table]');
 	const removeItem = event.target.closest('[data-remove-item]');
 	const resolveCall = event.target.closest('[data-resolve-call]');
+
+	if (guideToggle) {
+		guideOpen = !guideOpen;
+		rerender();
+		return;
+	}
 
 	if (langButton) {
 		currentLang = langButton.dataset.lang;
@@ -210,6 +233,18 @@ async function onAppClick(event) {
 }
 
 let lastTables = [];
+
+function rerender() {
+	render({ tables: lastTables, menu: menuState, allTables: allTablesState, languages: languagesState, translations: translationsState });
+}
+
+// Close the guide on a click anywhere else, or on Escape.
+document.addEventListener('click', (event) => {
+	if (guideOpen && !event.target.closest('.staff-guide')) { guideOpen = false; rerender(); }
+});
+document.addEventListener('keydown', (event) => {
+	if (event.key === 'Escape' && guideOpen) { guideOpen = false; rerender(); }
+});
 
 async function refresh() {
 	const response = await fetch(`${staffEndpoint()}?t=${encodeURIComponent(token)}`);
