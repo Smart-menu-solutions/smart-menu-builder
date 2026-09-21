@@ -27,6 +27,8 @@ body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',s
 .staff-item-name{flex:1}
 .staff-item-name em{color:var(--muted);font-style:normal;font-size:.85em}
 .staff-item-price{font-weight:700;font-size:.85rem;color:var(--muted)}
+.staff-item-remove{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;width:1.7rem;height:1.7rem;line-height:1;font-size:.8rem;font-weight:700;cursor:pointer;flex-shrink:0}
+.staff-item-remove:hover{background:var(--tint)}
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .status-dot.dot-red{background:#c9403a}
 .status-dot.dot-green{background:#2fa360}

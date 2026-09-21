@@ -201,6 +201,21 @@ Deno.serve(async (request) => {
 		return json({ success: true });
 	}
 
+	if (body.action === 'remove_item') {
+		// Cashier only: the cashier owns the bill, so only they can take a line
+		// off it (a sent order can't be undone by the guest or by kitchen/bar/waiter).
+		if (role !== 'cashier') return json({ error: 'Not allowed for this role.' }, 403);
+		const itemId = String(body.itemId || '');
+		const { data: item } = await supabase.from('order_items').select('id, order_group_id, serve_table_id').eq('id', itemId).maybeSingle();
+		if (!item) return json({ error: 'Item not found.' }, 404);
+		const { data: group } = await supabase.from('order_groups').select('menu_slug, status').eq('id', item.order_group_id).maybeSingle();
+		if (!group || group.menu_slug !== menuSlug || group.status !== 'OPEN') return json({ error: 'Item not found.' }, 404);
+		const { error } = await supabase.from('order_items').delete().eq('id', item.id);
+		if (error) return json({ error: error.message }, 500);
+		await broadcast(menuSlug, { type: 'item_removed', tableId: item.serve_table_id });
+		return json({ success: true });
+	}
+
 	if (body.action === 'resolve_call') {
 		if (role !== 'waiter') return json({ error: 'Not allowed for this role.' }, 403);
 		const { error } = await supabase.from('waiter_calls').update({ resolved_at: new Date().toISOString() }).eq('id', String(body.callId || ''));

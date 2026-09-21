@@ -13,6 +13,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen',
 		closeConfirm: 'Tisch wirklich schließen? Das entfernt die Bestellung aus allen Ansichten.',
 		callRow: '🔔 Ruft an einem Tisch', resolveCall: 'Erledigt',
+			removeItem: 'Position löschen', removeConfirm: 'Diese Position wirklich löschen?',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		onboardingHeading: 'Smart ServiceHub – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
 	},
@@ -25,6 +26,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Note (optional)', closeTable: 'Close table',
 		closeConfirm: 'Really close this table? This removes the order from every view.',
 		callRow: '🔔 A table is calling', resolveCall: 'Done',
+			removeItem: 'Delete item', removeConfirm: 'Really delete this item?',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		onboardingHeading: 'Smart ServiceHub – access details for {name}', tablesHeading: 'Tables (guest QR codes)', staffHeading: 'Staff access'
 	},
@@ -37,6 +39,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού',
 		closeConfirm: 'Κλείσιμο τραπεζιού; Η παραγγελία θα αφαιρεθεί από όλες τις προβολές.',
 		callRow: '🔔 Ένα τραπέζι καλεί', resolveCall: 'Έγινε',
+			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή αυτού του προϊόντος;',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		onboardingHeading: 'Smart ServiceHub – στοιχεία πρόσβασης για {name}', tablesHeading: 'Τραπέζια (QR κωδικοί για πελάτες)', staffHeading: 'Πρόσβαση προσωπικού'
 	},
@@ -49,6 +52,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo',
 		closeConfirm: 'Chiudere davvero il tavolo? L’ordine sparirà da tutte le viste.',
 		callRow: '🔔 Un tavolo sta chiamando', resolveCall: 'Fatto',
+			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero questo articolo?',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		onboardingHeading: 'Smart ServiceHub – dati di accesso per {name}', tablesHeading: 'Tavoli (codici QR per gli ospiti)', staffHeading: 'Accesso per il personale'
 	},
@@ -61,6 +65,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa',
 		closeConfirm: '¿Cerrar esta mesa de verdad? El pedido desaparecerá de todas las vistas.',
 		callRow: '🔔 Una mesa está llamando', resolveCall: 'Hecho',
+			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar este artículo de verdad?',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		onboardingHeading: 'Smart ServiceHub – datos de acceso para {name}', tablesHeading: 'Mesas (códigos QR para clientes)', staffHeading: 'Acceso del personal'
 	},
@@ -73,6 +78,7 @@ window.STAFF_STRINGS = {
 		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table',
 		closeConfirm: 'Vraiment fermer cette table ? La commande disparaîtra de toutes les vues.',
 		callRow: '🔔 Une table appelle', resolveCall: 'Fait',
+			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer cet article ?',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		onboardingHeading: 'Smart ServiceHub – informations d’accès pour {name}', tablesHeading: 'Tables (codes QR pour les clients)', staffHeading: 'Accès du personnel'
 	}
