@@ -6,8 +6,20 @@ let selectedId = clients[0]?.id;
 let clientSearch = '';
 let subscriptionsBySlug = {};
 let showOnlyNeedsRenewal = false;
-const SUBSCRIPTION_STATUS_LABELS = { active: 'Active', expired: 'Expired', deactivated: 'Deactivated', cancelled: 'Cancelled' };
 const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
+const LANG_STORAGE_KEY = 'smartmenu.admin.lang';
+let currentLang = (() => {
+	try { return localStorage.getItem(LANG_STORAGE_KEY) || 'de'; } catch { return 'de'; }
+})();
+function strings() {
+	const catalog = window.ADMIN_STRINGS || {};
+	return catalog[currentLang] || catalog.de || {};
+}
+// Dates follow the dashboard language, not the browser's own locale, so the
+// topbar date and the activity timestamps read the same way as the rest of
+// the page.
+function dateLocale() { return currentLang === 'de' ? 'de-DE' : 'en-GB'; }
+function subscriptionStatusLabel(status) { return strings().subscriptionStatus?.[status] || status; }
 // menu.js renders the live menu's language switcher buttons in exactly the
 // order client.languages lists them, so this order is directly what a
 // customer sees, not just an admin-side convenience.
@@ -151,7 +163,7 @@ async function saveClients() {
 		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
 	}));
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
-	if (error) throw new Error(`Could not save menus: ${error.message}`);
+	if (error) throw new Error(strings().couldNotSaveMenus.replace('{error}', error.message));
 	if (data?.length) {
 		const savedBySlug = new Map(data.map((row) => [row.slug, normalizeClient({ ...row, id: row.id })]));
 		clients = clients.map((client) => savedBySlug.get(client.slug) || client);
@@ -176,11 +188,11 @@ function menuUrl(client) {
 	return `${window.location.href.replace(/admin\.html.*$/, '')}menu.html?client=${encodeURIComponent(client.slug)}&lang=${encodeURIComponent(mainLanguage)}`;
 }
 async function uploadImage(file, pathHint) {
-	if (typeof supabaseClient === 'undefined') throw new Error('Cloud storage is not available.');
+	if (typeof supabaseClient === 'undefined') throw new Error(strings().cloudStorageUnavailable);
 	const extension = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '') || 'jpg';
 	const path = `${pathHint}-${Date.now()}.${extension}`;
 	const { error } = await supabaseClient.storage.from('menu-images').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: true });
-	if (error) throw new Error(`Image upload failed: ${error.message}`);
+	if (error) throw new Error(strings().imageUploadFailed.replace('{error}', error.message));
 	const { data } = supabaseClient.storage.from('menu-images').getPublicUrl(path);
 	return data.publicUrl;
 }
@@ -284,11 +296,11 @@ function pdfPageText(content) {
 
 async function importPdf() {
 	const file = $('#menuPdf').files[0];
-	if (!file) return notify('Choose a PDF first');
-	$('#importStatus').textContent = 'Reading PDF…';
+	if (!file) return notify(strings().choosePdfFirst);
+	$('#importStatus').textContent = strings().readingPdf;
 	try {
 		const pdfjs = window.pdfjsLib;
-		if (!pdfjs) throw new Error('PDF reader could not be loaded.');
+		if (!pdfjs) throw new Error(strings().pdfReaderFailed);
 		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
 		let text = '';
@@ -298,9 +310,9 @@ async function importPdf() {
 			text += `${pdfPageText(content)}\n`;
 		}
 		if (!text.trim()) {
-			$('#importStatus').textContent = 'No text layer found. Running OCR…';
+			$('#importStatus').textContent = strings().noTextLayerOcr;
 			const tesseract = window.Tesseract;
-			if (typeof tesseract.createWorker !== 'function') throw new Error('OCR reader could not be loaded.');
+			if (typeof tesseract.createWorker !== 'function') throw new Error(strings().ocrReaderFailed);
 			const worker = await tesseract.createWorker('eng');
 			for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
 				const page = await pdf.getPage(pageNumber);
@@ -314,14 +326,14 @@ async function importPdf() {
 			}
 			await worker.terminate();
 		}
-		if (!text.trim()) throw new Error('No readable text found in this PDF.');
+		if (!text.trim()) throw new Error(strings().pdfNoText);
 		const client = selectedClient();
 		client.categories = mergeImportedImages(client.categories, parsePdfText(text));
 		await saveClients();
 		render();
-		$('#importStatus').textContent = `Imported ${pdf.numPages} page(s). Check the draft before saving.`;
+		$('#importStatus').textContent = strings().pdfImported.replace('{n}', pdf.numPages);
 	} catch (error) {
-		$('#importStatus').textContent = `PDF could not be read: ${error.message}`;
+		$('#importStatus').textContent = strings().pdfReadFailed.replace('{error}', error.message);
 		notify(error.message);
 	}
 }
@@ -329,7 +341,7 @@ async function importPdf() {
 function updateLanguageState() {
 	const client = selectedClient();
 	client.languages = selectedLanguages();
-	$('#translationStatus').textContent = `${client.languages.length} language(s) selected.`;
+	$('#translationStatus').textContent = strings().languagesSelected.replace('{n}', client.languages.length);
 }
 
 
@@ -413,7 +425,7 @@ async function translateMenu() {
 	client.sourceLanguage = $('#sourceLanguage').value;
 	const source = client.sourceLanguage;
 	const targets = selectedLanguages().filter((language) => language !== source);
-	if (!targets.length) return notify('Select at least one target language.');
+	if (!targets.length) return notify(strings().selectTargetLanguage);
 	try {
 		client.translations = client.translations || {};
 		let failures = 0;
@@ -434,14 +446,16 @@ async function translateMenu() {
 					}
 					client.translations[language].items[item.name] = { name, description };
 					done += 1;
-					$('#translationStatus').textContent = `Translating menu… (${done}/${totalItems}, currently ${language})`;
+					$('#translationStatus').textContent = strings().translatingProgress.replace('{done}', done).replace('{total}', totalItems).replace('{lang}', language);
 				}
 			}
 		}
 		await saveClients();
-		$('#translationStatus').textContent = failures ? `Translated to ${targets.join(', ')} with ${failures} item(s) left unchanged.` : `Translated to ${targets.join(', ')}.`;
+		$('#translationStatus').textContent = failures
+			? strings().translatedWithFailures.replace('{targets}', targets.join(', ')).replace('{n}', failures)
+			: strings().translatedTo.replace('{targets}', targets.join(', '));
 	} catch (error) {
-		$('#translationStatus').textContent = 'Translation failed.';
+		$('#translationStatus').textContent = strings().translationFailed;
 		notify(error.message);
 	}
 }
@@ -547,7 +561,7 @@ async function syncSmartServiceHub() {
 async function provisionSmartServiceAccess(client) {
 	const rows = STAFF_ROLES.map((role) => ({ menu_slug: client.slug, role }));
 	const { error } = await supabaseClient.from('restaurant_access').upsert(rows, { onConflict: 'menu_slug,role', ignoreDuplicates: true });
-	if (error) { notify(`Could not set up staff links: ${error.message}`); return; }
+	if (error) { notify(strings().couldNotSetUpStaffLinks.replace('{error}', error.message)); return; }
 	await syncSmartServiceHub();
 }
 
@@ -557,8 +571,8 @@ async function provisionSmartServiceAccess(client) {
 async function setAddonFlag(client, flag, value) {
 	if (typeof supabaseClient !== 'undefined') {
 		const { data, error } = await supabaseClient.from('menus').update({ [flag]: value, updated_at: new Date().toISOString() }).eq('slug', client.slug).select('slug');
-		if (error) throw new Error(`Could not save: ${error.message}`);
-		if (!data?.length) throw new Error('Save this client first (it is not in the cloud yet), then tick the add-on.');
+		if (error) throw new Error(strings().couldNotSave.replace('{error}', error.message));
+		if (!data?.length) throw new Error(strings().saveClientFirst);
 	}
 	client[flag] = value;
 	localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
@@ -572,10 +586,10 @@ function wireAddonFreeCheckboxes() {
 			const client = selectedClient();
 			if (!client) return;
 			const wanted = input.checked;
-			if (!wanted && !confirm(`Turn off "${label}" for ${client.name}?\nIf the customer paid for it, they lose it.`)) { input.checked = true; return; }
+			if (!wanted && !confirm(strings().addonTurnOffConfirm.replace('{addon}', label).replace('{name}', client.name))) { input.checked = true; return; }
 			try {
 				await setAddonFlag(client, flag, wanted);
-				notify(`${label} ${wanted ? 'given for free to' : 'turned off for'} ${client.name}`);
+				notify((wanted ? strings().addonGivenFree : strings().addonTurnedOff).replace('{addon}', label).replace('{name}', client.name));
 				if (flag === 'smartservice_hub_enabled' && wanted) await provisionSmartServiceAccess(client);
 			} catch (error) {
 				input.checked = !wanted;
@@ -607,9 +621,7 @@ function renderAddonBoard(client, clientSubscription) {
 	const hint = $('#smartFoodMatchHint');
 	if (hint) {
 		const qualifies = smartFoodMatchQualifies(client);
-		hint.textContent = qualifies
-			? 'Ready - starter, main and dessert sections are all tagged.'
-			: 'Not ready yet - needs at least one tagged starter, main and dessert section (Menu & Photos tab).';
+		hint.textContent = qualifies ? strings().sfmReady : strings().sfmNotReady;
 		hint.classList.toggle('smart-match-not-ready', !qualifies);
 	}
 
@@ -633,9 +645,7 @@ function renderSmartServiceHubExtra(client) {
 	const hint = $('#smartServiceHubHint');
 	if (hint) {
 		const qualifies = smartServiceHubQualifies(client);
-		hint.textContent = qualifies
-			? 'Ready - every menu section is tagged Küche or Bar (Menu & Photos tab).'
-			: 'Not ready yet - every section with dishes needs a Küche/Bar/etc. tag (Menu & Photos tab), or orders from an untagged section have nowhere to go.';
+		hint.textContent = qualifies ? strings().hubReady : strings().hubNotReady;
 		hint.classList.toggle('smart-match-not-ready', !qualifies);
 	}
 
@@ -648,11 +658,14 @@ function renderSmartServiceHubExtra(client) {
 	const access = smartServiceAccessBySlug[client.slug] || {};
 	const linksList = $('#smartServiceHubLinks');
 	if (linksList) {
+		// Role names come from staff-strings.js rather than a second copy here -
+		// same reasoning as the onboarding template above.
+		const roleLabels = window.STAFF_STRINGS?.[currentLang]?.roleLabels || {};
 		linksList.innerHTML = STAFF_ROLES.map((role) => {
 			const token = access[role];
 			const link = token ? `${base}${role}.html?t=${token}` : '';
-			const label = role.charAt(0).toUpperCase() + role.slice(1);
-			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${label}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>Copy link</button></div>`;
+			const label = roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1);
+			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(label)}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>${escapeHtml(strings().copyLink)}</button></div>`;
 		}).join('');
 	}
 
@@ -667,9 +680,9 @@ function renderSmartServiceHubExtra(client) {
 			? tables.map((table) => {
 				const tableUrl = `${base}menu.html?t=${table.qr_token}`;
 				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
-				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="QR code for table ${escapeAttr(table.table_number)}"><span class="addon-board-main"><span class="addon-board-name">Tisch ${escapeHtml(table.table_number)}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">Open QR</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">Copy link</button></div>`;
+				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', table.table_number))}"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">${escapeHtml(strings().openQr)}</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button></div>`;
 			}).join('')
-			: '<p class="client-empty">No tables yet - add the first one below.</p>';
+			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
 
 	renderOnboardingTemplate(client);
@@ -712,14 +725,14 @@ function render() {
 	$('#clientList').innerHTML = visibleClients.map((item) => {
 		const sub = subscriptionsBySlug[item.slug];
 		const statusClass = sub ? (sub.status !== 'active' ? `status-${sub.status}` : '') : 'status-none';
-		const statusLabel = sub ? (SUBSCRIPTION_STATUS_LABELS[sub.status] || sub.status) : 'No subscription';
-		const subInfo = sub ? ` · ${escapeHtml(sub.plan)} · until ${escapeHtml(sub.current_period_end || '?')}` : '';
+		const statusLabel = sub ? subscriptionStatusLabel(sub.status) : strings().noSubscription;
+		const subInfo = sub ? strings().clientRowSub.replace('{plan}', escapeHtml(sub.plan)).replace('{date}', escapeHtml(sub.current_period_end || '?')) : '';
 		const statusBadge = `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>`;
-		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span class="client-info"><strong>${escapeHtml(item.name)}</strong><small>${item.categories.length} sections${subInfo}</small><span class="status-badge-row">${statusBadge}</span></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i></div>`;
-	}).join('') || `<p class="client-empty">${showOnlyNeedsRenewal ? 'No clients currently need renewal.' : 'No clients found.'}</p>`;
+		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span class="client-info"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(strings().sectionsCount.replace('{n}', item.categories.length))}${subInfo}</small><span class="status-badge-row">${statusBadge}</span></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i></div>`;
+	}).join('') || `<p class="client-empty">${escapeHtml(showOnlyNeedsRenewal ? strings().noClientsNeedRenewal : strings().noClientsFound)}</p>`;
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
-	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : '<span class="header-bg-empty">No custom background — using default</span>';
+	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : `<span class="header-bg-empty">${escapeHtml(strings().noCustomBackground)}</span>`;
 	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
 	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
 	// The three add-on flags are set automatically by stripe-webhook on
@@ -733,7 +746,8 @@ function render() {
 	const banner = $('#subscriptionBanner');
 	if (isLocked) {
 		const renewalUrl = `${RENEWAL_SITE}/renewal.html?token=${clientSubscription.renewal_token}`;
-		banner.innerHTML = `This client's subscription is <strong>${escapeHtml(SUBSCRIPTION_STATUS_LABELS[clientSubscription.status] || clientSubscription.status)}</strong>. Editing is locked until they renew. <a href="${renewalUrl}" target="_blank" rel="noopener">Renewal link</a>`;
+		const lockedText = strings().subscriptionLocked.replace('{status}', `<strong>${escapeHtml(subscriptionStatusLabel(clientSubscription.status))}</strong>`);
+		banner.innerHTML = `${lockedText} <a href="${renewalUrl}" target="_blank" rel="noopener">${escapeHtml(strings().renewalLink)}</a>`;
 		banner.style.display = '';
 	} else {
 		banner.style.display = 'none';
@@ -747,7 +761,11 @@ function render() {
 		const translatedItemCount = Object.keys(client.translations?.[code]?.items || {}).length;
 		const hasTranslation = isSource || translatedItemCount > 0;
 		const isMain = checked && index === 0;
-		return `<div class="language-row${checked && !hasTranslation ? ' lang-missing' : ''}"><label class="language-check"><span>${escapeHtml(entry?.label || code)}${isMain ? ' (main)' : ''}</span><input type="checkbox" name="language" value="${code}"${checked ? ' checked' : ''}></label><span class="language-move"><button type="button" class="move-language" data-move-language="up-${index}" title="Move language up" aria-label="Move language up" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" class="move-language" data-move-language="down-${index}" title="Move language down" aria-label="Move language down" ${index === languageOrder.length - 1 ? 'disabled' : ''}>↓</button></span></div>`;
+		const moveUp = escapeAttr(strings().moveLanguageUp);
+		const moveDown = escapeAttr(strings().moveLanguageDown);
+		// entry.label stays as it is - Deutsch/English/Ελληνικά are the language's
+		// own name, not chrome, and the live menu's switcher shows them the same way.
+		return `<div class="language-row${checked && !hasTranslation ? ' lang-missing' : ''}"><label class="language-check"><span>${escapeHtml(entry?.label || code)}${isMain ? ` (${escapeHtml(strings().languageMain)})` : ''}</span><input type="checkbox" name="language" value="${code}"${checked ? ' checked' : ''}></label><span class="language-move"><button type="button" class="move-language" data-move-language="up-${index}" title="${moveUp}" aria-label="${moveUp}" ${index === 0 ? 'disabled' : ''}>↑</button><button type="button" class="move-language" data-move-language="down-${index}" title="${moveDown}" aria-label="${moveDown}" ${index === languageOrder.length - 1 ? 'disabled' : ''}>↓</button></span></div>`;
 	}).join('');
 	document.querySelectorAll('[data-move-language]').forEach((button) => button.addEventListener('click', () => {
 		const [direction, indexText] = button.dataset.moveLanguage.split('-');
@@ -764,24 +782,39 @@ function render() {
 	}));
 	$('#sourceLanguage').value = client.sourceLanguage || 'de';
 	function imageControl(kind, index, imageUrl) {
-		const noun = kind === 'category' ? 'section' : 'dish';
-		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${imageUrl ? `Change ${noun} photo` : `＋ Add ${noun} photo (${kind === 'category' ? 'shown as a wide banner' : 'shown small, next to the price'})`}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="Remove photo">×</button>` : ''}</div>`;
+		const text = strings();
+		const buttonLabel = kind === 'category'
+			? (imageUrl ? text.changeSectionPhoto : text.addSectionPhoto)
+			: (imageUrl ? text.changeDishPhoto : text.addDishPhoto);
+		return `<div class="image-control" data-image-kind="${kind}" data-image-index="${index}">${imageUrl ? `<img class="image-thumb" src="${escapeAttr(imageUrl)}" alt="">` : ''}<label class="image-upload-btn">${escapeHtml(buttonLabel)}<input type="file" accept="image/*" data-image-input="${kind}-${index}" hidden></label>${imageUrl ? `<button type="button" class="remove-button" data-remove-image="${kind}-${index}" title="${escapeAttr(text.removePhoto)}">×</button>` : ''}</div>`;
 	}
 	function selectOptions(options, current) {
-		return options.map(([value, label]) => `<option value="${value}"${value === (current || '') ? ' selected' : ''}>${label}</option>`).join('');
+		return options.map(([value, label]) => `<option value="${value}"${value === (current || '') ? ' selected' : ''}>${escapeHtml(label)}</option>`).join('');
 	}
 	// courseType is tagged once per section (not per dish) - it's what Smart
 	// Food Match uses to know which section counts as starters/mains/desserts.
 	function courseTypeControl(category, categoryIndex) {
-		const options = [['', 'Smart FoodMatch™: not classified'], ['starter', 'Starter'], ['main', 'Main'], ['dessert', 'Dessert'], ['drink', 'Drink'], ['other', 'Other (ignored)']];
-		return `<select data-category-course-type="${categoryIndex}" class="course-type-select" title="Which course this section counts as for Smart FoodMatch™">${selectOptions(options, category.courseType)}</select>`;
+		const text = strings();
+		const options = [['', text.courseUnclassified], ['starter', text.courseStarter], ['main', text.courseMain], ['dessert', text.courseDessert], ['drink', text.courseDrink], ['other', text.courseOther]];
+		return `<select data-category-course-type="${categoryIndex}" class="course-type-select" title="${escapeAttr(text.courseTypeTitle)}">${selectOptions(options, category.courseType)}</select>`;
 	}
 	function itemTagsControl(item, categoryIndex, itemIndex) {
-		const sizeOptions = [['', 'Size: not set'], ['small', 'Small'], ['medium', 'Medium'], ['large', 'Large'], ['very-large', 'Very large']];
-		const styleOptions = [['', 'Style: not set'], ['fresh', 'Fresh & light'], ['hearty', 'Hearty & rich'], ['special', 'Something special'], ['quick', 'Quick & simple']];
-		return `<div class="item-tags"><select data-item-appetite-size="${categoryIndex}-${itemIndex}" title="Portion size, for Smart FoodMatch™">${selectOptions(sizeOptions, item.appetiteSize)}</select><select data-item-style="${categoryIndex}-${itemIndex}" title="Dish style, for Smart Food Match">${selectOptions(styleOptions, item.style)}</select><label class="item-favorite-check"><input type="checkbox" data-item-favorite="${categoryIndex}-${itemIndex}"${item.isFavorite ? ' checked' : ''}> Favorite</label></div>`;
+		const text = strings();
+		const sizeOptions = [['', text.sizeNotSet], ['small', text.sizeSmall], ['medium', text.sizeMedium], ['large', text.sizeLarge], ['very-large', text.sizeVeryLarge]];
+		const styleOptions = [['', text.styleNotSet], ['fresh', text.styleFresh], ['hearty', text.styleHearty], ['special', text.styleSpecial], ['quick', text.styleQuick]];
+		return `<div class="item-tags"><select data-item-appetite-size="${categoryIndex}-${itemIndex}" title="${escapeAttr(text.sizeTitle)}">${selectOptions(sizeOptions, item.appetiteSize)}</select><select data-item-style="${categoryIndex}-${itemIndex}" title="${escapeAttr(text.styleTitle)}">${selectOptions(styleOptions, item.style)}</select><label class="item-favorite-check"><input type="checkbox" data-item-favorite="${categoryIndex}-${itemIndex}"${item.isFavorite ? ' checked' : ''}> ${escapeHtml(text.favorite)}</label></div>`;
 	}
-	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="Section name"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="Move section up" aria-label="Move section up">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="Move section down" aria-label="Move section down">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="Remove section">×</button></div>${imageControl('category', categoryIndex, category.image)}${courseTypeControl(category, categoryIndex)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="Dish name" aria-label="Dish name"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="Description" aria-label="Dish description"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="Price"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="Remove dish">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}${itemTagsControl(item, categoryIndex, itemIndex)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">＋ Add dish</button></div>`).join('');
+	const editorText = strings();
+	const sectionNameAria = escapeAttr(editorText.sectionNameAria);
+	const moveSectionUp = escapeAttr(editorText.moveSectionUp);
+	const moveSectionDown = escapeAttr(editorText.moveSectionDown);
+	const removeSectionLabel = escapeAttr(editorText.removeSection);
+	const dishNameLabel = escapeAttr(editorText.dishName);
+	const dishDescriptionLabel = escapeAttr(editorText.dishDescription);
+	const dishDescriptionAria = escapeAttr(editorText.dishDescriptionAria);
+	const priceLabel = escapeAttr(editorText.price);
+	const removeDishLabel = escapeAttr(editorText.removeDish);
+	$('#categoryEditor').innerHTML = client.categories.map((category, categoryIndex) => `<div class="category-block"><div class="category-top"><input data-category-name="${categoryIndex}" value="${escapeAttr(category.name)}" aria-label="${sectionNameAria}"><span class="category-move"><button type="button" class="move-category" data-move-category="up-${categoryIndex}" title="${moveSectionUp}" aria-label="${moveSectionUp}">↑</button><button type="button" class="move-category" data-move-category="down-${categoryIndex}" title="${moveSectionDown}" aria-label="${moveSectionDown}">↓</button></span><button type="button" class="remove-button" data-remove-category="${categoryIndex}" title="${removeSectionLabel}">×</button></div>${imageControl('category', categoryIndex, category.image)}${courseTypeControl(category, categoryIndex)}<div class="category-items">${category.items.map((item, itemIndex) => `<div class="item-block"><div class="item-row"><input data-item-name="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.name)}" placeholder="${dishNameLabel}" aria-label="${dishNameLabel}"><input data-item-description="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.description)}" placeholder="${dishDescriptionLabel}" aria-label="${dishDescriptionAria}"><input data-item-price="${categoryIndex}-${itemIndex}" value="${escapeAttr(item.price)}" placeholder="0.00" aria-label="${priceLabel}"><button type="button" class="remove-button" data-remove-item="${categoryIndex}-${itemIndex}" title="${removeDishLabel}">×</button></div>${imageControl('item', `${categoryIndex}-${itemIndex}`, item.image)}${itemTagsControl(item, categoryIndex, itemIndex)}</div>`).join('')}</div><button type="button" class="add-item" data-add-item="${categoryIndex}">${escapeHtml(editorText.addDish)}</button></div>`).join('');
 	const uploadClientId = client.id;
 	document.querySelectorAll('[data-image-input]').forEach((input) => input.addEventListener('change', async () => {
 		const file = input.files[0];
@@ -805,7 +838,7 @@ function render() {
 			else { const [categoryIndex, itemIndex] = index.split('-').map(Number); target.categories[categoryIndex].items[itemIndex].image = url; }
 			await saveClients();
 			render();
-			notify('Photo uploaded');
+			notify(strings().photoUploaded);
 		} catch (error) { notify(error.message); }
 	}));
 	document.querySelectorAll('[data-remove-image]').forEach((button) => button.addEventListener('click', () => {
@@ -832,13 +865,13 @@ function render() {
 }
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
 function escapeAttr(value) { return escapeHtml(value); }
-async function readForm() { const client = selectedClient(); const name = $('#businessName').value.trim(); const slug = slugifyName($('#slug').value) || slugifyName(name); if (!name) return notify('Customer name is required'); if (!slug) return notify('URL slug is required'); if (clients.some((item) => item.id !== client.id && item.slug === slug)) return notify('This URL slug is already in use'); client.name = name; client.slug = slug; client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); render(); $('#savedState').textContent = 'Saved locally just now'; notify(`${client.name} saved locally`); try { await saveClients(); $('#savedState').textContent = 'Saved to cloud'; } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
-async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, slugManual: false, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }], localCreatedAt: Date.now() }; clients.push(client); selectedId = client.id; render(); notify('New customer created'); try { await saveClients(); } catch (error) { notify(`Saved locally; cloud sync failed: ${error.message}`); } }
+async function readForm() { const client = selectedClient(); const name = $('#businessName').value.trim(); const slug = slugifyName($('#slug').value) || slugifyName(name); if (!name) return notify(strings().customerNameRequired); if (!slug) return notify(strings().urlSlugRequired); if (clients.some((item) => item.id !== client.id && item.slug === slug)) return notify(strings().slugInUse); client.name = name; client.slug = slug; client.phone = $('#phone').value.trim(); client.whatsapp = $('#whatsapp').value.trim(); client.address = $('#address').value.trim(); client.currency = $('#currency').value; document.querySelectorAll('[data-category-name]').forEach((input) => { client.categories[Number(input.dataset.categoryName)].name = input.value.trim() || 'Untitled section'; }); document.querySelectorAll('[data-item-name]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemName.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].name = input.value.trim() || 'Untitled dish'; }); document.querySelectorAll('[data-item-description]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemDescription.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].description = input.value.trim(); }); document.querySelectorAll('[data-item-price]').forEach((input) => { const [categoryIndex, itemIndex] = input.dataset.itemPrice.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].price = input.value.trim(); }); localStorage.setItem(STORAGE_KEY, JSON.stringify(clients)); render(); $('#savedState').textContent = strings().savedLocallyJustNow; notify(strings().clientSavedLocally.replace('{name}', client.name)); try { await saveClients(); $('#savedState').textContent = strings().savedToCloud; } catch (error) { notify(strings().savedLocallyCloudFailed.replace('{error}', error.message)); } }
+async function addClient() { const client = { id: `client-${Date.now()}`, name: 'New customer', slug: `new-customer-${Date.now()}`, slugManual: false, phone: '', whatsapp: '', address: '', currency: '€', languages: selectedLanguages().length ? selectedLanguages() : ['en'], categories: [{ name: 'Menu', items: [{ name: 'Signature dish', description: 'Describe this dish', price: '0.00' }] }], localCreatedAt: Date.now() }; clients.push(client); selectedId = client.id; render(); notify(strings().newCustomerCreated); try { await saveClients(); } catch (error) { notify(strings().savedLocallyCloudFailed.replace('{error}', error.message)); } }
 
 $('#businessName').addEventListener('input', () => { const slugInput = $('#slug'); if (slugInput.dataset.manual !== 'true') slugInput.value = slugifyName($('#businessName').value); }); $('#slug').addEventListener('input', () => { $('#slug').dataset.manual = 'true'; const client = selectedClient(); if (client) client.slugManual = true; }); $('#clientForm').addEventListener('submit', (event) => { event.preventDefault(); readForm(); }); $('#addClient').addEventListener('click', addClient); $('#addClientTop').addEventListener('click', addClient); $('#addCategory').addEventListener('click', () => { selectedClient().categories.push({ name: 'New section', items: [] }); saveClients().then(render).catch((error) => notify(error.message)); });
 async function deleteClient() {
-	if (clients.length === 1) return notify('Keep at least one client in the workspace');
-	if (!confirm('Delete this client and their menu?')) return;
+	if (clients.length === 1) return notify(strings().keepOneClient);
+	if (!confirm(strings().deleteClientConfirm)) return;
 	const removed = selectedClient();
 	const previousClients = clients;
 	const previousSelectedId = selectedId;
@@ -859,13 +892,13 @@ async function deleteClient() {
 			selectedId = previousSelectedId;
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 			render();
-			notify(`Could not delete "${removed.name}": ${error.message}`);
+			notify(strings().couldNotDeleteClient.replace('{name}', removed.name).replace('{error}', error.message));
 			return;
 		}
 	}
-	notify('Client deleted');
+	notify(strings().clientDeleted);
 }
-$('#deleteClient').addEventListener('click', deleteClient); if ($('#deleteClientTop')) $('#deleteClientTop').addEventListener('click', deleteClient); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify('Menu link copied'); }); if ($('#saveChangesTop')) $('#saveChangesTop').addEventListener('click', () => readForm()); $('#downloadQr').addEventListener('click', async () => {
+$('#deleteClient').addEventListener('click', deleteClient); if ($('#deleteClientTop')) $('#deleteClientTop').addEventListener('click', deleteClient); $('#copyUrl').addEventListener('click', async () => { await navigator.clipboard.writeText($('#qrUrl').textContent); notify(strings().menuLinkCopied); }); if ($('#saveChangesTop')) $('#saveChangesTop').addEventListener('click', () => readForm()); $('#downloadQr').addEventListener('click', async () => {
 	try {
 		const response = await fetch($('#qrImage').src);
 		if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -879,15 +912,15 @@ $('#deleteClient').addEventListener('click', deleteClient); if ($('#deleteClient
 		link.remove();
 		URL.revokeObjectURL(blobUrl);
 	} catch (error) {
-		notify(`Could not download QR code: ${error.message}`);
+		notify(strings().couldNotDownloadQr.replace('{error}', error.message));
 	}
 });
 function exportMenu() { const client = selectedClient(); const blob = new Blob([JSON.stringify({ name: client.name, slug: client.slug, categories: client.categories }, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${client.slug}-menu.json`; link.click(); URL.revokeObjectURL(link.href); }
-$('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEventListener('click', () => $('#menuJson').click()); $('#menuJson').addEventListener('change', async () => { const file = $('#menuJson').files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); const client = selectedClient(); client.categories = normalizeClient({ categories: imported.categories }).categories; if (imported.name) client.name = imported.name; if (imported.slug) client.slug = slugifyName(imported.slug); await saveClients(); render(); notify('Menu JSON imported'); } catch (error) { notify(`JSON import failed: ${error.message}`); } });
+$('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEventListener('click', () => $('#menuJson').click()); $('#menuJson').addEventListener('change', async () => { const file = $('#menuJson').files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); const client = selectedClient(); client.categories = normalizeClient({ categories: imported.categories }).categories; if (imported.name) client.name = imported.name; if (imported.slug) client.slug = slugifyName(imported.slug); await saveClients(); render(); notify(strings().menuJsonImported); } catch (error) { notify(strings().jsonImportFailed.replace('{error}', error.message)); } });
 async function syncFromSupabase() {
 	if (typeof supabaseClient === 'undefined') return;
 	const { data, error } = await supabaseClient.from('menus').select('*').order('created_at');
-	if (error) { notify(`Cloud sync unavailable; local customer data kept`); return; }
+	if (error) { notify(strings().cloudSyncUnavailable); return; }
 	if (data?.length) {
 		const remoteClients = data.filter((client) => client.slug !== 'new-venue-3').map(normalizeClient);
 		const remoteSlugs = new Set(remoteClients.map((client) => client.slug));
@@ -926,12 +959,12 @@ function updateDishCount(client, subscription) {
 	const plan = PLAN_DISH_LIMITS[planKey(subscription?.plan)];
 	badge.classList.remove('dish-count--near', 'dish-count--over');
 	if (!plan) {
-		badge.textContent = `${total} dish${total === 1 ? '' : 'es'}`;
-		badge.title = 'No subscription found for this menu, so no plan limit is shown';
+		badge.textContent = total === 1 ? strings().dishCountOne : strings().dishCountMany.replace('{n}', total);
+		badge.title = strings().noPlanLimitTitle;
 		return;
 	}
-	badge.textContent = `${total} / ${plan.limit} dishes`;
-	badge.title = `${plan.label} includes up to ${plan.limit} menu items`;
+	badge.textContent = strings().dishCountOfLimit.replace('{n}', total).replace('{limit}', plan.limit);
+	badge.title = strings().planIncludesTitle.replace('{plan}', plan.label).replace('{limit}', plan.limit);
 	if (total > plan.limit) badge.classList.add('dish-count--over');
 	else if (total >= plan.limit * 0.9) badge.classList.add('dish-count--near');
 }
@@ -948,40 +981,41 @@ async function syncSubscriptions() {
 async function loadActivity() {
 	const list = $('#activityList');
 	if (!list) return;
-	if (typeof supabaseClient === 'undefined') { list.innerHTML = '<p class="client-empty">Cloud connection unavailable.</p>'; return; }
+	if (typeof supabaseClient === 'undefined') { list.innerHTML = `<p class="client-empty">${escapeHtml(strings().cloudConnectionUnavailable)}</p>`; return; }
 	const { data, error } = await supabaseClient
 		.from('notifications_log')
 		.select('kind, sent_to, provider_message_id, created_at, subscriptions(menu_slug, customers(contact_name))')
 		.order('created_at', { ascending: false })
 		.limit(50);
-	if (error) { list.innerHTML = `<p class="client-empty">Could not load activity: ${escapeHtml(error.message)}</p>`; return; }
-	if (!data || !data.length) { list.innerHTML = '<p class="client-empty">No automated emails have gone out yet.</p>'; return; }
+	if (error) { list.innerHTML = `<p class="client-empty">${escapeHtml(strings().couldNotLoadActivity.replace('{error}', error.message))}</p>`; return; }
+	if (!data || !data.length) { list.innerHTML = `<p class="client-empty">${escapeHtml(strings().noActivityYet)}</p>`; return; }
 	list.innerHTML = data.map((row) => {
-		const who = row.subscriptions?.customers?.contact_name || row.subscriptions?.menu_slug || 'Unknown';
+		const who = row.subscriptions?.customers?.contact_name || row.subscriptions?.menu_slug || strings().unknownRecipient;
 		const sent = !!row.provider_message_id;
-		const when = new Date(row.created_at).toLocaleString();
-		return `<div class="activity-row"><div><strong>${escapeHtml(row.kind)}</strong><small>${escapeHtml(who)} · to ${escapeHtml(row.sent_to)}</small></div><div class="activity-meta"><span class="activity-status ${sent ? 'sent' : 'failed'}">${sent ? 'Sent' : 'Failed'}</span><small>${escapeHtml(when)}</small></div></div>`;
+		const when = new Date(row.created_at).toLocaleString(dateLocale());
+		const recipient = strings().activityTo.replace('{to}', escapeHtml(row.sent_to));
+		return `<div class="activity-row"><div><strong>${escapeHtml(row.kind)}</strong><small>${escapeHtml(who)} · ${recipient}</small></div><div class="activity-meta"><span class="activity-status ${sent ? 'sent' : 'failed'}">${escapeHtml(sent ? strings().activitySent : strings().activityFailed)}</span><small>${escapeHtml(when)}</small></div></div>`;
 	}).join('');
 }
 
 async function loadPhotoLibrary() {
 	const grid = $('#photoLibraryGrid');
 	if (!grid) return;
-	grid.innerHTML = '<p class="client-empty">Loading…</p>';
+	grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().loading)}</p>`;
 	const { files, error } = await listLibraryPhotos();
-	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
-	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos uploaded yet.</p>'; return; }
-	grid.innerHTML = files.map((file) => `<div class="photo-library-item"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"><button type="button" class="icon-button photo-delete-x" data-delete-photo="${escapeAttr(file.name)}" title="Delete photo">×</button></div>`).join('');
+	if (error) { grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().couldNotLoadPhotos.replace('{error}', error))}</p>`; return; }
+	if (!files.length) { grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().noPhotosYet)}</p>`; return; }
+	grid.innerHTML = files.map((file) => `<div class="photo-library-item"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"><button type="button" class="icon-button photo-delete-x" data-delete-photo="${escapeAttr(file.name)}" title="${escapeAttr(strings().deletePhoto)}">×</button></div>`).join('');
 	document.querySelectorAll('[data-delete-photo]').forEach((button) => button.addEventListener('click', async () => {
-		if (!confirm('Delete this photo? This cannot be undone, and it will disappear from any menu still using it.')) return;
+		if (!confirm(strings().deletePhotoConfirm)) return;
 		const { error } = await supabaseClient.storage.from('menu-images').remove([`library/${button.dataset.deletePhoto}`]);
-		if (error) { notify(`Could not delete photo: ${error.message}`); return; }
-		notify('Photo deleted');
+		if (error) { notify(strings().couldNotDeletePhoto.replace('{error}', error.message)); return; }
+		notify(strings().photoDeleted);
 		await loadPhotoLibrary();
 	}));
 }
 async function listLibraryPhotos() {
-	if (typeof supabaseClient === 'undefined') return { error: 'Cloud connection unavailable.' };
+	if (typeof supabaseClient === 'undefined') return { error: strings().cloudConnectionUnavailable };
 	const { data, error } = await supabaseClient.storage.from('menu-images').list('library', { sortBy: { column: 'created_at', order: 'desc' } });
 	if (error) return { error: error.message };
 	const files = (data || []).filter((file) => file.id && file.name !== '.emptyFolderPlaceholder');
@@ -991,15 +1025,15 @@ async function openHeaderBgPicker() {
 	const modal = $('#photoPickerModal');
 	const grid = $('#photoPickerGrid');
 	modal.hidden = false;
-	grid.innerHTML = '<p class="client-empty">Loading…</p>';
+	grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().loading)}</p>`;
 	const { files, error } = await listLibraryPhotos();
-	if (error) { grid.innerHTML = `<p class="client-empty">Could not load photos: ${escapeHtml(error)}</p>`; return; }
-	if (!files.length) { grid.innerHTML = '<p class="client-empty">No photos in your library yet — upload one under Activity first.</p>'; return; }
+	if (error) { grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().couldNotLoadPhotos.replace('{error}', error))}</p>`; return; }
+	if (!files.length) { grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().noPhotosInLibrary)}</p>`; return; }
 	grid.innerHTML = files.map((file) => `<div class="photo-library-item photo-pick-item" data-pick-photo="${escapeAttr(file.url)}"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"></div>`).join('');
 	document.querySelectorAll('[data-pick-photo]').forEach((item) => item.addEventListener('click', async () => {
 		selectedClient().header_background_url = item.dataset.pickPhoto;
 		modal.hidden = true;
-		try { await saveClients(); notify('Header background updated'); } catch (error) { notify(error.message); }
+		try { await saveClients(); notify(strings().headerBackgroundUpdated); } catch (error) { notify(error.message); }
 		render();
 	}));
 }
@@ -1014,7 +1048,7 @@ if ($('#uploadHeaderBg')) $('#uploadHeaderBg').addEventListener('change', async 
 		const url = await uploadImage(file, `library/${Date.now()}`);
 		selectedClient().header_background_url = url;
 		await saveClients();
-		notify('Header background uploaded');
+		notify(strings().headerBackgroundUploaded);
 		render();
 	} catch (error) { notify(error.message); } finally { input.value = ''; }
 });
@@ -1036,7 +1070,7 @@ wireAddonFreeCheckboxes();
 	button.addEventListener('click', async () => {
 		if (!button.dataset.link) return;
 		await navigator.clipboard.writeText(button.dataset.link);
-		notify('Add-ons link copied');
+		notify(strings().addonsLinkCopied);
 	});
 });
 
@@ -1069,10 +1103,10 @@ if (smartServiceHubPanel) {
 						'text/plain': new Blob([text], { type: 'text/plain' })
 					})
 				]);
-				notify('Kopiert (mit QR-Code-Bildern) - in ein E-Mail-Programm einfügen');
+				notify(strings().onboardingCopiedRich);
 			} catch (error) {
 				await navigator.clipboard.writeText(text);
-				notify('Text kopiert (Bilder konnten in diesem Browser nicht mitkopiert werden)');
+				notify(strings().onboardingCopiedText);
 			}
 			return;
 		}
@@ -1081,7 +1115,7 @@ if (smartServiceHubPanel) {
 		const link = button.dataset.staffLink || button.dataset.tableLink;
 		if (!link) return;
 		await navigator.clipboard.writeText(link);
-		notify('Link copied');
+		notify(strings().linkCopied);
 	});
 }
 if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {
@@ -1090,9 +1124,9 @@ if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListene
 	const tableNumber = input.value.trim();
 	if (!client || !tableNumber) return;
 	const { error } = await supabaseClient.from('restaurant_tables').insert({ menu_slug: client.slug, table_number: tableNumber });
-	if (error) { notify(`Could not add table: ${error.message}`); return; }
+	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
 	input.value = '';
-	notify(`Table ${tableNumber} added`);
+	notify(strings().tableAdded.replace('{n}', tableNumber));
 	await syncSmartServiceHub();
 });
 
@@ -1325,7 +1359,7 @@ function saveTemplateStore() {
 	try {
 		localStorage.setItem(TEMPLATE_STORE_KEY, JSON.stringify(templateStore));
 	} catch {
-		notify('Could not save the template changes in this browser');
+		notify(strings().templateStoreSaveFailed);
 	}
 }
 
@@ -1352,7 +1386,7 @@ function updateTemplateToolbar() {
 	const deleteButton = $('#templateDelete');
 	if (deleteButton) {
 		deleteButton.disabled = !selectedTemplateKeys.size;
-		deleteButton.textContent = selectedTemplateKeys.size ? `Delete template (${selectedTemplateKeys.size})` : 'Delete template';
+		deleteButton.textContent = selectedTemplateKeys.size ? strings().deleteTemplateCount.replace('{n}', selectedTemplateKeys.size) : strings().deleteTemplate;
 	}
 	const restoreButton = $('#templateRestore');
 	if (restoreButton) restoreButton.hidden = !templateStore.hidden.length;
@@ -1369,15 +1403,15 @@ function renderTemplateBoard() {
 		return `
 		<div class="template-card">
 			<div class="template-card-head">
-				<label class="template-card-select" title="Tick to delete"><input type="checkbox" data-template-select="${escapeAttr(template.key)}"${selectedTemplateKeys.has(template.key) ? ' checked' : ''}><span class="template-card-name">${escapeHtml(template.name)}</span>${template.custom ? '<span class="template-card-tag">Own</span>' : ''}</label>
-				<button type="button" class="button button-ghost template-card-copy" data-template-key="${escapeAttr(template.key)}">Copy</button>
+				<label class="template-card-select" title="${escapeAttr(strings().tickToDelete)}"><input type="checkbox" data-template-select="${escapeAttr(template.key)}"${selectedTemplateKeys.has(template.key) ? ' checked' : ''}><span class="template-card-name">${escapeHtml(template.name)}</span>${template.custom ? `<span class="template-card-tag">${escapeHtml(strings().templateOwn)}</span>` : ''}</label>
+				<button type="button" class="button button-ghost template-card-copy" data-template-key="${escapeAttr(template.key)}">${escapeHtml(strings().copy)}</button>
 			</div>
-			${missingEnglish ? '<p class="template-card-note">No English version yet - showing the German text.</p>' : ''}
-			<p class="template-card-subject"><strong>Subject:</strong> ${escapeHtml(text.subject)}</p>
+			${missingEnglish ? `<p class="template-card-note">${escapeHtml(strings().templateNoEnglish)}</p>` : ''}
+			<p class="template-card-subject"><strong>${escapeHtml(strings().subjectLabel)}</strong> ${escapeHtml(text.subject)}</p>
 			<pre class="template-card-body">${escapeHtml(text.body)}</pre>
 		</div>
 	`;
-	}).join('') || '<p class="client-empty">No templates. Use "Add template" to write one, or "Restore deleted" to bring the built-in ones back.</p>';
+	}).join('') || `<p class="client-empty">${escapeHtml(strings().noTemplates)}</p>`;
 	updateTemplateToolbar();
 }
 
@@ -1406,7 +1440,7 @@ if (templateBoard) {
 		if (!template) return;
 		const text = templateText(template);
 		await navigator.clipboard.writeText(`${text.subject}\n\n${text.body}`);
-		notify(`Template copied (${templateLang === 'en' && template.en ? 'English' : 'Deutsch'})`);
+		notify(strings().templateCopied.replace('{lang}', templateLang === 'en' && template.en ? 'English' : 'Deutsch'));
 	});
 	templateBoard.addEventListener('change', (event) => {
 		const key = event.target.dataset?.templateSelect;
@@ -1426,7 +1460,7 @@ if (templateBoard) {
 	});
 	$('#templateSave').addEventListener('click', () => {
 		const name = $('#templateName').value.trim();
-		if (!name) { notify('Give the template a name first'); $('#templateName').focus(); return; }
+		if (!name) { notify(strings().templateNameRequired); $('#templateName').focus(); return; }
 		templateStore.custom.push({
 			id: `custom-${Date.now()}`,
 			name,
@@ -1436,14 +1470,15 @@ if (templateBoard) {
 		saveTemplateStore();
 		closeTemplateForm();
 		renderTemplateBoard();
-		notify(`Template "${name}" added`);
+		notify(strings().templateAdded.replace('{name}', name));
 	});
 	$('#templateDelete').addEventListener('click', () => {
 		if (!selectedTemplateKeys.size) return;
 		const chosen = visibleTemplates().filter((template) => selectedTemplateKeys.has(template.key));
 		const builtInCount = chosen.filter((template) => !template.custom).length;
-		const note = builtInCount ? `\n${builtInCount === chosen.length ? 'They are' : `${builtInCount} of them are`} built-in and can be brought back with "Restore deleted".` : '';
-		if (!confirm(`Delete ${chosen.length} template${chosen.length === 1 ? '' : 's'}?\n${chosen.map((template) => `• ${template.name}`).join('\n')}${note}`)) return;
+		const note = builtInCount ? `\n${builtInCount === chosen.length ? strings().templateDeleteNoteAll : strings().templateDeleteNoteSome.replace('{n}', builtInCount)}` : '';
+		const question = chosen.length === 1 ? strings().templateDeleteConfirmOne : strings().templateDeleteConfirmMany.replace('{n}', chosen.length);
+		if (!confirm(`${question}\n${chosen.map((template) => `• ${template.name}`).join('\n')}${note}`)) return;
 		chosen.forEach((template) => {
 			if (template.custom) templateStore.custom = templateStore.custom.filter((item) => item.id !== template.key);
 			else if (!templateStore.hidden.includes(template.key)) templateStore.hidden.push(template.key);
@@ -1451,13 +1486,13 @@ if (templateBoard) {
 		selectedTemplateKeys.clear();
 		saveTemplateStore();
 		renderTemplateBoard();
-		notify(`Deleted ${chosen.length} template${chosen.length === 1 ? '' : 's'}`);
+		notify(chosen.length === 1 ? strings().templateDeletedOne : strings().templateDeletedMany.replace('{n}', chosen.length));
 	});
 	$('#templateRestore').addEventListener('click', () => {
 		templateStore.hidden = [];
 		saveTemplateStore();
 		renderTemplateBoard();
-		notify('Built-in templates restored');
+		notify(strings().templatesRestored);
 	});
 }
 
@@ -1467,7 +1502,7 @@ if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', 
 	if (!files.length) return;
 	try {
 		for (let index = 0; index < files.length; index += 1) await uploadImage(files[index], `library/${Date.now()}-${index}`);
-		notify(files.length > 1 ? 'Photos uploaded' : 'Photo uploaded');
+		notify(files.length > 1 ? strings().photosUploaded : strings().photoUploaded);
 		await loadPhotoLibrary();
 	} catch (error) {
 		notify(error.message);
@@ -1476,12 +1511,36 @@ if ($('#photoLibraryInput')) $('#photoLibraryInput').addEventListener('change', 
 	}
 });
 
-render();
+// The static chrome is translated by walking admin.html's data-i18n*
+// attributes; everything else on screen is built by a render function, so a
+// language switch has to run all of them again. Also the page's own first
+// paint - it replaces the plain render()/loadActivity()/loadPhotoLibrary()
+// calls that used to start things off.
+function applyAdminLang() {
+	const text = strings();
+	document.documentElement.lang = currentLang;
+	document.querySelectorAll('[data-i18n]').forEach((element) => { const value = text[element.dataset.i18n]; if (value) element.textContent = value; });
+	document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { const value = text[element.dataset.i18nPlaceholder]; if (value) element.placeholder = value; });
+	document.querySelectorAll('[data-i18n-title]').forEach((element) => { const value = text[element.dataset.i18nTitle]; if (value) element.title = value; });
+	document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => { const value = text[element.dataset.i18nAriaLabel]; if (value) element.setAttribute('aria-label', value); });
+	document.querySelectorAll('[data-admin-lang]').forEach((button) => button.classList.toggle('active', button.dataset.adminLang === currentLang));
+	if ($('#qrImage') && text.qrImageAlt) $('#qrImage').alt = text.qrImageAlt;
+	if ($('#topbarDate')) $('#topbarDate').textContent = new Date().toLocaleDateString(dateLocale(), { weekday: 'long', month: 'long', day: 'numeric' });
+	render();
+	renderTemplateBoard();
+	loadActivity();
+	loadPhotoLibrary();
+}
+document.querySelectorAll('[data-admin-lang]').forEach((button) => button.addEventListener('click', () => {
+	currentLang = button.dataset.adminLang;
+	try { localStorage.setItem(LANG_STORAGE_KEY, currentLang); } catch { /* convenience only */ }
+	applyAdminLang();
+}));
+
+applyAdminLang();
 syncFromSupabase();
 syncSubscriptions();
 syncSmartServiceHub();
-loadActivity();
-loadPhotoLibrary();
 
 $('#importPdf').addEventListener('click', importPdf);
 $('#translateMenu').addEventListener('click', translateMenu);

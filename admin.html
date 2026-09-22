@@ -19,164 +19,169 @@
 <body>
 <aside class="sidebar">
     <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Smart Menu Builder</span></a>
-    <p class="eyebrow">Workspace</p>
+    <p class="eyebrow" data-i18n="navWorkspace">Workspace</p>
     <nav>
-        <a class="nav-link active" href="#dashboard"><span>▦</span> Overview</a>
-        <a class="nav-link" href="#clients"><span>◉</span> Clients <b id="navClientCount">1</b></a>
-        <a class="nav-link" href="#builder"><span>✦</span> Menu builder</a>
-        <a class="nav-link" href="#qr"><span>⌗</span> QR codes</a>
-        <a class="nav-link" href="#activity"><span>🕐</span> Activity</a>
-        <a class="nav-link" href="#pictures"><span>📁</span> Pictures</a>
-        <a class="nav-link" href="leads.html"><span>⌕</span> Lead finder</a>
+        <!-- .nav-link span is the icon slot (fixed 20px, 18px type), so each
+             label carries its own width/font-size reset. -->
+        <a class="nav-link active" href="#dashboard"><span>▦</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navOverview">Overview</span></a>
+        <a class="nav-link" href="#clients"><span>◉</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navClients">Clients</span> <b id="navClientCount">1</b></a>
+        <a class="nav-link" href="#builder"><span>✦</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navMenuBuilder">Menu builder</span></a>
+        <a class="nav-link" href="#qr"><span>⌗</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navQrCodes">QR codes</span></a>
+        <a class="nav-link" href="#activity"><span>🕐</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navActivity">Activity</span></a>
+        <a class="nav-link" href="#pictures"><span>📁</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navPictures">Pictures</span></a>
+        <a class="nav-link" href="leads.html"><span>⌕</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navLeadFinder">Lead finder</span></a>
     </nav>
-    <div class="sidebar-note"><span class="status-dot"></span><div><strong>Local workspace</strong><small>Your client data stays in this browser.</small></div></div>
+    <div class="sidebar-note"><span class="status-dot"></span><div><strong data-i18n="sidebarLocalWorkspace">Local workspace</strong><small data-i18n="sidebarLocalNote">Your client data stays in this browser.</small></div></div>
 </aside>
 
 <main class="main" id="dashboard">
-    <header class="topbar"><div><p class="eyebrow">Monday, September 7</p><h1>Your menu workspace</h1></div><div style="display:flex;gap:8px"><button class="button button-ghost" type="button" onclick="logout()">Log out</button><button class="button button-primary" id="addClientTop">＋ Add client</button></div></header>
-    <section class="stats" aria-label="Workspace summary">
-        <article class="stat-card"><span class="stat-icon coral">◉</span><div><p>Active clients</p><strong id="clientCount">0</strong></div></article>
-        <article class="stat-card"><span class="stat-icon teal">☷</span><div><p>Menu sections</p><strong id="sectionCount">0</strong></div></article>
-        <article class="stat-card"><span class="stat-icon yellow">⌗</span><div><p>Live QR links</p><strong id="qrCount">0</strong></div></article>
-        <article class="stat-card" id="renewalFilterCard" role="button" tabindex="0" style="cursor:pointer" title="Click to filter clients that need renewal"><span class="stat-icon coral">⚠</span><div><p>Needs renewal</p><strong id="renewalCount">0</strong></div></article>
+    <header class="topbar"><div><p class="eyebrow" id="topbarDate">Monday, September 7</p><h1 data-i18n="topbarTitle">Your menu workspace</h1></div><div style="display:flex;gap:8px;align-items:center"><div class="template-lang" role="group" data-i18n-aria-label="adminLanguageAria" aria-label="Interface language"><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="de">DE</button><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="en">EN</button></div><button class="button button-ghost" type="button" onclick="logout()" data-i18n="logOut">Log out</button><button class="button button-primary" id="addClientTop" data-i18n="addClient">＋ Add client</button></div></header>
+    <section class="stats" data-i18n-aria-label="statsAria" aria-label="Workspace summary">
+        <article class="stat-card"><span class="stat-icon coral">◉</span><div><p data-i18n="statActiveClients">Active clients</p><strong id="clientCount">0</strong></div></article>
+        <article class="stat-card"><span class="stat-icon teal">☷</span><div><p data-i18n="statMenuSections">Menu sections</p><strong id="sectionCount">0</strong></div></article>
+        <article class="stat-card"><span class="stat-icon yellow">⌗</span><div><p data-i18n="statLiveQrLinks">Live QR links</p><strong id="qrCount">0</strong></div></article>
+        <article class="stat-card" id="renewalFilterCard" role="button" tabindex="0" style="cursor:pointer" data-i18n-title="statNeedsRenewalTitle" title="Click to filter clients that need renewal"><span class="stat-icon coral">⚠</span><div><p data-i18n="statNeedsRenewal">Needs renewal</p><strong id="renewalCount">0</strong></div></article>
     </section>
 
     <section class="workspace-grid" id="clients">
-        <div class="panel client-panel"><div class="panel-heading"><div><p class="eyebrow">Portfolio</p><h2>Your clients</h2></div><button class="icon-button" id="addClient" title="Add a client">＋</button></div><input class="client-search" id="clientSearch" type="search" placeholder="Search clients..." aria-label="Search clients"><div id="clientList" class="client-list"></div></div>
-        <div class="panel editor-panel" id="builder"><div class="panel-heading"><div><p class="eyebrow">Selected client</p><h2 id="editorTitle">Client details</h2></div><span class="saved-state" id="savedState">Saved locally</span></div>
+        <div class="panel client-panel"><div class="panel-heading"><div><p class="eyebrow" data-i18n="portfolio">Portfolio</p><h2 data-i18n="yourClients">Your clients</h2></div><button class="icon-button" id="addClient" data-i18n-title="addClientTitle" title="Add a client">＋</button></div><input class="client-search" id="clientSearch" type="search" data-i18n-placeholder="searchClientsPlaceholder" placeholder="Search clients..." data-i18n-aria-label="searchClientsAria" aria-label="Search clients"><div id="clientList" class="client-list"></div></div>
+        <div class="panel editor-panel" id="builder"><div class="panel-heading"><div><p class="eyebrow" data-i18n="selectedClient">Selected client</p><h2 id="editorTitle" data-i18n="clientDetails">Client details</h2></div><span class="saved-state" id="savedState" data-i18n="savedLocally">Saved locally</span></div>
             <div class="subscription-banner" id="subscriptionBanner" style="display:none"></div>
             <div class="editor-tabs" role="tablist">
-                <button type="button" class="editor-tab active" data-tab="details" role="tab" aria-selected="true">Details</button>
-                <button type="button" class="editor-tab" data-tab="menu" role="tab" aria-selected="false">Menu &amp; Photos</button>
-                <button type="button" class="editor-tab" data-tab="languages" role="tab" aria-selected="false">Languages</button>
-                <button type="button" class="editor-tab" data-tab="addons" role="tab" aria-selected="false">Add-ons</button>
-                <button type="button" class="editor-tab" data-tab="emails" role="tab" aria-selected="false">Email templates</button>
+                <button type="button" class="editor-tab active" data-tab="details" role="tab" aria-selected="true" data-i18n="tabDetails">Details</button>
+                <button type="button" class="editor-tab" data-tab="menu" role="tab" aria-selected="false" data-i18n="tabMenuPhotos">Menu &amp; Photos</button>
+                <button type="button" class="editor-tab" data-tab="languages" role="tab" aria-selected="false" data-i18n="tabLanguages">Languages</button>
+                <button type="button" class="editor-tab" data-tab="addons" role="tab" aria-selected="false" data-i18n="tabAddons">Add-ons</button>
+                <button type="button" class="editor-tab" data-tab="emails" role="tab" aria-selected="false" data-i18n="tabEmailTemplates">Email templates</button>
             </div>
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
-                    <div class="form-grid"><label>Customer name<input id="businessName" required placeholder="e.g. Café Ole"></label><label>URL slug<input id="slug" required placeholder="cafe-ole"></label><label>Phone<input id="phone" placeholder="+30 210 555 0123"></label><label>WhatsApp<input id="whatsapp" placeholder="+30 210 555 0123"></label><label class="wide">Address<input id="address" placeholder="Street, city"></label><label>Currency<select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
+                    <div class="form-grid"><label><span data-i18n="customerName">Customer name</span><input id="businessName" required data-i18n-placeholder="customerNamePlaceholder" placeholder="e.g. Café Ole"></label><label><span data-i18n="urlSlug">URL slug</span><input id="slug" required data-i18n-placeholder="urlSlugPlaceholder" placeholder="cafe-ole"></label><label><span data-i18n="phone">Phone</span><input id="phone" data-i18n-placeholder="phonePlaceholder" placeholder="+30 210 555 0123"></label><label><span data-i18n="whatsapp">WhatsApp</span><input id="whatsapp" data-i18n-placeholder="whatsappPlaceholder" placeholder="+30 210 555 0123"></label><label class="wide"><span data-i18n="address">Address</span><input id="address" data-i18n-placeholder="addressPlaceholder" placeholder="Street, city"></label><label><span data-i18n="currency">Currency</span><select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
                     <div class="header-bg-control">
-                        <span class="header-bg-label">Menu header style</span>
+                        <span class="header-bg-label" data-i18n="menuHeaderStyle">Menu header style</span>
                         <div class="header-bg-row">
                             <div class="header-bg-preview" id="headerBgPreview"></div>
                             <div class="header-bg-actions">
-                                <button type="button" class="button button-ghost" id="pickHeaderBg">Choose from Pictures</button>
-                                <label class="button button-ghost" for="uploadHeaderBg">Upload new</label>
+                                <button type="button" class="button button-ghost" id="pickHeaderBg" data-i18n="chooseFromPictures">Choose from Pictures</button>
+                                <label class="button button-ghost" for="uploadHeaderBg" data-i18n="uploadNew">Upload new</label>
                                 <input id="uploadHeaderBg" type="file" accept="image/*" hidden>
-                                <button type="button" class="button button-ghost" id="removeHeaderBg">Remove</button>
+                                <button type="button" class="button button-ghost" id="removeHeaderBg" data-i18n="removeButton">Remove</button>
                             </div>
                         </div>
                         <div class="header-style-row">
-                            <label>Header font<select id="headerFont"><option value="">Default (Open Sans)</option><option value="playfair">Playfair Display</option><option value="montserrat">Montserrat</option><option value="poppins">Poppins</option><option value="dancing">Dancing Script</option><option value="oswald">Oswald</option></select></label>
-                            <label>Header text color<input id="headerTextColor" type="color" value="#ffffff"></label>
+                            <label><span data-i18n="headerFont">Header font</span><select id="headerFont"><option value="" data-i18n="fontDefault">Default (Open Sans)</option><option value="playfair">Playfair Display</option><option value="montserrat">Montserrat</option><option value="poppins">Poppins</option><option value="dancing">Dancing Script</option><option value="oswald">Oswald</option></select></label>
+                            <label><span data-i18n="headerTextColor">Header text color</span><input id="headerTextColor" type="color" value="#ffffff"></label>
                         </div>
                     </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
-                    <div class="import-panel"><strong>Import menu PDF</strong><p>Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu">Export JSON</button><button type="button" class="button button-ghost" id="importMenu">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
-                    <div class="menu-heading"><div><p class="eyebrow">Menu content</p><div class="menu-heading-title"><h3>Sections & dishes</h3><span class="dish-count" id="dishCount" role="status" aria-live="polite"></span></div></div><button type="button" class="button button-ghost" id="addCategory">＋ Add section</button></div>
+                    <div class="import-panel"><strong data-i18n="importMenuPdf">Import menu PDF</strong><p data-i18n="importMenuPdfHint">Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf" data-i18n="importPdfButton">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu" data-i18n="exportJson">Export JSON</button><button type="button" class="button button-ghost" id="importMenu" data-i18n="importJson">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
+                    <div class="menu-heading"><div><p class="eyebrow" data-i18n="menuContent">Menu content</p><div class="menu-heading-title"><h3 data-i18n="sectionsAndDishes">Sections & dishes</h3><span class="dish-count" id="dishCount" role="status" aria-live="polite"></span></div></div><button type="button" class="button button-ghost" id="addCategory" data-i18n="addSection">＋ Add section</button></div>
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="languages" hidden>
-                    <div class="language-panel"><strong>Menu languages</strong><p class="language-hint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language">Source language<select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu">Automatically translate</button><span id="translationStatus"></span></div>
+                    <div class="language-panel"><strong data-i18n="menuLanguages">Menu languages</strong><p class="language-hint" data-i18n="menuLanguagesHint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language"><span data-i18n="sourceLanguage">Source language</span><select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu" data-i18n="automaticallyTranslate">Automatically translate</button><span id="translationStatus"></span></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="addons" hidden>
-                    <p class="language-hint">Green means the client already has it. Tick "Gratis" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
+                    <p class="language-hint" data-i18n="addonsIntro">Green means the client already has it. Tick "Gratis" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
                     <div class="addon-board">
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusAnalytics"></span>
-                            <span class="addon-board-main"><span class="addon-board-name">Smart WeeklyReport™</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreeAnalytics"> Gratis</label></span>
-                            <a href="#" class="addon-board-view" id="addonViewAnalytics" target="_blank" rel="noopener" style="display:none">View stats ↗</a>
-                            <button type="button" class="button button-ghost addon-board-send" id="addonSendAnalytics">Send link</button>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart WeeklyReport™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeAnalytics"> <span data-i18n="gratis">Gratis</span></label></span>
+                            <a href="#" class="addon-board-view" id="addonViewAnalytics" target="_blank" rel="noopener" style="display:none" data-i18n="viewStats">View stats ↗</a>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendAnalytics" data-i18n="sendLink">Send link</button>
                         </div>
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusSfm"></span>
-                            <span class="addon-board-main"><span class="addon-board-name">Smart FoodMatch™</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreeSfm"> Gratis</label><small class="addon-board-hint" id="smartFoodMatchHint"></small></span>
-                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSfm">Send link</button>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart FoodMatch™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeSfm"> <span data-i18n="gratis">Gratis</span></label><small class="addon-board-hint" id="smartFoodMatchHint"></small></span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSfm" data-i18n="sendLink">Send link</button>
                         </div>
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusPhoto"></span>
-                            <span class="addon-board-main"><span class="addon-board-name">Smart DishPhoto™</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreePhoto"> Gratis</label></span>
-                            <button type="button" class="button button-ghost addon-board-send" id="addonSendPhoto">Send link</button>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart DishPhoto™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreePhoto"> <span data-i18n="gratis">Gratis</span></label></span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendPhoto" data-i18n="sendLink">Send link</button>
                         </div>
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusSmartServiceHub"></span>
-                            <span class="addon-board-main"><span class="addon-board-name">Smart ServiceHub™</span><label class="addon-board-free" title="Give this add-on for free"><input type="checkbox" id="addonFreeSmartServiceHub"> Gratis</label><small class="addon-board-hint" id="smartServiceHubHint"></small></span>
-                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSmartServiceHub">Send link</button>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart ServiceHub™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeSmartServiceHub"> <span data-i18n="gratis">Gratis</span></label><small class="addon-board-hint" id="smartServiceHubHint"></small></span>
+                            <button type="button" class="button button-ghost addon-board-send" id="addonSendSmartServiceHub" data-i18n="sendLink">Send link</button>
                         </div>
                         <div class="addon-extra" id="smartServiceHubExtra" hidden>
                             <div class="addon-extra-block">
-                                <p class="addon-extra-heading">Staff links</p>
+                                <p class="addon-extra-heading" data-i18n="staffLinks">Staff links</p>
                                 <div id="smartServiceHubLinks"></div>
                             </div>
                             <div class="addon-extra-block">
-                                <p class="addon-extra-heading">Tables</p>
+                                <p class="addon-extra-heading" data-i18n="tables">Tables</p>
                                 <div id="smartServiceHubTables"></div>
                                 <div class="addon-extra-add">
-                                    <input type="text" id="smartServiceHubNewTable" placeholder="Table number, e.g. 12">
-                                    <button type="button" class="button button-ghost" id="smartServiceHubAddTable">＋ Add table</button>
+                                    <input type="text" id="smartServiceHubNewTable" data-i18n-placeholder="tableNumberPlaceholder" placeholder="Table number, e.g. 12">
+                                    <button type="button" class="button button-ghost" id="smartServiceHubAddTable" data-i18n="addTable">＋ Add table</button>
                                 </div>
                             </div>
                             <div class="addon-extra-block">
                                 <div class="addon-extra-heading-row">
-                                    <p class="addon-extra-heading">Onboarding template</p>
+                                    <p class="addon-extra-heading" data-i18n="onboardingTemplate">Onboarding template</p>
                                     <div class="template-lang" id="onboardingTemplateLangs"></div>
                                 </div>
                                 <div class="onboarding-template-preview" id="onboardingTemplatePreview"></div>
-                                <button type="button" class="button button-primary" id="onboardingTemplateCopy">Copy for email</button>
+                                <button type="button" class="button button-primary" id="onboardingTemplateCopy" data-i18n="copyForEmail">Copy for email</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="emails" hidden>
-                    <p class="language-hint">Read-only reference for what's actually sent - copies the plain text so you can paste it into a manual email. Editing the real templates still needs a code change. Templates marked "(manual)" are not sent automatically - they are only here for you to send yourself.</p>
+                    <p class="language-hint" data-i18n="emailTemplatesIntro">Read-only reference for what's actually sent - copies the plain text so you can paste it into a manual email. Editing the real templates still needs a code change. Templates marked "(manual)" are not sent automatically - they are only here for you to send yourself.</p>
                     <div class="template-toolbar">
-                        <div class="template-lang" role="group" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button></div>
-                        <div class="template-actions"><button type="button" class="button button-ghost" id="templateAdd">＋ Add template</button><button type="button" class="button button-danger" id="templateDelete" disabled>Delete template</button><button type="button" class="button button-ghost" id="templateRestore" hidden>Restore deleted</button></div>
+                        <!-- Deutsch/English stay untranslated: they name the language of the
+                             customer-facing email text, not of this dashboard. -->
+                        <div class="template-lang" role="group" data-i18n-aria-label="templateLanguageAria" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button></div>
+                        <div class="template-actions"><button type="button" class="button button-ghost" id="templateAdd" data-i18n="addTemplate">＋ Add template</button><button type="button" class="button button-danger" id="templateDelete" disabled data-i18n="deleteTemplate">Delete template</button><button type="button" class="button button-ghost" id="templateRestore" hidden data-i18n="restoreDeleted">Restore deleted</button></div>
                     </div>
                     <div class="template-form" id="templateForm" hidden>
-                        <label class="wide">Template name<input id="templateName" placeholder="e.g. Thank you after the first order"></label>
-                        <label class="wide">Subject (Deutsch)<input id="templateSubjectDe" placeholder="Betreff"></label>
-                        <label class="wide">Text (Deutsch)<textarea id="templateBodyDe" rows="7" placeholder="Hallo [Vorname Nachname],"></textarea></label>
-                        <label class="wide">Subject (English) - optional<input id="templateSubjectEn" placeholder="Subject"></label>
-                        <label class="wide">Text (English) - optional<textarea id="templateBodyEn" rows="7" placeholder="Hi [First name Last name],"></textarea></label>
-                        <div class="template-form-actions"><button type="button" class="button button-ghost" id="templateCancel">Cancel</button><button type="button" class="button button-primary" id="templateSave">Save template</button></div>
+                        <label class="wide"><span data-i18n="templateName">Template name</span><input id="templateName" data-i18n-placeholder="templateNamePlaceholder" placeholder="e.g. Thank you after the first order"></label>
+                        <label class="wide"><span data-i18n="templateSubjectDe">Subject (Deutsch)</span><input id="templateSubjectDe" placeholder="Betreff"></label>
+                        <label class="wide"><span data-i18n="templateBodyDe">Text (Deutsch)</span><textarea id="templateBodyDe" rows="7" placeholder="Hallo [Vorname Nachname],"></textarea></label>
+                        <label class="wide"><span data-i18n="templateSubjectEn">Subject (English) - optional</span><input id="templateSubjectEn" placeholder="Subject"></label>
+                        <label class="wide"><span data-i18n="templateBodyEn">Text (English) - optional</span><textarea id="templateBodyEn" rows="7" placeholder="Hi [First name Last name],"></textarea></label>
+                        <div class="template-form-actions"><button type="button" class="button button-ghost" id="templateCancel" data-i18n="cancel">Cancel</button><button type="button" class="button button-primary" id="templateSave" data-i18n="saveTemplate">Save template</button></div>
                     </div>
                     <div class="template-board" id="templateBoard"></div>
                 </div>
-                <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank">Preview menu ↗</a><button class="button button-primary" type="submit">Save changes</button></div>
+                <div class="form-actions"><button type="button" class="button button-danger" id="deleteClient" data-i18n="deleteClient">Delete client</button><span></span><a class="button button-ghost" id="previewMenu" target="_blank" data-i18n="previewMenu">Preview menu ↗</a><button class="button button-primary" type="submit" data-i18n="saveChanges">Save changes</button></div>
             </form>
         </div>
         <div class="qr-column">
-        <div class="panel quick-actions-panel"><p class="eyebrow" style="margin-bottom:10px">Operate Client</p><div class="qr-actions" style="margin-bottom:8px"><button class="button button-primary" id="saveChangesTop" type="button">Save changes</button><a class="button button-ghost" id="previewMenuTop" target="_blank">Preview menu ↗</a></div><button class="button button-danger" id="deleteClientTop" type="button" style="width:100%">Delete client</button><a href="https://claude.ai/artifact/7RGTQnwnqbQ5a95wRxrkpu" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;font-size:11px;color:var(--muted)">Client has a subscription? Deletion guide ↗</a></div>
-        <aside class="panel qr-panel" id="qr"><div class="panel-heading"><div><p class="eyebrow">Ready to print</p><h2>Client QR code</h2></div><span class="qr-badge">LIVE</span></div><div class="qr-frame"><img id="qrImage" alt="QR code for the selected client's menu"></div><p class="qr-url" id="qrUrl"></p><div class="qr-actions"><button class="button button-primary" id="downloadQr">Download QR</button><button class="button button-ghost" id="copyUrl">Copy link</button></div><p class="helper">Scan to open this client’s live digital menu. Save the QR on table cards, windows, or receipts.</p></aside>
+        <div class="panel quick-actions-panel"><p class="eyebrow" style="margin-bottom:10px" data-i18n="operateClient">Operate Client</p><div class="qr-actions" style="margin-bottom:8px"><button class="button button-primary" id="saveChangesTop" type="button" data-i18n="saveChanges">Save changes</button><a class="button button-ghost" id="previewMenuTop" target="_blank" data-i18n="previewMenu">Preview menu ↗</a></div><button class="button button-danger" id="deleteClientTop" type="button" style="width:100%" data-i18n="deleteClient">Delete client</button><a href="https://claude.ai/artifact/7RGTQnwnqbQ5a95wRxrkpu" target="_blank" rel="noopener" style="display:block;text-align:center;margin-top:10px;font-size:11px;color:var(--muted)" data-i18n="deletionGuide">Client has a subscription? Deletion guide ↗</a></div>
+        <aside class="panel qr-panel" id="qr"><div class="panel-heading"><div><p class="eyebrow" data-i18n="readyToPrint">Ready to print</p><h2 data-i18n="clientQrCode">Client QR code</h2></div><span class="qr-badge" data-i18n="qrLive">LIVE</span></div><div class="qr-frame"><img id="qrImage" alt="QR code for the selected client's menu"></div><p class="qr-url" id="qrUrl"></p><div class="qr-actions"><button class="button button-primary" id="downloadQr" data-i18n="downloadQr">Download QR</button><button class="button button-ghost" id="copyUrl" data-i18n="copyLink">Copy link</button></div><p class="helper" data-i18n="qrHelper">Scan to open this client’s live digital menu. Save the QR on table cards, windows, or receipts.</p></aside>
         </div>
     </section>
 
     <section class="activity-section" id="activity">
         <div class="panel activity-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Automation</p><h2>Recent activity</h2></div></div>
-            <div id="activityList" class="activity-list"><p class="client-empty">Loading…</p></div>
+            <div class="panel-heading"><div><p class="eyebrow" data-i18n="automation">Automation</p><h2 data-i18n="recentActivity">Recent activity</h2></div></div>
+            <div id="activityList" class="activity-list"><p class="client-empty" data-i18n="loading">Loading…</p></div>
         </div>
     </section>
 
     <section class="pictures-section" id="pictures">
         <div class="panel activity-panel">
-            <div class="panel-heading"><div><p class="eyebrow">Media</p><h2>Pictures</h2></div><label class="button button-ghost" for="photoLibraryInput">＋ Upload photo</label></div>
+            <div class="panel-heading"><div><p class="eyebrow" data-i18n="media">Media</p><h2 data-i18n="pictures">Pictures</h2></div><label class="button button-ghost" for="photoLibraryInput" data-i18n="uploadPhoto">＋ Upload photo</label></div>
             <input id="photoLibraryInput" type="file" accept="image/*" multiple hidden>
-            <div id="photoLibraryGrid" class="photo-library-grid"><p class="client-empty">Loading…</p></div>
+            <div id="photoLibraryGrid" class="photo-library-grid"><p class="client-empty" data-i18n="loading">Loading…</p></div>
         </div>
     </section>
 </main>
 <div class="toast" id="toast" role="status"></div>
 <div class="modal-overlay" id="photoPickerModal" hidden>
     <div class="modal-box">
-        <div class="modal-heading"><h3>Choose a header photo</h3><button type="button" class="icon-button" id="closePhotoPicker">×</button></div>
+        <div class="modal-heading"><h3 data-i18n="chooseHeaderPhoto">Choose a header photo</h3><button type="button" class="icon-button" id="closePhotoPicker">×</button></div>
         <div id="photoPickerGrid" class="photo-library-grid"></div>
     </div>
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=6"></script>
-<script src="data/assets/js/admin.js?v=smartservice-hub-7"></script>
+<script src="data/assets/js/admin-strings.js?v=1"></script>
+<script src="data/assets/js/admin.js?v=i18n-1"></script>
 </body>
 </html>
