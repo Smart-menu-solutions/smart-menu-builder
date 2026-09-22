@@ -6,9 +6,20 @@
 :root{--ink:#262421;--muted:#737373;--line:#e7e5e1;--alt:#fafaf9;--paper:#fff;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--shadow:0 14px 30px -18px rgba(38,36,33,.35)}
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',system-ui,sans-serif}
-.staff-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
+.staff-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
 .staff-header h1{font-size:1.1rem;line-height:1.3;margin:0}
 .staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;line-height:1.3;margin:.2rem 0 0}
+/* .staff-brand is flex:1, so it centers itself in whatever space is left
+   over between the role label and the tools group - but that leftover
+   space isn't centered on the bar, since the tools group (guide + 6
+   language buttons) is much wider than "Kellner / Live". Giving the role
+   label a min-width roughly matching the tools group's own (unwrapped)
+   width balances the two sides so the leftover middle - and .staff-brand
+   in it - lands close to the bar's true center. This is an approximation
+   (not a guaranteed exact match, unlike forcing both sides to the same
+   flex-basis), chosen because forcing an exact match made the tools
+   group itself shrink and wrap onto extra lines it didn't need to. */
+.staff-header>div:first-child{min-width:335px}
 .staff-brand{flex:1;min-width:0;text-align:center;overflow:hidden}
 .staff-brand-name{margin:0 0 .2rem;font-size:.85rem;color:#bcb8b1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .staff-brand-tag{display:inline-flex;max-width:100%;align-items:center;gap:.5rem;color:#e7e4df;text-decoration:none;font-weight:600;font-size:.8rem}
@@ -65,10 +76,16 @@ body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',s
 .staff-add-form select,.staff-add-form input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
 @media(max-width:480px){
 	.staff-grid{grid-template-columns:1fr;padding:1rem}
-	/* Centering .staff-brand between two wide flex groups squeezes it to
-	   nothing once the language buttons wrap - give it its own full-width
-	   row instead, between the role label and the (still-wrapping) tools. */
+}
+/* The desktop rule above centers .staff-brand by giving the role label a
+   min-width roughly matching the tools group's own (unwrapped) width -
+   below ~900px there isn't reliably room for role label + that min-width
+   + brand + tools all on one line (tightest around tablet-portrait
+   widths, where it collapsed .staff-brand to nothing), so stack all
+   three full-width instead: role label, then brand, then tools. */
+@media(max-width:900px){
 	.staff-header{padding:1rem;flex-wrap:wrap}
-	.staff-brand{order:1;flex:0 0 100%;text-align:left;margin-top:.5rem}
-	.staff-header-tools{order:2;justify-content:flex-start}
+	.staff-header>div:first-child{flex:1 1 100%;min-width:0}
+	.staff-brand{order:1;flex:0 0 100%;max-width:100%;text-align:left;margin-top:.5rem}
+	.staff-header-tools{order:2;flex:0 0 100%;max-width:100%;justify-content:flex-start;margin-top:.5rem}
 }
