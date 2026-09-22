@@ -7,14 +7,16 @@
 *{box-sizing:border-box}
 body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',system-ui,sans-serif}
 .staff-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
-.staff-header h1{font-size:1.1rem;margin:0}
-.staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;margin:.15rem 0 0}
+.staff-header h1{font-size:1.1rem;line-height:1.3;margin:0}
+.staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;line-height:1.3;margin:.2rem 0 0}
 .staff-languages{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
-.staff-lang-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:.35rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer}
+/* Same rectangular button shape as the marketing site's language switcher
+   (.flag-btn), not a pill. */
+.staff-lang-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:.35rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer}
 .staff-lang-btn.is-active{background:var(--orange);border-color:var(--orange);color:#fff}
 .staff-header-tools{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:flex-end}
 .staff-guide{position:relative}
-.staff-guide-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:999px;padding:.35rem .8rem;font-size:.72rem;font-weight:700;cursor:pointer}
+.staff-guide-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:.35rem .8rem;font-size:.72rem;font-weight:700;cursor:pointer}
 .staff-guide-btn:hover,.staff-guide-btn.is-open{background:rgba(255,255,255,.14)}
 .staff-guide-panel{position:absolute;right:0;top:calc(100% + .6rem);width:min(320px,86vw);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:1rem 1.1rem;z-index:20;text-align:left}
 .staff-guide-panel h2{margin:0 0 .5rem;font-size:.95rem}

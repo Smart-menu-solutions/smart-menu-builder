@@ -46,7 +46,7 @@ window.STAFF_STRINGS = {
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
-		roleLabels: { waiter: 'Waiter', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
+		roleLabels: { waiter: 'Service', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
 		live: 'Live', empty: 'No active tables right now.', table: 'Table',
 		drinksInfoOnly: 'Drinks (info only)', dishesInfoOnly: 'Food (info only)',
 		allDone: 'All done', addItem: '+ Item', add: 'Add',
