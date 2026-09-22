@@ -134,7 +134,9 @@ Deno.serve(async (request) => {
 		// same translations lookup menu.js uses (by source name, not id)
 		// works here too via staff.js's translateName().
 		const menu = ['waiter', 'bar', 'cashier'].includes(access.role) ? { categories: access.menu.categories } : undefined;
-		return json({ ...view, menu, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
+		// name goes to every role (header branding), unlike categories above
+		// which only waiter/bar/cashier need for picking products to add.
+		return json({ ...view, menu, name: access.menu.name, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
 	}
 
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);

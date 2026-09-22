@@ -9,6 +9,7 @@ body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',s
 .staff-header{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
 .staff-header h1{font-size:1.1rem;line-height:1.3;margin:0}
 .staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;line-height:1.3;margin:.2rem 0 0}
+.staff-brand{flex:1;min-width:0;margin:0;text-align:center;font-weight:700;font-size:1rem;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .staff-languages{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
 /* Same rectangular button shape as the marketing site's language switcher
    (.flag-btn), not a pill. */
@@ -57,4 +58,12 @@ body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',s
 .staff-add-form{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed var(--line);display:none;gap:.5rem;flex-direction:column}
 .staff-add-form.is-open{display:flex}
 .staff-add-form select,.staff-add-form input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
-@media(max-width:480px){.staff-grid{grid-template-columns:1fr;padding:1rem}.staff-header{padding:1rem}}
+@media(max-width:480px){
+	.staff-grid{grid-template-columns:1fr;padding:1rem}
+	/* Centering .staff-brand between two wide flex groups squeezes it to
+	   nothing once the language buttons wrap - give it its own full-width
+	   row instead, between the role label and the (still-wrapping) tools. */
+	.staff-header{padding:1rem;flex-wrap:wrap}
+	.staff-brand{order:1;flex:0 0 100%;text-align:left;margin-top:.5rem}
+	.staff-header-tools{order:2;justify-content:flex-start}
+}

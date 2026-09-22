@@ -12,6 +12,7 @@ const canAddItems = ROLE === 'bar' || ROLE === 'waiter' || ROLE === 'cashier';
 const LANG_STORAGE_KEY = `smartmenu.staff.lang.${ROLE}`;
 
 let menuState = null;
+let restaurantName = '';
 let allTablesState = [];
 let languagesState = ['de'];
 let translationsState = {};
@@ -145,6 +146,7 @@ function guideMarkup() {
 
 function render(data) {
 	menuState = data.menu || menuState;
+	if (data.name) restaurantName = data.name;
 	allTablesState = data.allTables || allTablesState;
 	if (data.languages?.length) languagesState = data.languages;
 	// The client's language order puts the main language first (see
@@ -157,6 +159,7 @@ function render(data) {
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
+			${restaurantName ? `<p class="staff-brand">${escapeHtml(restaurantName)}</p>` : ''}
 			<div class="staff-header-tools">${languageSwitcherMarkup()}${guideMarkup()}</div>
 		</header>
 		${callsMarkup(allCalls)}
