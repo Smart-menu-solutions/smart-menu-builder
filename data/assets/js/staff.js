@@ -159,8 +159,11 @@ function render(data) {
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
-			${restaurantName ? `<p class="staff-brand">${escapeHtml(restaurantName)}</p>` : ''}
-			<div class="staff-header-tools">${languageSwitcherMarkup()}${guideMarkup()}</div>
+			<div class="staff-brand">
+				${restaurantName ? `<p class="staff-brand-name">${escapeHtml(restaurantName)}</p>` : ''}
+				<a class="staff-brand-tag" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html" target="_blank" rel="noopener"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>
+			</div>
+			<div class="staff-header-tools">${guideMarkup()}${languageSwitcherMarkup()}</div>
 		</header>
 		${callsMarkup(allCalls)}
 		${tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`}
