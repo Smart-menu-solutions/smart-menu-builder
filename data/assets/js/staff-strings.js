@@ -32,8 +32,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"Hier siehst du alle Tische als Kacheln: Orange = frei, Grün = aktiv, Rot = Rechnung angefordert.",
-					"Neue Gäste an einem freien (orangen) Tisch? Kachel antippen zeigt ein Popup mit „Aktivieren“ - erst dieser Klick öffnet den Tisch wirklich.",
+					"Hier siehst du alle Tische als Kacheln: Grün = frei, Orange = aktiv, Rot = Rechnung angefordert.",
+					"Neue Gäste an einem freien (grünen) Tisch? Kachel antippen zeigt ein Popup mit „Aktivieren“ - erst dieser Klick öffnet den Tisch wirklich.",
 					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
 					"🛎️ auf der Kachel = etwas ist fertig und wartet zum Abholen.",
 					"Gast will zahlen, hat aber nicht über sein Handy Bescheid gegeben? Im Popup „Rechnung anfordern“ drücken – der Tisch wird rot, die Kasse sieht es sofort.",
@@ -88,8 +88,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"All tables are shown as tiles: orange = free, green = active, red = bill requested.",
-					"New guests at a free (orange) table? Tap the tile to see a popup with \"Activate\" - that button is what actually opens the table.",
+					"All tables are shown as tiles: green = free, orange = active, red = bill requested.",
+					"New guests at a free (green) table? Tap the tile to see a popup with \"Activate\" - that button is what actually opens the table.",
 					"Tap an active tile to see its order and add items.",
 					"🛎️ on a tile = something is ready and waiting to be picked up.",
 					"Guest wants to pay but didn't say so via their phone? Tap \"Request bill\" in the popup - the tile turns red and the cashier sees it right away.",
@@ -144,8 +144,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πορτοκαλί = ελεύθερο, πράσινο = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
-					"Νέοι πελάτες σε ελεύθερο (πορτοκαλί) τραπέζι; Πάτα το πλακίδιο για να δεις ένα popup με «Ενεργοποίηση» - μόνο αυτό το κουμπί ανοίγει πραγματικά το τραπέζι.",
+					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πράσινο = ελεύθερο, πορτοκαλί = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
+					"Νέοι πελάτες σε ελεύθερο (πράσινο) τραπέζι; Πάτα το πλακίδιο για να δεις ένα popup με «Ενεργοποίηση» - μόνο αυτό το κουμπί ανοίγει πραγματικά το τραπέζι.",
 					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
 					"🛎️ σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
 					"Ο πελάτης θέλει να πληρώσει αλλά δεν το έκανε από το κινητό του; Πάτα «Ζήτα λογαριασμό» στο popup - το πλακίδιο γίνεται κόκκινο και το ταμείο το βλέπει αμέσως.",
@@ -200,8 +200,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"Tutti i tavoli sono mostrati come riquadri: arancione = libero, verde = attivo, rosso = conto richiesto.",
-					"Nuovi ospiti a un tavolo libero (arancione)? Tocca il riquadro per vedere un popup con «Attiva» - solo quel pulsante apre davvero il tavolo.",
+					"Tutti i tavoli sono mostrati come riquadri: verde = libero, arancione = attivo, rosso = conto richiesto.",
+					"Nuovi ospiti a un tavolo libero (verde)? Tocca il riquadro per vedere un popup con «Attiva» - solo quel pulsante apre davvero il tavolo.",
 					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
 					"🛎️ sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
 					"L'ospite vuole pagare ma non l'ha detto dal telefono? Tocca «Richiedi conto» nel popup - il riquadro diventa rosso e la cassa lo vede subito.",
@@ -256,8 +256,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"Todas las mesas se muestran como fichas: naranja = libre, verde = activa, rojo = cuenta solicitada.",
-					"¿Nuevos clientes en una mesa libre (naranja)? Toca la ficha para ver un popup con «Activar» - solo ese botón abre de verdad la mesa.",
+					"Todas las mesas se muestran como fichas: verde = libre, naranja = activa, rojo = cuenta solicitada.",
+					"¿Nuevos clientes en una mesa libre (verde)? Toca la ficha para ver un popup con «Activar» - solo ese botón abre de verdad la mesa.",
 					"Toca una ficha activa para ver el pedido y añadir artículos.",
 					"🛎️ en la ficha = algo está listo y espera a que lo recojas.",
 					"¿El cliente quiere pagar pero no lo dijo desde su móvil? Pulsa «Pedir la cuenta» en el popup - la ficha se pone roja y caja lo ve al instante.",
@@ -312,8 +312,8 @@ window.STAFF_STRINGS = {
 			],
 			guide: {
 				waiter: [
-					"Toutes les tables sont affichées en tuiles : orange = libre, vert = active, rouge = addition demandée.",
-					"Nouveaux clients à une table libre (orange) ? Touchez la tuile pour voir une fenêtre avec « Activer » - seul ce bouton ouvre vraiment la table.",
+					"Toutes les tables sont affichées en tuiles : vert = libre, orange = active, rouge = addition demandée.",
+					"Nouveaux clients à une table libre (verte) ? Touchez la tuile pour voir une fenêtre avec « Activer » - seul ce bouton ouvre vraiment la table.",
 					"Touchez une tuile active pour voir la commande et ajouter des articles.",
 					"🛎️ sur une tuile = quelque chose est prêt et attend d'être récupéré.",
 					"Le client veut payer mais ne l'a pas dit via son téléphone ? Appuyez sur « Demander l'addition » dans la fenêtre - la tuile devient rouge et la caisse le voit tout de suite.",
