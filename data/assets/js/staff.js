@@ -120,14 +120,13 @@ function cardActionsMarkup(table) {
 }
 
 // The bill-requested flag: a plain span for roles that can't act on it, but
-// for the cashier a clickable shortcut straight to "Tisch schließen" - a
-// bell rather than a card-suit emoji, since 💳 doesn't render everywhere
-// (shows as a blank/tofu box on some devices) while 🛎️ already has to work
-// reliably for the Table Hub's own bell.
+// for the cashier a clickable shortcut straight to "Tisch schließen" - 💳
+// there reads as "this is the payment step", while every other role keeps
+// the service bell (🛎️), which fits a "guest wants something" notice better.
 function billFlagMarkup(table) {
 	if (!table.billRequested) return '';
 	if (ROLE !== 'cashier') return `<span class="staff-bill-flag" title="${escapeHtml(strings().billFlagHint)}">🛎️</span>`;
-	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">🛎️</button>`;
+	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">💳</button>`;
 }
 
 function cardMarkup(table) {
