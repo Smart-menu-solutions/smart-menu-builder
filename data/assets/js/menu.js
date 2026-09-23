@@ -1,10 +1,12 @@
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const app = isBrowser ? document.querySelector('#app') : null;
 const slug = isBrowser ? new URLSearchParams(location.search).get('client') : null;
-// SmartService Hub ordering mode: a table's QR code links here with ?t=
-// instead of ?client= - see order-session Edge Function. Mutually exclusive
-// with the plain read-only ?client= mode.
-const qrToken = isBrowser ? new URLSearchParams(location.search).get('t') : null;
+// SmartService Hub ordering mode: a table's link is ?client=<slug>&table=
+// <table_number> - see order-session Edge Function. The table number is
+// printed openly on the table (never a secret, never rotates - see
+// 0017_table_hub.sql), so it just rides alongside the same ?client= the
+// plain read-only menu already uses, rather than a separate secret token.
+const tableNumber = isBrowser ? new URLSearchParams(location.search).get('table') : null;
 const urlLanguageParam = isBrowser ? new URLSearchParams(location.search).get('lang') : null;
 // No explicit ?lang= in the URL (the normal case when a customer scans the
 // QR code) — falls back to 'en' until renderMenu() swaps it for the menu's
@@ -43,12 +45,12 @@ function logoMarkup(client) {
 	return `<img class="menu-logo" src="${escapeHtml(source)}" alt="${escapeHtml(client.name)} logo">`;
 }
 
-// Ordering mode links stay on the same table (?t=) across a language
-// switch; read-only mode keeps today's ?client= links. Either way this is a
-// full navigation/reload - the draft cart survives it via localStorage
-// keyed by qrToken (see loadCart/saveCart), not by keeping the cart in memory.
+// Ordering mode links stay on the same table (&table=) across a language
+// switch. Either way this is a full navigation/reload - the draft cart
+// survives it via localStorage keyed by slug+table (see loadCart/saveCart),
+// not by keeping the cart in memory.
 function pageUrl(client, language, hash) {
-	const base = qrToken ? `?t=${encodeURIComponent(qrToken)}` : `?client=${encodeURIComponent(client.slug)}`;
+	const base = tableNumber ? `?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(tableNumber)}` : `?client=${encodeURIComponent(client.slug)}`;
 	return `${base}&lang=${encodeURIComponent(language)}${hash ? `#${hash}` : ''}`;
 }
 
@@ -383,7 +385,7 @@ function renderMenu(client, ordering) {
 	if (ordering) { wireCart(); renderOrderPanel(); }
 }
 
-// --- SmartService Hub: guest ordering (only active with ?t=<qr_token>) ---
+// --- SmartService Hub: guest ordering (only active with &table=) ---
 // orderState holds the table/menu/order this page is bound to; cart is the
 // not-yet-sent draft. Both order-session calls below deliberately send no
 // apikey header - Supabase's Edge Function gateway doesn't require one
@@ -394,21 +396,27 @@ let orderState = null;
 const cart = new Map();
 
 function orderEndpoint() { return `${AUTH_CONFIG.supabaseUrl}/functions/v1/order-session`; }
+function cartStorageKey() { return `${CART_STORAGE_PREFIX}${slug}:${tableNumber}`; }
 
 function loadCart() {
-	if (!qrToken) return;
+	if (!tableNumber) return;
 	try {
-		const raw = localStorage.getItem(CART_STORAGE_PREFIX + qrToken);
+		const raw = localStorage.getItem(cartStorageKey());
 		if (raw) JSON.parse(raw).forEach((item) => cart.set(item.productId, item));
 	} catch { /* storage unavailable or corrupt - start empty */ }
 }
 function saveCart() {
-	if (!qrToken) return;
-	try { localStorage.setItem(CART_STORAGE_PREFIX + qrToken, JSON.stringify([...cart.values()])); } catch { /* convenience only */ }
+	if (!tableNumber) return;
+	try { localStorage.setItem(cartStorageKey(), JSON.stringify([...cart.values()])); } catch { /* convenience only */ }
 }
 function cartCount() { return [...cart.values()].reduce((sum, item) => sum + item.quantity, 0); }
 
+// Guests never activate a table themselves (see 0017_table_hub.sql) - if
+// staff haven't activated it yet, the moment they try to order anything at
+// all they get told to ask staff, instead of quietly building a cart that
+// can never be sent.
 function addToCart(productId, name, price) {
+	if (orderState && !orderState.active) { alert(orderStrings().notActiveYet); return; }
 	const existing = cart.get(productId);
 	if (existing) existing.quantity += 1;
 	else cart.set(productId, { productId, name, price, quantity: 1, notes: '' });
@@ -516,7 +524,7 @@ async function submitCart() {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				token: orderState.token,
+				slug, table: tableNumber, sessionId: orderState.sessionId,
 				items: [...cart.values()].map((item) => ({ productId: item.productId, quantity: item.quantity, notes: item.notes || undefined }))
 			})
 		});
@@ -564,23 +572,16 @@ function orderPanelMarkup() {
 		<div class="order-panel-rows">${rows}</div>
 		${quickTray ? `<p class="order-panel-label">${escapeHtml(orderStrings().recentlyOrdered)}</p><div class="quick-tray">${quickTray}</div>` : ''}
 		<div class="order-panel-actions">
-			<button type="button" class="order-action-btn" id="callWaiterButton">${escapeHtml(orderStrings().callWaiter)}</button>
 			<button type="button" class="order-action-btn" id="requestBillButton" ${billRequested ? 'disabled' : ''}>${escapeHtml(billRequested ? orderStrings().billRequested : orderStrings().requestBill)}</button>
 		</div>
 	</section>`;
 }
 
 function wireOrderPanel() {
-	const callButton = document.getElementById('callWaiterButton');
-	if (callButton) callButton.addEventListener('click', async () => {
-		callButton.disabled = true;
-		callButton.textContent = orderStrings().waiterCalled;
-		await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: orderState.token, action: 'call_waiter' }) }).catch(() => {});
-	});
 	const billButton = document.getElementById('requestBillButton');
 	if (billButton) billButton.addEventListener('click', async () => {
 		billButton.disabled = true;
-		const response = await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: orderState.token, action: 'request_bill' }) }).catch(() => null);
+		const response = await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, table: tableNumber, sessionId: orderState.sessionId, action: 'request_bill' }) }).catch(() => null);
 		if (response && response.ok) { orderState.order.billRequestedAt = new Date().toISOString(); renderOrderPanel(); }
 		else billButton.disabled = false;
 	});
@@ -619,15 +620,17 @@ async function subscribeRealtime(menuSlug) {
 		const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
 		const channel = client.channel(`restaurant:${menuSlug}`);
 		channel.on('broadcast', { event: 'update' }, async () => {
-			const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`).catch(() => null);
+			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`).catch(() => null);
 			const data = response ? await response.json().catch(() => null) : null;
-			if (data?.order !== undefined) { orderState.order = data.order; renderOrderPanel(); }
+			if (data?.table) { orderState.active = data.active; orderState.sessionId = data.sessionId; orderState.order = data.order; renderOrderPanel(); }
 		});
 		channel.on('broadcast', { event: 'menu_updated' }, async () => {
 			const cartOpen = document.getElementById('cartOverlay') && !document.getElementById('cartOverlay').hidden;
-			const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`).catch(() => null);
+			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`).catch(() => null);
 			const data = response ? await response.json().catch(() => null) : null;
 			if (!data?.menu) return;
+			orderState.active = data.active;
+			orderState.sessionId = data.sessionId;
 			orderState.order = data.order;
 			orderState.menu = data.menu;
 			renderMenu(data.menu, true);
@@ -638,17 +641,17 @@ async function subscribeRealtime(menuSlug) {
 }
 
 async function loadOrderSession() {
-	const response = await fetch(`${orderEndpoint()}?t=${encodeURIComponent(qrToken)}`);
+	const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`);
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) throw new Error(data.error || 'This menu link is no longer valid.');
-	orderState = { token: qrToken, tableId: data.table.id, order: data.order, menu: data.menu };
+	orderState = { tableId: data.table.id, active: data.active, sessionId: data.sessionId, order: data.order, menu: data.menu };
 	loadCart();
 	renderMenu(data.menu, true);
 	subscribeRealtime(data.menu.slug);
 }
 
 async function loadMenu() {
-	if (qrToken) { await loadOrderSession(); return; }
+	if (tableNumber) { await loadOrderSession(); return; }
 	if (!slug) throw new Error('This menu link is missing its client identifier.');
 	const FALLBACK_CLIENTS = {
 		'gute-laune': {

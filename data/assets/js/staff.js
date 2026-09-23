@@ -2,22 +2,29 @@
 // each page sets window.STAFF_ROLE before loading this file, everything
 // else (fetch, render, actions, realtime) branches on that one value
 // instead of duplicating four near-identical files. See staff-access Edge
-// Function for what each role actually receives.
+// Function for what each role actually receives. "waiter" is the Table Hub:
+// a grid of every table (see hubTileMarkup/renderHub) rather than a card
+// list, because its whole job is showing which tables are FREE and letting
+// staff activate the next one - see 0017_table_hub.sql for why that
+// replaced the old per-table QR secret.
 
 const ROLE = window.STAFF_ROLE;
 const token = new URLSearchParams(location.search).get('t');
 const app = document.querySelector('#app');
 const isTicketRole = ROLE === 'kitchen' || ROLE === 'bar';
+const isHub = ROLE === 'waiter';
 const canAddItems = ROLE === 'bar' || ROLE === 'waiter' || ROLE === 'cashier';
 const LANG_STORAGE_KEY = `smartmenu.staff.lang.${ROLE}`;
 
 let menuState = null;
 let restaurantName = '';
-let allTablesState = [];
 let languagesState = ['de'];
 let translationsState = {};
 let openAddFormFor = null;
 let guideOpen = false;
+let openHubTable = null; // hub only: which table's popup is showing
+let totalsOpen = false; // cashier only: the "Gesamtübersicht" popup
+const ackDispatchedCount = {}; // hub only: dispatched-item count last seen per table, to know when the bell is "new"
 
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
@@ -76,14 +83,10 @@ function menuOptionsMarkup() {
 
 function addFormMarkup(tableId) {
 	const open = openAddFormFor === tableId;
-	const serveField = ROLE === 'waiter'
-		? `<select data-add-serve><option value="">${escapeHtml(strings().serveHere)}</option>${allTablesState.filter((table) => table.id !== tableId).map((table) => `<option value="${escapeHtml(table.id)}">${escapeHtml(strings().serveAt.replace('{n}', table.tableNumber))}</option>`).join('')}</select>`
-		: '';
 	return `<div class="staff-add-form ${open ? 'is-open' : ''}" data-add-form="${tableId}">
 		<select data-add-product>${menuOptionsMarkup()}</select>
 		<input type="number" min="1" value="1" data-add-qty>
 		<input type="text" data-add-notes placeholder="${escapeHtml(strings().notesPlaceholder)}">
-		${serveField}
 		<button type="button" class="staff-btn staff-btn-primary" data-add-submit="${tableId}">${escapeHtml(strings().add)}</button>
 	</div>`;
 }
@@ -100,29 +103,59 @@ function cardActionsMarkup(table) {
 }
 
 function cardMarkup(table) {
-	const withPrice = ROLE === 'waiter' || ROLE === 'cashier';
+	const withPrice = ROLE === 'cashier';
 	const bill = table.billRequested ? '<span class="staff-bill-flag">💳</span>' : '';
 	const total = withPrice ? `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>` : '';
-	const primaryRows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
-	const secondaryLabel = ROLE === 'kitchen' ? strings().drinksInfoOnly : strings().dishesInfoOnly;
-	const secondary = isTicketRole && table.otherItems?.length
-		? `<div class="staff-secondary"><p class="staff-secondary-label">${escapeHtml(secondaryLabel)}</p>${sortItems(table.otherItems).map((item) => itemRowMarkup(item, false, false)).join('')}</div>`
-		: '';
+	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''}" data-table-id="${table.tableId}">
 		<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}</div>
-		<div class="staff-card-rows">${primaryRows}</div>
-		${secondary}
+		<div class="staff-card-rows">${rows}</div>
 		${cardActionsMarkup(table)}
 	</div>`;
 }
 
-function callsMarkup(calls) {
-	if (ROLE !== 'waiter' || !calls?.length) return '';
-	return `<div class="staff-calls">${calls.map((call) => `
-		<div class="staff-call-row" data-call-id="${call.id}">
-			<span>${escapeHtml(strings().callRow)}</span>
-			<button type="button" class="staff-btn" data-resolve-call="${call.id}">${escapeHtml(strings().resolveCall)}</button>
-		</div>`).join('')}</div>`;
+// --- Table Hub (waiter role): a grid of every table instead of a card list.
+// Tapping a FREE tile activates it right away (no confirmation - it's the
+// low-risk direction, closing is what actually settles a bill). Tapping an
+// ACTIVE/PAYMENT_PENDING tile opens a popup with that table's order, same
+// row markup as the card view. See 0017_table_hub.sql for why FREE tiles
+// carry no secret of any kind.
+function hubTileMarkup(table) {
+	const statusClass = table.status === 'FREE' ? 'hub-tile-free' : table.status === 'PAYMENT_PENDING' ? 'hub-tile-pending' : 'hub-tile-active';
+	const dispatchedCount = (table.items || []).filter((item) => item.dispatched).length;
+	const bell = table.status !== 'FREE' && dispatchedCount > (ackDispatchedCount[table.tableId] || 0);
+	return `<button type="button" class="hub-tile ${statusClass}" data-hub-table="${table.tableId}" data-hub-status="${table.status}">
+		${bell ? '<span class="hub-bell" aria-hidden="true">🔔</span>' : ''}
+		<span class="hub-tile-number">${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</span>
+		<span class="hub-tile-status">${escapeHtml(strings().hubStatus?.[table.status] || table.status)}</span>
+	</button>`;
+}
+
+function hubPopupMarkup(table) {
+	if (!table) return '';
+	const total = `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>`;
+	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, true, false)).join('') || `<p class="staff-empty">${escapeHtml(strings().hubEmptyOrder)}</p>`;
+	return `<div class="hub-popup-overlay" id="hubPopupOverlay">
+		<div class="hub-popup-box" role="dialog" aria-modal="true">
+			<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
+			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${table.billRequested ? ' <span class="staff-bill-flag">💳</span>' : ''}</h3>${total}</div>
+			<div class="staff-card-rows">${rows}</div>
+			<div class="staff-card-actions"><button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button></div>
+			${addFormMarkup(table.tableId)}
+		</div>
+	</div>`;
+}
+
+function totalsPopupMarkup() {
+	if (!totalsOpen) return '';
+	const grandTotal = lastTables.reduce((sum, table) => sum + (table.totalCents || 0), 0);
+	return `<div class="hub-popup-overlay" id="totalsPopupOverlay">
+		<div class="hub-popup-box" role="dialog" aria-modal="true">
+			<button type="button" class="smart-match-close" id="totalsPopupClose" aria-label="Close">✕</button>
+			<h2>${escapeHtml(strings().totalsHeading)}</h2>
+			<p class="staff-card-total staff-grand-total">${(grandTotal / 100).toFixed(2)} €</p>
+		</div>
+	</div>`;
 }
 
 function languageSwitcherMarkup() {
@@ -144,10 +177,14 @@ function guideMarkup() {
 	</div>`;
 }
 
+function headerToolsMarkup() {
+	const totalsButton = ROLE === 'cashier' ? `<button type="button" class="staff-btn" data-open-totals>${escapeHtml(strings().totalsButton)}</button>` : '';
+	return `${totalsButton}${guideMarkup()}${languageSwitcherMarkup()}`;
+}
+
 function render(data) {
 	menuState = data.menu || menuState;
 	if (data.name) restaurantName = data.name;
-	allTablesState = data.allTables || allTablesState;
 	if (data.languages?.length) languagesState = data.languages;
 	// The client's language order puts the main language first (see
 	// languageDisplayOrder in admin.js) - a saved or default language that
@@ -155,7 +192,9 @@ function render(data) {
 	if (!languagesState.includes(currentLang)) currentLang = languagesState[0];
 	if (data.translations) translationsState = data.translations;
 	const tables = data.tables || [];
-	const allCalls = (data.tables || []).flatMap((table) => table.waiterCalls || []);
+	const body = isHub
+		? `<div class="hub-grid">${tables.map(hubTileMarkup).join('')}</div>${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
+		: (tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup();
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
@@ -163,10 +202,9 @@ function render(data) {
 				${restaurantName ? `<p class="staff-brand-name">${escapeHtml(restaurantName)}</p>` : ''}
 				<a class="staff-brand-tag" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html" target="_blank" rel="noopener"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>
 			</div>
-			<div class="staff-header-tools">${guideMarkup()}${languageSwitcherMarkup()}</div>
+			<div class="staff-header-tools">${headerToolsMarkup()}</div>
 		</header>
-		${callsMarkup(allCalls)}
-		${tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`}
+		${body}
 	`;
 	wireActions();
 }
@@ -184,7 +222,10 @@ async function onAppClick(event) {
 	const addSubmit = event.target.closest('[data-add-submit]');
 	const closeTable = event.target.closest('[data-close-table]');
 	const removeItem = event.target.closest('[data-remove-item]');
-	const resolveCall = event.target.closest('[data-resolve-call]');
+	const hubTile = event.target.closest('[data-hub-table]');
+	const hubPopupClose = event.target.closest('#hubPopupClose') || event.target.id === 'hubPopupOverlay' && event.target;
+	const openTotals = event.target.closest('[data-open-totals]');
+	const totalsClose = event.target.closest('#totalsPopupClose') || event.target.id === 'totalsPopupOverlay' && event.target;
 
 	if (guideToggle) {
 		guideOpen = !guideOpen;
@@ -195,12 +236,27 @@ async function onAppClick(event) {
 	if (langButton) {
 		currentLang = langButton.dataset.lang;
 		try { localStorage.setItem(LANG_STORAGE_KEY, currentLang); } catch { /* convenience only */ }
-		render({ tables: lastTables, menu: menuState, allTables: allTablesState, languages: languagesState, translations: translationsState });
+		rerender();
 		return;
 	}
 
+	if (openTotals) { totalsOpen = true; rerender(); return; }
+	if (totalsClose) { totalsOpen = false; rerender(); return; }
+
+	if (hubPopupClose) { openHubTable = null; rerender(); return; }
+
 	try {
-		if (dispatchItem && isTicketRole) {
+		if (hubTile) {
+			const tableId = hubTile.dataset.hubTable;
+			if (hubTile.dataset.hubStatus === 'FREE') {
+				await callStaff({ action: 'activate_table', tableId });
+				await refresh();
+			} else {
+				openHubTable = tableId;
+				ackDispatchedCount[tableId] = (lastTables.find((table) => table.tableId === tableId)?.items || []).filter((item) => item.dispatched).length;
+				rerender();
+			}
+		} else if (dispatchItem && isTicketRole) {
 			await callStaff({ action: 'dispatch_item', itemId: dispatchItem.dataset.itemId });
 			await refresh();
 		} else if (dispatchAll) {
@@ -208,17 +264,16 @@ async function onAppClick(event) {
 			await refresh();
 		} else if (toggleAdd) {
 			openAddFormFor = openAddFormFor === toggleAdd.dataset.toggleAdd ? null : toggleAdd.dataset.toggleAdd;
-			render({ tables: lastTables, menu: menuState, allTables: allTablesState, languages: languagesState, translations: translationsState });
+			rerender();
 		} else if (addSubmit) {
 			const tableId = addSubmit.dataset.addSubmit;
 			const form = app.querySelector(`[data-add-form="${tableId}"]`);
 			const productId = form.querySelector('[data-add-product]')?.value;
 			const quantity = Number(form.querySelector('[data-add-qty]')?.value) || 1;
 			const notes = form.querySelector('[data-add-notes]')?.value || undefined;
-			const serveTableId = form.querySelector('[data-add-serve]')?.value || undefined;
 			if (!productId) return;
 			addSubmit.disabled = true;
-			await callStaff({ action: 'add_item', tableId, serveTableId, items: [{ productId, quantity, notes }] });
+			await callStaff({ action: 'add_item', tableId, items: [{ productId, quantity, notes }] });
 			openAddFormFor = null;
 			await refresh();
 		} else if (removeItem && ROLE === 'cashier') {
@@ -229,9 +284,6 @@ async function onAppClick(event) {
 			if (!confirm(strings().closeConfirm)) return;
 			await callStaff({ action: 'close_table', tableId: closeTable.dataset.closeTable });
 			await refresh();
-		} else if (resolveCall) {
-			await callStaff({ action: 'resolve_call', callId: resolveCall.dataset.resolveCall });
-			await refresh();
 		}
 	} catch (error) {
 		alert(error.message);
@@ -241,7 +293,7 @@ async function onAppClick(event) {
 let lastTables = [];
 
 function rerender() {
-	render({ tables: lastTables, menu: menuState, allTables: allTablesState, languages: languagesState, translations: translationsState });
+	render({ tables: lastTables, menu: menuState, languages: languagesState, translations: translationsState });
 }
 
 // Close the guide on a click anywhere else, or on Escape.
@@ -250,6 +302,8 @@ document.addEventListener('click', (event) => {
 });
 document.addEventListener('keydown', (event) => {
 	if (event.key === 'Escape' && guideOpen) { guideOpen = false; rerender(); }
+	if (event.key === 'Escape' && openHubTable) { openHubTable = null; rerender(); }
+	if (event.key === 'Escape' && totalsOpen) { totalsOpen = false; rerender(); }
 });
 
 async function refresh() {
@@ -257,6 +311,9 @@ async function refresh() {
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
+	// A table popped from the list (closed elsewhere) or is no longer open -
+	// don't leave a stale popup showing.
+	if (openHubTable && !lastTables.some((table) => table.tableId === openHubTable && table.status !== 'FREE')) openHubTable = null;
 	render(data);
 }
 

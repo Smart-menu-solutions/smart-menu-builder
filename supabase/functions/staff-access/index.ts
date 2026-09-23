@@ -1,12 +1,14 @@
 // Waiter/kitchen/bar/cashier API for SmartService Hub. A per-role secret
 // link (restaurant_access.token) is the only credential - no PIN, no
 // Supabase login (see 0015_smartservice_hub.sql and the design notes for
-// why). Kitchen/bar group a table's items by serve_table_id (where food
-// physically goes); waiter/cashier group by the order_group's own table_id
-// (whose bill it's on) - the only place those two differ is a waiter's
-// cross-table "gift a round" action, which intentionally keeps the gifted
-// items on the *giving* table's bill while routing the kitchen/bar ticket
-// to the other table.
+// why). The "waiter" role is the Table Hub: a grid of every table with its
+// status (FREE/ACTIVE/PAYMENT_PENDING), which is the only place a table
+// moves from FREE to ACTIVE (see activate_table below) - guests never
+// choose or type anything, they just get told to ask staff when their
+// table isn't active yet (see order-session). There's no more cross-table
+// "gift a round": add_item always bills and serves the same table, so
+// kitchen/bar no longer need to bucket a table's items into "own" vs
+// "other station serving here".
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -29,7 +31,7 @@ function json(data: unknown, status = 200) {
 
 type OrderItemRow = {
 	id: string; product_name: string; unit_price_cents: number; quantity: number; notes: string | null;
-	station: 'KITCHEN' | 'BAR'; source: string; round_number: number; dispatched_at: string | null; serve_table_id: string;
+	station: 'KITCHEN' | 'BAR'; source: string; round_number: number; dispatched_at: string | null;
 };
 type OrderGroupRow = { id: string; table_id: string; bill_requested_at: string | null; order_items: OrderItemRow[] };
 type MenuItem = { id?: string; name: string; price: string };
@@ -70,50 +72,43 @@ function itemView(item: OrderItemRow, withPrice: boolean) {
 }
 
 async function buildView(menuSlug: string, role: string) {
-	const [{ data: tables }, { data: groups }, { data: calls }] = await Promise.all([
-		supabase.from('restaurant_tables').select('id, table_number').eq('menu_slug', menuSlug).order('table_number'),
-		supabase.from('order_groups').select('id, table_id, bill_requested_at, order_items(id, product_name, unit_price_cents, quantity, notes, station, source, round_number, dispatched_at, serve_table_id)').eq('menu_slug', menuSlug).eq('status', 'OPEN'),
-		supabase.from('waiter_calls').select('id, table_id, created_at').is('resolved_at', null)
+	const [{ data: tables }, { data: groups }] = await Promise.all([
+		supabase.from('restaurant_tables').select('id, table_number, status').eq('menu_slug', menuSlug).order('table_number'),
+		supabase.from('order_groups').select('id, table_id, bill_requested_at, order_items(id, product_name, unit_price_cents, quantity, notes, station, source, round_number, dispatched_at)').eq('menu_slug', menuSlug).eq('status', 'OPEN')
 	]);
-	const tableNumberById = new Map((tables || []).map((table) => [table.id, table.table_number]));
 	const openGroups = (groups || []) as OrderGroupRow[];
+	const groupByTable = new Map(openGroups.map((group) => [group.table_id, group]));
 
 	if (role === 'kitchen' || role === 'bar') {
 		const ownStation = role === 'kitchen' ? 'KITCHEN' : 'BAR';
-		const byTable = new Map<string, { own: OrderItemRow[]; other: OrderItemRow[] }>();
-		for (const group of openGroups) {
-			for (const item of group.order_items || []) {
-				const bucket = byTable.get(item.serve_table_id) || { own: [], other: [] };
-				(item.station === ownStation ? bucket.own : bucket.other).push(item);
-				byTable.set(item.serve_table_id, bucket);
-			}
-		}
-		const cards = [...byTable.entries()]
-			.filter(([, bucket]) => bucket.own.length || bucket.other.length)
-			.map(([tableId, bucket]) => ({
-				tableId, tableNumber: tableNumberById.get(tableId) || '?',
-				items: bucket.own.map((item) => itemView(item, false)),
-				otherItems: bucket.other.map((item) => itemView(item, false))
-			}));
-		return { role, tables: cards, allTables: (tables || []).map((table) => ({ id: table.id, tableNumber: table.table_number })) };
+		const cards = (tables || [])
+			.map((table) => {
+				const items = (groupByTable.get(table.id)?.order_items || []).filter((item) => item.station === ownStation);
+				return { tableId: table.id, tableNumber: table.table_number, items: items.map((item) => itemView(item, false)) };
+			})
+			.filter((card) => card.items.length);
+		return { role, tables: cards };
 	}
 
-	// waiter/cashier: grouped by the order_group's own table (whose bill it
-	// is), with prices and a total - see file header for why this differs
-	// from kitchen/bar's serve_table_id grouping.
-	const cards = openGroups
-		.filter((group) => (group.order_items || []).length)
-		.map((group) => {
-			const items = group.order_items || [];
+	// waiter: the Table Hub - every table, including free ones, so staff can
+	// activate from the grid. cashier: every non-free table too (not just
+	// ones with items) - an activated table that never got an order still
+	// needs to be closable, or it would be stuck ACTIVE forever with no way
+	// back to FREE.
+	const tableCards = (tables || [])
+		.filter((table) => role === 'waiter' || table.status !== 'FREE')
+		.map((table) => {
+			const group = groupByTable.get(table.id);
+			const items = group?.order_items || [];
 			return {
-				tableId: group.table_id, tableNumber: tableNumberById.get(group.table_id) || '?',
-				orderGroupId: group.id, billRequested: !!group.bill_requested_at,
+				tableId: table.id, tableNumber: table.table_number, status: table.status,
+				billRequested: !!group?.bill_requested_at,
 				items: items.map((item) => itemView(item, true)),
 				totalCents: items.reduce((sum, item) => sum + item.unit_price_cents * item.quantity, 0),
-				waiterCalls: role === 'waiter' ? (calls || []).filter((call) => call.table_id === group.table_id).map((call) => ({ id: call.id, createdAt: call.created_at })) : undefined
+				hasReadyItem: items.some((item) => item.dispatched_at)
 			};
 		});
-	return { role, tables: cards };
+	return { role, tables: tableCards };
 }
 
 Deno.serve(async (request) => {
@@ -142,8 +137,8 @@ Deno.serve(async (request) => {
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
 	let body: {
-		token?: string; action?: string; tableId?: string; itemId?: string; callId?: string;
-		serveTableId?: string; items?: { productId?: string; quantity?: number; notes?: string }[];
+		token?: string; action?: string; tableId?: string; itemId?: string;
+		items?: { productId?: string; quantity?: number; notes?: string }[];
 	};
 	try {
 		body = await request.json();
@@ -168,20 +163,35 @@ Deno.serve(async (request) => {
 		return json({ success: true });
 	}
 
+	if (body.action === 'activate_table') {
+		if (role !== 'waiter') return json({ error: 'Not allowed for this role.' }, 403);
+		const tableId = String(body.tableId || '');
+		const { data: table } = await supabase.from('restaurant_tables').select('id, status').eq('id', tableId).eq('menu_slug', menuSlug).maybeSingle();
+		if (!table) return json({ error: 'Table not found.' }, 404);
+		if (table.status !== 'FREE') return json({ error: 'Table is already active.' }, 400);
+		const { error: groupError } = await supabase.from('order_groups').insert({ table_id: tableId, menu_slug: menuSlug });
+		if (groupError) {
+			// Unique-open-group index race: another device activated this exact
+			// table in the same instant (see 0015_smartservice_hub.sql) - treat
+			// it the same as "already active" rather than a real error.
+			const alreadyActive = groupError.code === '23505';
+			return json({ error: alreadyActive ? 'Table is already active.' : groupError.message }, alreadyActive ? 400 : 500);
+		}
+		const { error: tableError } = await supabase.from('restaurant_tables').update({ status: 'ACTIVE' }).eq('id', tableId);
+		if (tableError) return json({ error: tableError.message }, 500);
+		await broadcast(menuSlug, { type: 'table_activated', tableId });
+		return json({ success: true });
+	}
+
 	if (body.action === 'add_item') {
 		if (!['waiter', 'bar', 'cashier'].includes(role)) return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
-		const serveTableId = body.serveTableId ? String(body.serveTableId) : tableId;
 		if (!tableId) return json({ error: 'Missing table.' }, 400);
 		const requested = Array.isArray(body.items) ? body.items : [];
 		if (!requested.length) return json({ error: 'No items to add.' }, 400);
 
-		let group = (await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle()).data;
-		if (!group) {
-			const { data: created, error: createError } = await supabase.from('order_groups').insert({ table_id: tableId, menu_slug: menuSlug }).select('id').single();
-			if (createError) return json({ error: 'Could not start an order for this table.' }, 500);
-			group = created;
-		}
+		const { data: group } = await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
+		if (!group) return json({ error: 'This table is not active yet.' }, 400);
 		const { data: existingItems } = await supabase.from('order_items').select('round_number').eq('order_group_id', group.id).order('round_number', { ascending: false }).limit(1);
 		const roundNumber = existingItems && existingItems.length ? existingItems[0].round_number + 1 : 1;
 
@@ -190,7 +200,7 @@ Deno.serve(async (request) => {
 			const product = findProduct(menu.categories, String(requestedItem.productId || ''));
 			if (!product) return json({ error: 'One of the items is no longer on the menu.' }, 400);
 			rows.push({
-				order_group_id: group.id, serve_table_id: serveTableId, product_id: String(requestedItem.productId),
+				order_group_id: group.id, serve_table_id: tableId, product_id: String(requestedItem.productId),
 				product_name: product.name, unit_price_cents: product.priceCents, station: product.station,
 				quantity: Math.max(1, Math.min(20, Number(requestedItem.quantity) || 1)),
 				notes: requestedItem.notes ? String(requestedItem.notes).slice(0, 200) : null,
@@ -199,7 +209,7 @@ Deno.serve(async (request) => {
 		}
 		const { error: insertError } = await supabase.from('order_items').insert(rows);
 		if (insertError) return json({ error: insertError.message }, 500);
-		await broadcast(menuSlug, { type: 'order_placed', tableId: serveTableId });
+		await broadcast(menuSlug, { type: 'order_placed', tableId });
 		return json({ success: true });
 	}
 
@@ -218,13 +228,6 @@ Deno.serve(async (request) => {
 		return json({ success: true });
 	}
 
-	if (body.action === 'resolve_call') {
-		if (role !== 'waiter') return json({ error: 'Not allowed for this role.' }, 403);
-		const { error } = await supabase.from('waiter_calls').update({ resolved_at: new Date().toISOString() }).eq('id', String(body.callId || ''));
-		if (error) return json({ error: error.message }, 500);
-		return json({ success: true });
-	}
-
 	if (body.action === 'close_table') {
 		if (role !== 'cashier') return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
@@ -232,10 +235,7 @@ Deno.serve(async (request) => {
 		if (!group) return json({ error: 'No open order for this table.' }, 400);
 		const { error: groupError } = await supabase.from('order_groups').update({ status: 'PAID', closed_at: new Date().toISOString() }).eq('id', group.id);
 		if (groupError) return json({ error: groupError.message }, 500);
-		// Rotating the qr_token here (not just resetting status) is what makes
-		// an old photographed QR code stop working the moment this table's
-		// round is settled - see 0015_smartservice_hub.sql.
-		const { error: tableError } = await supabase.from('restaurant_tables').update({ status: 'FREE', qr_token: crypto.randomUUID() }).eq('id', tableId);
+		const { error: tableError } = await supabase.from('restaurant_tables').update({ status: 'FREE' }).eq('id', tableId);
 		if (tableError) return json({ error: tableError.message }, 500);
 		await broadcast(menuSlug, { type: 'table_closed', tableId });
 		return json({ success: true });

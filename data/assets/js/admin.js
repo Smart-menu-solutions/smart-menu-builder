@@ -495,7 +495,7 @@ function onboardingTemplateText(client, lang) {
 	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const tableLines = tables.length
-		? tables.map((table) => `${strings.table || 'Table'} ${table.table_number}: ${base}menu.html?t=${table.qr_token}`).join('\n')
+		? tables.map((table) => `${strings.table || 'Table'} ${table.table_number}: ${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`).join('\n')
 		: '-';
 	const staffLines = STAFF_ROLES.map((role) => {
 		const token = access[role];
@@ -519,7 +519,7 @@ function onboardingTemplateHtml(client, lang) {
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
 	const tableRows = tables.length
 		? tables.map((table) => {
-			const url = `${base}menu.html?t=${table.qr_token}`;
+			const url = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
 			const qr = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=6&data=${encodeURIComponent(url)}`;
 			return `<tr><td style="padding:0 12px 12px 0;vertical-align:top"><img src="${escapeAttr(qr)}" width="90" height="90" alt="QR"></td><td style="padding:0 0 12px 0;vertical-align:top"><strong>${escapeHtml(strings.table || 'Table')} ${escapeHtml(String(table.table_number))}</strong><br><a href="${escapeAttr(url)}">${escapeHtml(url)}</a></td></tr>`;
 		}).join('')
@@ -546,7 +546,7 @@ async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
 	const [{ data: access }, { data: tables }] = await Promise.all([
 		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
-		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, qr_token').order('table_number')
+		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, status').order('table_number')
 	]);
 	smartServiceAccessBySlug = {};
 	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
@@ -678,7 +678,7 @@ function renderSmartServiceHubExtra(client) {
 		// raw link.
 		tableList.innerHTML = tables.length
 			? tables.map((table) => {
-				const tableUrl = `${base}menu.html?t=${table.qr_token}`;
+				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
 				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
 				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', table.table_number))}"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">${escapeHtml(strings().openQr)}</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button></div>`;
 			}).join('')

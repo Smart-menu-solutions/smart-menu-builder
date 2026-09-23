@@ -3,25 +3,25 @@
 // already offers and staff.js's language switcher mirrors it. Dish names
 // themselves are never translated here - they come from the menu's own
 // source-language text, same as an order ticket in any real restaurant.
+// "Admin Hub" (the former "Kellner" role) keeps its name untranslated in
+// every language - see 0017_table_hub.sql / staff.js for what it does.
 window.STAFF_STRINGS = {
 	de: {
-		roleLabels: { waiter: 'Kellner', kitchen: 'Küche', bar: 'Bar', cashier: 'Kasse' },
-		live: 'Live', empty: 'Gerade keine aktiven Tische.', table: 'Tisch',
-		drinksInfoOnly: 'Getränke (nur Info)', dishesInfoOnly: 'Speisen (nur Info)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Küche', bar: 'Bar', cashier: 'Kasse' },
+		live: 'Live', empty: 'Gerade keine aktiven Tische.', hubEmptyOrder: 'Noch keine Bestellung.', table: 'Tisch',
+		hubStatus: { FREE: 'Frei', ACTIVE: 'Aktiv', PAYMENT_PENDING: 'Besetzt' },
 		allDone: 'Alles fertig', addItem: '+ Artikel', add: 'Hinzufügen',
-		serveHere: 'Servieren an diesem Tisch', serveAt: 'Servieren an Tisch {n}',
 		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen',
 		closeConfirm: 'Tisch wirklich schließen? Das entfernt die Bestellung aus allen Ansichten.',
-		callRow: '🔔 Ruft an einem Tisch', resolveCall: 'Erledigt',
 			removeItem: 'Position löschen', removeConfirm: '{item} wirklich löschen?',
 			guideButton: 'Anleitung', guideTitle: 'So funktioniert’s',
+			totalsButton: '📊 Gesamtübersicht', totalsHeading: 'Summe aller offenen Tische',
 			guide: {
 				waiter: [
-					"Hier siehst du alle Tische mit ihren Bestellungen.",
-					"Rot = noch nicht fertig. Grün = fertig.",
-					"🔔 Ein Gast ruft dich. Danach auf „Erledigt“ tippen.",
-					"💳 Der Gast möchte zahlen.",
-					"„+ Artikel“ = etwas zu einem Tisch hinzufügen."
+					"Hier siehst du alle Tische als Kacheln: Orange = frei, Grün = aktiv, Rot = Rechnung angefordert.",
+					"Neue Gäste an einem freien (orangen) Tisch? Kachel antippen aktiviert ihn sofort.",
+					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
+					"🔔 auf der Kachel = etwas ist fertig und wartet zum Abholen."
 				],
 				kitchen: [
 					"Hier siehst du, was die Gäste bestellt haben.",
@@ -39,30 +39,29 @@ window.STAFF_STRINGS = {
 					"Hier siehst du alle Tische mit Preisen und Summe.",
 					"💳 Der Gast möchte zahlen.",
 					"✕ = Position löschen (du wirst vorher gefragt).",
-					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei."
+					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
+					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
 				]
 			},
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
-		roleLabels: { waiter: 'Service', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
-		live: 'Live', empty: 'No active tables right now.', table: 'Table',
-		drinksInfoOnly: 'Drinks (info only)', dishesInfoOnly: 'Food (info only)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
+		live: 'Live', empty: 'No active tables right now.', hubEmptyOrder: 'No order yet.', table: 'Table',
+		hubStatus: { FREE: 'Free', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupied' },
 		allDone: 'All done', addItem: '+ Item', add: 'Add',
-		serveHere: 'Serve at this table', serveAt: 'Serve at table {n}',
 		notesPlaceholder: 'Note (optional)', closeTable: 'Close table',
 		closeConfirm: 'Really close this table? This removes the order from every view.',
-		callRow: '🔔 A table is calling', resolveCall: 'Done',
 			removeItem: 'Delete item', removeConfirm: 'Really delete {item}?',
 			guideButton: 'Guide', guideTitle: 'How it works',
+			totalsButton: '📊 Overview', totalsHeading: 'Total of all open tables',
 			guide: {
 				waiter: [
-					"All tables with their orders are shown here.",
-					"Red = not ready yet. Green = ready.",
-					"🔔 A guest is calling you. Tap “Done” afterwards.",
-					"💳 The guest wants to pay.",
-					"“+ Item” = add something to a table."
+					"All tables are shown as tiles: orange = free, green = active, red = bill requested.",
+					"New guests at a free (orange) table? Tap the tile to activate it right away.",
+					"Tap an active tile to see its order and add items.",
+					"🔔 on a tile = something is ready and waiting to be picked up."
 				],
 				kitchen: [
 					"Here you see what the guests ordered.",
@@ -80,30 +79,29 @@ window.STAFF_STRINGS = {
 					"All tables with prices and the total are shown here.",
 					"💳 The guest wants to pay.",
 					"✕ = delete an item (you will be asked first).",
-					"“Close table” = the guest has paid, the table is free again."
+					"“Close table” = the guest has paid, the table is free again.",
+					"📊 Overview = the total across every table that's currently open."
 				]
 			},
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', tablesHeading: 'Tables (guest QR codes)', staffHeading: 'Staff access'
 	},
 	el: {
-		roleLabels: { waiter: 'Σερβιτόρος', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
-		live: 'Ζωντανά', empty: 'Κανένα ενεργό τραπέζι αυτή τη στιγμή.', table: 'Τραπέζι',
-		drinksInfoOnly: 'Ποτά (μόνο πληροφορία)', dishesInfoOnly: 'Φαγητό (μόνο πληροφορία)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
+		live: 'Ζωντανά', empty: 'Κανένα ενεργό τραπέζι αυτή τη στιγμή.', hubEmptyOrder: 'Καμία παραγγελία ακόμα.', table: 'Τραπέζι',
+		hubStatus: { FREE: 'Ελεύθερο', ACTIVE: 'Ενεργό', PAYMENT_PENDING: 'Κατειλημμένο' },
 		allDone: 'Όλα έτοιμα', addItem: '+ Προσθήκη', add: 'Προσθήκη',
-		serveHere: 'Σερβίρισμα σε αυτό το τραπέζι', serveAt: 'Σερβίρισμα στο τραπέζι {n}',
 		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού',
 		closeConfirm: 'Κλείσιμο τραπεζιού; Η παραγγελία θα αφαιρεθεί από όλες τις προβολές.',
-		callRow: '🔔 Ένα τραπέζι καλεί', resolveCall: 'Έγινε',
 			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή του {item};',
 			guideButton: 'Οδηγός', guideTitle: 'Πώς λειτουργεί',
+			totalsButton: '📊 Σύνολο', totalsHeading: 'Σύνολο όλων των ανοιχτών τραπεζιών',
 			guide: {
 				waiter: [
-					"Εδώ βλέπεις όλα τα τραπέζια με τις παραγγελίες τους.",
-					"Κόκκινο = δεν είναι έτοιμο. Πράσινο = έτοιμο.",
-					"🔔 Ένας πελάτης σε καλεί. Μετά πάτα «Έγινε».",
-					"💳 Ο πελάτης θέλει να πληρώσει.",
-					"«+ Προσθήκη» = πρόσθεσε κάτι σε ένα τραπέζι."
+					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πορτοκαλί = ελεύθερο, πράσινο = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
+					"Νέοι πελάτες σε ελεύθερο (πορτοκαλί) τραπέζι; Πάτα το πλακίδιο για να το ενεργοποιήσεις αμέσως.",
+					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
+					"🔔 σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις."
 				],
 				kitchen: [
 					"Εδώ βλέπεις τι παρήγγειλαν οι πελάτες.",
@@ -121,30 +119,29 @@ window.STAFF_STRINGS = {
 					"Εδώ βλέπεις όλα τα τραπέζια με τιμές και σύνολο.",
 					"💳 Ο πελάτης θέλει να πληρώσει.",
 					"✕ = διαγραφή προϊόντος (θα σε ρωτήσει πρώτα).",
-					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο."
+					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
+					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
 				]
 			},
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', tablesHeading: 'Τραπέζια (QR κωδικοί για πελάτες)', staffHeading: 'Πρόσβαση προσωπικού'
 	},
 	it: {
-		roleLabels: { waiter: 'Cameriere', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
-		live: 'Live', empty: 'Nessun tavolo attivo al momento.', table: 'Tavolo',
-		drinksInfoOnly: 'Bevande (solo info)', dishesInfoOnly: 'Cibo (solo info)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
+		live: 'Live', empty: 'Nessun tavolo attivo al momento.', hubEmptyOrder: 'Ancora nessun ordine.', table: 'Tavolo',
+		hubStatus: { FREE: 'Libero', ACTIVE: 'Attivo', PAYMENT_PENDING: 'Occupato' },
 		allDone: 'Tutto pronto', addItem: '+ Articolo', add: 'Aggiungi',
-		serveHere: 'Servire a questo tavolo', serveAt: 'Servire al tavolo {n}',
 		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo',
 		closeConfirm: 'Chiudere davvero il tavolo? L’ordine sparirà da tutte le viste.',
-		callRow: '🔔 Un tavolo sta chiamando', resolveCall: 'Fatto',
 			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero {item}?',
 			guideButton: 'Guida', guideTitle: 'Come funziona',
+			totalsButton: '📊 Riepilogo', totalsHeading: 'Totale di tutti i tavoli aperti',
 			guide: {
 				waiter: [
-					"Qui vedi tutti i tavoli con le loro ordinazioni.",
-					"Rosso = non ancora pronto. Verde = pronto.",
-					"🔔 Un ospite ti chiama. Poi tocca «Fatto».",
-					"💳 L’ospite vuole pagare.",
-					"«+ Articolo» = aggiungi qualcosa a un tavolo."
+					"Tutti i tavoli sono mostrati come riquadri: arancione = libero, verde = attivo, rosso = conto richiesto.",
+					"Nuovi ospiti a un tavolo libero (arancione)? Tocca il riquadro per attivarlo subito.",
+					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
+					"🔔 sul riquadro = qualcosa è pronto e aspetta di essere ritirato."
 				],
 				kitchen: [
 					"Qui vedi cosa hanno ordinato gli ospiti.",
@@ -162,30 +159,29 @@ window.STAFF_STRINGS = {
 					"Qui vedi tutti i tavoli con prezzi e totale.",
 					"💳 L’ospite vuole pagare.",
 					"✕ = elimina un articolo (prima ti viene chiesto).",
-					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero."
+					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
+					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
 				]
 			},
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', tablesHeading: 'Tavoli (codici QR per gli ospiti)', staffHeading: 'Accesso per il personale'
 	},
 	es: {
-		roleLabels: { waiter: 'Camarero', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
-		live: 'En vivo', empty: 'No hay mesas activas ahora mismo.', table: 'Mesa',
-		drinksInfoOnly: 'Bebidas (solo info)', dishesInfoOnly: 'Comida (solo info)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
+		live: 'En vivo', empty: 'No hay mesas activas ahora mismo.', hubEmptyOrder: 'Todavía sin pedido.', table: 'Mesa',
+		hubStatus: { FREE: 'Libre', ACTIVE: 'Activa', PAYMENT_PENDING: 'Ocupada' },
 		allDone: 'Todo listo', addItem: '+ Artículo', add: 'Añadir',
-		serveHere: 'Servir en esta mesa', serveAt: 'Servir en la mesa {n}',
 		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa',
 		closeConfirm: '¿Cerrar esta mesa de verdad? El pedido desaparecerá de todas las vistas.',
-		callRow: '🔔 Una mesa está llamando', resolveCall: 'Hecho',
 			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar {item} de verdad?',
 			guideButton: 'Guía', guideTitle: 'Cómo funciona',
+			totalsButton: '📊 Resumen', totalsHeading: 'Total de todas las mesas abiertas',
 			guide: {
 				waiter: [
-					"Aquí ves todas las mesas con sus pedidos.",
-					"Rojo = aún no está listo. Verde = listo.",
-					"🔔 Un cliente te llama. Después pulsa «Hecho».",
-					"💳 El cliente quiere pagar.",
-					"«+ Artículo» = añade algo a una mesa."
+					"Todas las mesas se muestran como fichas: naranja = libre, verde = activa, rojo = cuenta solicitada.",
+					"¿Nuevos clientes en una mesa libre (naranja)? Toca la ficha para activarla al instante.",
+					"Toca una ficha activa para ver el pedido y añadir artículos.",
+					"🔔 en la ficha = algo está listo y espera a que lo recojas."
 				],
 				kitchen: [
 					"Aquí ves lo que han pedido los clientes.",
@@ -203,30 +199,29 @@ window.STAFF_STRINGS = {
 					"Aquí ves todas las mesas con precios y total.",
 					"💳 El cliente quiere pagar.",
 					"✕ = borrar un artículo (antes te preguntará).",
-					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre."
+					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
+					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
 				]
 			},
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', tablesHeading: 'Mesas (códigos QR para clientes)', staffHeading: 'Acceso del personal'
 	},
 	fr: {
-		roleLabels: { waiter: 'Serveur', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
-		live: 'En direct', empty: 'Aucune table active pour le moment.', table: 'Table',
-		drinksInfoOnly: 'Boissons (info uniquement)', dishesInfoOnly: 'Plats (info uniquement)',
+		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
+		live: 'En direct', empty: 'Aucune table active pour le moment.', hubEmptyOrder: 'Pas encore de commande.', table: 'Table',
+		hubStatus: { FREE: 'Libre', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupée' },
 		allDone: 'Tout est prêt', addItem: '+ Article', add: 'Ajouter',
-		serveHere: 'Servir à cette table', serveAt: 'Servir à la table {n}',
 		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table',
 		closeConfirm: 'Vraiment fermer cette table ? La commande disparaîtra de toutes les vues.',
-		callRow: '🔔 Une table appelle', resolveCall: 'Fait',
 			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer {item} ?',
 			guideButton: 'Guide', guideTitle: 'Comment ça marche',
+			totalsButton: '📊 Vue d’ensemble', totalsHeading: 'Total de toutes les tables ouvertes',
 			guide: {
 				waiter: [
-					"Vous voyez ici toutes les tables avec leurs commandes.",
-					"Rouge = pas encore prêt. Vert = prêt.",
-					"🔔 Un client vous appelle. Ensuite, appuyez sur « Fait ».",
-					"💳 Le client veut payer.",
-					"« + Article » = ajouter quelque chose à une table."
+					"Toutes les tables sont affichées en tuiles : orange = libre, vert = active, rouge = addition demandée.",
+					"Nouveaux clients à une table libre (orange) ? Touchez la tuile pour l'activer immédiatement.",
+					"Touchez une tuile active pour voir la commande et ajouter des articles.",
+					"🔔 sur une tuile = quelque chose est prêt et attend d'être récupéré."
 				],
 				kitchen: [
 					"Vous voyez ici ce que les clients ont commandé.",
@@ -244,7 +239,8 @@ window.STAFF_STRINGS = {
 					"Vous voyez ici toutes les tables avec prix et total.",
 					"💳 Le client veut payer.",
 					"✕ = supprimer un article (une confirmation est demandée).",
-					"« Fermer la table » = le client a payé, la table est de nouveau libre."
+					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
+					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
 				]
 			},
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
