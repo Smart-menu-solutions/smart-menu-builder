@@ -24,7 +24,24 @@ let openAddFormFor = null;
 let guideOpen = false;
 let openHubTable = null; // hub only: which table's popup is showing
 let totalsOpen = false; // cashier only: the "Gesamtübersicht" popup
-const ackDispatchedCount = {}; // hub only: dispatched-item count last seen per table, to know when the bell is "new"
+
+// hub only: dispatched-item count last seen per table, to know when the
+// bell is "new" - persisted per token (not just kept in memory), otherwise
+// every page reload (tablet woke up, browser refreshed, shift change) would
+// re-show the bell on every table that already has a ready item sitting on
+// it, even one staff already saw and is just waiting to be picked up.
+const ACK_STORAGE_KEY = `smartmenu.staff.ack.${token}`;
+function loadAckDispatchedCount() {
+	try {
+		const raw = localStorage.getItem(ACK_STORAGE_KEY);
+		const parsed = raw ? JSON.parse(raw) : null;
+		return parsed && typeof parsed === 'object' ? parsed : {};
+	} catch { return {}; }
+}
+const ackDispatchedCount = loadAckDispatchedCount();
+function saveAckDispatchedCount() {
+	try { localStorage.setItem(ACK_STORAGE_KEY, JSON.stringify(ackDispatchedCount)); } catch { /* convenience only */ }
+}
 
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
@@ -282,6 +299,7 @@ async function onAppClick(event) {
 			} else {
 				openHubTable = tableId;
 				ackDispatchedCount[tableId] = (lastTables.find((table) => table.tableId === tableId)?.items || []).filter((item) => item.dispatched).length;
+				saveAckDispatchedCount();
 				rerender();
 			}
 		} else if (dispatchItem && isTicketRole) {
