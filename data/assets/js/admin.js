@@ -1084,6 +1084,19 @@ if (smartServiceHubPanel) {
 		notify(strings().linkCopied);
 	});
 }
+// Just a table_number insert - no QR code to generate here, see
+// 0017_table_hub.sql (a table's link is just menu.html?client=<slug>&table=
+// <n>, worked out from its number, not a per-table secret to manage).
+if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {
+	const client = selectedClient();
+	const input = $('#smartServiceHubNewTable');
+	const tableNumber = input.value.trim();
+	if (!client || !tableNumber) return;
+	const { error } = await supabaseClient.from('restaurant_tables').insert({ menu_slug: client.slug, table_number: tableNumber });
+	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
+	input.value = '';
+	notify(strings().tableAdded.replace('{n}', tableNumber));
+});
 
 // Read-only reference copy of what the Edge Functions actually send (see
 // stripe-webhook/check-subscriptions/manage-addons index.ts) - kept here as
