@@ -478,6 +478,7 @@ const ADDON_FREE_TOGGLES = [
 
 const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
 let smartServiceAccessBySlug = {};
+let smartServiceTableNumbersBySlug = {};
 
 // Onboarding template: the 4 staff links, in whichever of the 6 menu
 // languages the owner picks - meant to be copied straight into an email to
@@ -526,14 +527,22 @@ function onboardingTemplateHtml(client, lang) {
 	</div>`;
 }
 
-// restaurant_access isn't in the `clients` (menus) rows or subscriptionsBySlug
-// - separate table, own fetch, same "map keyed by menu_slug then render()"
-// shape as syncSubscriptions().
+// restaurant_access/restaurant_tables aren't in the `clients` (menus) rows
+// or subscriptionsBySlug - separate tables, own fetch, same "map keyed by
+// menu_slug then render()" shape as syncSubscriptions(). Only table_number
+// is fetched for tables - no qr_token/status to show here, that's the
+// Admin Hub's job now (see 0017_table_hub.sql); this is just so the owner
+// can see what's already there before adding another.
 async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
-	const { data: access } = await supabaseClient.from('restaurant_access').select('menu_slug, role, token');
+	const [{ data: access }, { data: tables }] = await Promise.all([
+		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
+		supabaseClient.from('restaurant_tables').select('menu_slug, table_number').order('table_number')
+	]);
 	smartServiceAccessBySlug = {};
 	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
+	smartServiceTableNumbersBySlug = {};
+	(tables || []).forEach((row) => { (smartServiceTableNumbersBySlug[row.menu_slug] ||= []).push(row.table_number); });
 	render();
 }
 
@@ -649,6 +658,14 @@ function renderSmartServiceHubExtra(client) {
 			const label = roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1);
 			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(label)}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>${escapeHtml(strings().copyLink)}</button></div>`;
 		}).join('');
+	}
+
+	const tableNumbers = smartServiceTableNumbersBySlug[client.slug] || [];
+	const tableNumbersEl = $('#smartServiceHubTableNumbers');
+	if (tableNumbersEl) {
+		tableNumbersEl.textContent = tableNumbers.length
+			? strings().existingTables.replace('{list}', tableNumbers.join(', '))
+			: strings().noTablesYet;
 	}
 
 	renderOnboardingTemplate(client);
@@ -1096,6 +1113,7 @@ if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListene
 	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
 	input.value = '';
 	notify(strings().tableAdded.replace('{n}', tableNumber));
+	await syncSmartServiceHub();
 });
 
 // Read-only reference copy of what the Edge Functions actually send (see

@@ -90,6 +90,7 @@ window.ADMIN_STRINGS = {
 		onboardingCopiedRich: 'Kopiert (mit QR-Code-Bildern) – in ein E-Mail-Programm einfügen',
 		onboardingCopiedText: 'Text kopiert (Bilder konnten in diesem Browser nicht mitkopiert werden)',
 		couldNotAddTable: 'Tisch konnte nicht hinzugefügt werden: {error}', tableAdded: 'Tisch {n} hinzugefügt',
+		existingTables: 'Bereits angelegt: {list}', noTablesYet: 'Noch keine Tische angelegt.',
 
 		// Sits in a fixed 100x64 preview box, so it has to stay about as short
 		// as the English text.
@@ -230,6 +231,7 @@ window.ADMIN_STRINGS = {
 		onboardingCopiedRich: 'Copied (with QR code images) - paste into an email program',
 		onboardingCopiedText: 'Text copied (the images could not be copied along in this browser)',
 		couldNotAddTable: 'Could not add table: {error}', tableAdded: 'Table {n} added',
+		existingTables: 'Already added: {list}', noTablesYet: 'No tables added yet.',
 
 		noCustomBackground: 'No custom background — using default',
 		changeSectionPhoto: 'Change section photo', changeDishPhoto: 'Change dish photo',
