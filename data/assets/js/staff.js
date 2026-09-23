@@ -24,6 +24,7 @@ let openAddFormFor = null;
 let guideOpen = false;
 let openHubTable = null; // hub only: which table's popup is showing
 let totalsOpen = false; // cashier only: the "Gesamtübersicht" popup
+let workflowOpen = false; // cashier only: the end-to-end walkthrough popup
 
 // hub only: dispatched-item count last seen per table, to know when the
 // bell is "new" - persisted per token (not just kept in memory), otherwise
@@ -223,6 +224,23 @@ function totalsPopupMarkup() {
 	</div>`;
 }
 
+// Cashier only: the end-to-end walkthrough (guest scan -> activation ->
+// order -> kitchen/bar -> bill -> close) rather than the short per-role
+// bullets in guideMarkup() below - a numbered step list, so it gets its own
+// modal popup (same as totalsPopupMarkup) instead of the small dropdown
+// panel, which has no scroll handling for a list this long.
+function workflowPopupMarkup() {
+	if (!workflowOpen) return '';
+	const steps = strings().workflow || [];
+	return `<div class="hub-popup-overlay" id="workflowPopupOverlay">
+		<div class="hub-popup-box" role="dialog" aria-modal="true">
+			<button type="button" class="smart-match-close" id="workflowPopupClose" aria-label="Close">✕</button>
+			<h2>${escapeHtml(strings().workflowTitle)}</h2>
+			<ol class="staff-workflow-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>
+		</div>
+	</div>`;
+}
+
 function languageSwitcherMarkup() {
 	return `<nav class="staff-languages" aria-label="Language">${languagesState.map((language) => `<button type="button" class="staff-lang-btn ${language === currentLang ? 'is-active' : ''}" data-lang="${escapeHtml(language)}">${escapeHtml(language.toUpperCase())}</button>`).join('')}</nav>`;
 }
@@ -244,7 +262,8 @@ function guideMarkup() {
 
 function headerToolsMarkup() {
 	const totalsButton = ROLE === 'cashier' ? `<button type="button" class="staff-btn" data-open-totals>${escapeHtml(strings().totalsButton)}</button>` : '';
-	return `${totalsButton}${guideMarkup()}${languageSwitcherMarkup()}`;
+	const workflowButton = ROLE === 'cashier' ? `<button type="button" class="staff-btn" data-open-workflow>${escapeHtml(strings().workflowButton)}</button>` : '';
+	return `${totalsButton}${workflowButton}${guideMarkup()}${languageSwitcherMarkup()}`;
 }
 
 function render(data) {
@@ -259,7 +278,7 @@ function render(data) {
 	const tables = data.tables || [];
 	const body = isHub
 		? `${hubGridMarkup(tables)}${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
-		: (tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup();
+		: (tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup() + workflowPopupMarkup();
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
@@ -294,6 +313,8 @@ async function onAppClick(event) {
 	const hubPopupClose = event.target.closest('#hubPopupClose') || event.target.id === 'hubPopupOverlay' && event.target;
 	const openTotals = event.target.closest('[data-open-totals]');
 	const totalsClose = event.target.closest('#totalsPopupClose') || event.target.id === 'totalsPopupOverlay' && event.target;
+	const openWorkflow = event.target.closest('[data-open-workflow]');
+	const workflowClose = event.target.closest('#workflowPopupClose') || event.target.id === 'workflowPopupOverlay' && event.target;
 
 	if (guideToggle) {
 		guideOpen = !guideOpen;
@@ -310,6 +331,9 @@ async function onAppClick(event) {
 
 	if (openTotals) { totalsOpen = true; rerender(); return; }
 	if (totalsClose) { totalsOpen = false; rerender(); return; }
+
+	if (openWorkflow) { workflowOpen = true; rerender(); return; }
+	if (workflowClose) { workflowOpen = false; rerender(); return; }
 
 	if (hubPopupClose) { openHubTable = null; rerender(); return; }
 
@@ -382,6 +406,7 @@ document.addEventListener('keydown', (event) => {
 	if (event.key === 'Escape' && guideOpen) { guideOpen = false; rerender(); }
 	if (event.key === 'Escape' && openHubTable) { openHubTable = null; rerender(); }
 	if (event.key === 'Escape' && totalsOpen) { totalsOpen = false; rerender(); }
+	if (event.key === 'Escape' && workflowOpen) { workflowOpen = false; rerender(); }
 });
 
 async function refresh() {

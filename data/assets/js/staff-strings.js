@@ -17,6 +17,19 @@ window.STAFF_STRINGS = {
 			removeItem: 'Position löschen', removeConfirm: '{item} wirklich löschen?',
 			guideButton: 'Anleitung', guideTitle: 'So funktioniert’s',
 			totalsButton: '📊 Gesamtübersicht', totalsHeading: 'Summe aller offenen Tische',
+			workflowButton: 'Ablauf', workflowTitle: 'So läuft der ganze Ablauf',
+			workflow: [
+				"Gäste scannen den QR-Code am Tisch - das Menü öffnet sich, aber bestellen geht erst nach der Aktivierung.",
+				"Im Admin Hub auf den freien (grünen) Tisch tippen und „Aktivieren“ drücken.",
+				"Ab jetzt bestellt jeder Gast über sein eigenes Handy - alle Bestellungen landen zusammen am selben Tisch.",
+				"Artikel werden automatisch an Küche oder Bar verteilt, je nachdem was bestellt wurde.",
+				"Küche und Bar sehen ihre Artikel als Liste und markieren sie als fertig.",
+				"Gäste sehen live auf ihrem Handy, was schon fertig ist, inklusive Preis und Summe.",
+				"Gäste können jederzeit nachbestellen, ohne das Menü neu zu scannen.",
+				"Rechnung anfordern - entweder der Gast selbst am Handy oder das Personal im Admin Hub.",
+				"Der Tisch wird rot, 💳 erscheint bei der Kasse.",
+				"Kasse prüft die Bestellung, kassiert, drückt „Tisch schließen“ - der Tisch ist sofort wieder frei, derselbe QR-Code bleibt für den nächsten Gast gültig."
+			],
 			guide: {
 				waiter: [
 					"Hier siehst du alle Tische als Kacheln: Orange = frei, Grün = aktiv, Rot = Rechnung angefordert.",
@@ -60,6 +73,19 @@ window.STAFF_STRINGS = {
 			removeItem: 'Delete item', removeConfirm: 'Really delete {item}?',
 			guideButton: 'Guide', guideTitle: 'How it works',
 			totalsButton: '📊 Overview', totalsHeading: 'Total of all open tables',
+			workflowButton: 'Workflow', workflowTitle: 'How the whole flow works',
+			workflow: [
+				"Guests scan the QR code on the table - the menu opens, but ordering only works after activation.",
+				"Tap the free (green) table in the Admin Hub and press \"Activate\".",
+				"From then on, every guest orders from their own phone - all orders land together on the same table.",
+				"Items are automatically split between kitchen and bar, based on what was ordered.",
+				"Kitchen and bar see their items as a list and mark them done.",
+				"Guests see live on their phone what's ready, including price and total.",
+				"Guests can reorder any time without scanning the menu again.",
+				"Request the bill - either the guest themselves on their phone, or staff in the Admin Hub.",
+				"The table turns red, 💳 shows up at the cashier.",
+				"The cashier checks the order, takes payment, and taps \"Close table\" - the table is free again right away, and the same QR code stays valid for the next guest."
+			],
 			guide: {
 				waiter: [
 					"All tables are shown as tiles: orange = free, green = active, red = bill requested.",
@@ -103,6 +129,19 @@ window.STAFF_STRINGS = {
 			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή του {item};',
 			guideButton: 'Οδηγός', guideTitle: 'Πώς λειτουργεί',
 			totalsButton: '📊 Σύνολο', totalsHeading: 'Σύνολο όλων των ανοιχτών τραπεζιών',
+			workflowButton: 'Ροή', workflowTitle: 'Πώς λειτουργεί όλη η διαδικασία',
+			workflow: [
+				"Οι πελάτες σκανάρουν τον κωδικό QR στο τραπέζι - το μενού ανοίγει, αλλά η παραγγελία λειτουργεί μόνο μετά την ενεργοποίηση.",
+				"Πάτα το ελεύθερο (πράσινο) τραπέζι στο Admin Hub και πάτα «Ενεργοποίηση».",
+				"Από εκεί και πέρα κάθε πελάτης παραγγέλνει από το δικό του κινητό - όλες οι παραγγελίες πάνε μαζί στο ίδιο τραπέζι.",
+				"Τα προϊόντα μοιράζονται αυτόματα σε κουζίνα ή μπαρ, ανάλογα με το τι παραγγέλθηκε.",
+				"Κουζίνα και μπαρ βλέπουν τα προϊόντα τους ως λίστα και τα σημειώνουν έτοιμα.",
+				"Οι πελάτες βλέπουν ζωντανά στο κινητό τους τι είναι έτοιμο, με τιμή και σύνολο.",
+				"Οι πελάτες μπορούν να ξαναπαραγγείλουν ανά πάσα στιγμή, χωρίς να σκανάρουν ξανά το μενού.",
+				"Ζήτα τον λογαριασμό - είτε ο ίδιος ο πελάτης από το κινητό, είτε το προσωπικό από το Admin Hub.",
+				"Το τραπέζι γίνεται κόκκινο, το 💳 εμφανίζεται στο ταμείο.",
+				"Το ταμείο ελέγχει την παραγγελία, εισπράττει, πατάει «Κλείσιμο τραπεζιού» - το τραπέζι ελευθερώνεται αμέσως, ο ίδιος κωδικός QR παραμένει έγκυρος για τον επόμενο πελάτη."
+			],
 			guide: {
 				waiter: [
 					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πορτοκαλί = ελεύθερο, πράσινο = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
@@ -146,6 +185,19 @@ window.STAFF_STRINGS = {
 			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero {item}?',
 			guideButton: 'Guida', guideTitle: 'Come funziona',
 			totalsButton: '📊 Riepilogo', totalsHeading: 'Totale di tutti i tavoli aperti',
+			workflowButton: 'Flusso', workflowTitle: 'Come funziona l’intero processo',
+			workflow: [
+				"Gli ospiti scansionano il codice QR al tavolo - il menu si apre, ma si può ordinare solo dopo l'attivazione.",
+				"Tocca il tavolo libero (verde) nell'Admin Hub e premi «Attiva».",
+				"Da quel momento ogni ospite ordina dal proprio telefono - tutti gli ordini finiscono insieme sullo stesso tavolo.",
+				"Gli articoli vengono divisi automaticamente tra cucina e bar, in base a cosa è stato ordinato.",
+				"Cucina e bar vedono i propri articoli come una lista e li segnano come pronti.",
+				"Gli ospiti vedono in tempo reale sul telefono cosa è pronto, incluso prezzo e totale.",
+				"Gli ospiti possono riordinare in qualsiasi momento senza scansionare di nuovo il menu.",
+				"Richiedi il conto - o l'ospite stesso dal telefono, o il personale dall'Admin Hub.",
+				"Il tavolo diventa rosso, il 💳 appare alla cassa.",
+				"La cassa controlla l'ordine, incassa, preme «Chiudi tavolo» - il tavolo torna subito libero, lo stesso codice QR resta valido per il prossimo ospite."
+			],
 			guide: {
 				waiter: [
 					"Tutti i tavoli sono mostrati come riquadri: arancione = libero, verde = attivo, rosso = conto richiesto.",
@@ -189,6 +241,19 @@ window.STAFF_STRINGS = {
 			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar {item} de verdad?',
 			guideButton: 'Guía', guideTitle: 'Cómo funciona',
 			totalsButton: '📊 Resumen', totalsHeading: 'Total de todas las mesas abiertas',
+			workflowButton: 'Flujo', workflowTitle: 'Cómo funciona todo el proceso',
+			workflow: [
+				"Los clientes escanean el código QR de la mesa - el menú se abre, pero solo se puede pedir después de la activación.",
+				"Toca la mesa libre (verde) en el Admin Hub y pulsa «Activar».",
+				"A partir de ahí, cada cliente pide desde su propio móvil - todos los pedidos llegan juntos a la misma mesa.",
+				"Los artículos se reparten automáticamente entre cocina y bar, según lo que se haya pedido.",
+				"Cocina y bar ven sus artículos como una lista y los marcan como listos.",
+				"Los clientes ven en tiempo real en su móvil qué está listo, con precio y total.",
+				"Los clientes pueden volver a pedir en cualquier momento sin escanear el menú de nuevo.",
+				"Pedir la cuenta - ya sea el propio cliente desde el móvil, o el personal desde el Admin Hub.",
+				"La mesa se pone roja, el 💳 aparece en caja.",
+				"Caja revisa el pedido, cobra, pulsa «Cerrar mesa» - la mesa queda libre al instante, el mismo código QR sigue siendo válido para el próximo cliente."
+			],
 			guide: {
 				waiter: [
 					"Todas las mesas se muestran como fichas: naranja = libre, verde = activa, rojo = cuenta solicitada.",
@@ -232,6 +297,19 @@ window.STAFF_STRINGS = {
 			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer {item} ?',
 			guideButton: 'Guide', guideTitle: 'Comment ça marche',
 			totalsButton: '📊 Vue d’ensemble', totalsHeading: 'Total de toutes les tables ouvertes',
+			workflowButton: 'Déroulement', workflowTitle: 'Comment fonctionne tout le processus',
+			workflow: [
+				"Les clients scannent le QR code de la table - le menu s'ouvre, mais on ne peut commander qu'après l'activation.",
+				"Touchez la table libre (verte) dans l'Admin Hub et appuyez sur « Activer ».",
+				"À partir de là, chaque client commande depuis son propre téléphone - toutes les commandes arrivent ensemble sur la même table.",
+				"Les articles sont répartis automatiquement entre la cuisine et le bar, selon ce qui a été commandé.",
+				"La cuisine et le bar voient leurs articles sous forme de liste et les marquent comme prêts.",
+				"Les clients voient en direct sur leur téléphone ce qui est prêt, avec le prix et le total.",
+				"Les clients peuvent recommander à tout moment sans rescanner le menu.",
+				"Demander l'addition - soit le client lui-même depuis son téléphone, soit le personnel depuis l'Admin Hub.",
+				"La table devient rouge, le 💳 apparaît à la caisse.",
+				"La caisse vérifie la commande, encaisse, appuie sur « Fermer la table » - la table est libérée immédiatement, le même QR code reste valable pour le prochain client."
+			],
 			guide: {
 				waiter: [
 					"Toutes les tables sont affichées en tuiles : orange = libre, vert = active, rouge = addition demandée.",

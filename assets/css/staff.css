@@ -94,6 +94,8 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .hub-popup-box{position:relative;background:var(--paper);color:var(--ink);border-radius:18px;box-shadow:var(--shadow);padding:1.4rem 1.3rem;max-width:420px;width:100%;max-height:86vh;overflow-y:auto}
 .smart-match-close{position:absolute;top:.7rem;right:.7rem;background:transparent;border:0;font-size:1rem;color:var(--muted);cursor:pointer}
 .staff-grand-total{font-size:1.8rem;text-align:center;margin:1rem 0 0}
+.staff-workflow-list{margin:0;padding-left:1.3rem;font-size:.88rem;line-height:1.55}
+.staff-workflow-list li{margin:.55rem 0}
 @media(max-width:480px){
 	.staff-grid{grid-template-columns:1fr;padding:1rem}
 	.hub-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));padding:1rem}
