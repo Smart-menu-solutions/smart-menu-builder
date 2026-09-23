@@ -81,9 +81,8 @@
 .addon-extra-add{display:flex;gap:8px;align-items:center}
 .addon-extra-add input{flex:1;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}
 .addon-extra-heading-row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.table-chip-list{display:flex;flex-wrap:wrap;gap:6px}
-.table-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);font-size:12px;color:var(--ink)}
-.table-chip-remove{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;padding:0;border:0;border-radius:4px;background:var(--tint);color:var(--orange-dark);font-size:9px;line-height:1;cursor:pointer}
+.table-chip-list{display:grid;gap:8px}
+.table-chip-remove{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:0;border-radius:4px;background:var(--tint);color:var(--orange-dark);font-size:11px;line-height:1;cursor:pointer;flex-shrink:0}
 .table-chip-remove:hover{background:var(--orange);color:#fff}
 .addon-extra-heading-row .addon-extra-heading{margin:0}
 .onboarding-template-preview{margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font-size:13px;max-height:340px;overflow-y:auto}

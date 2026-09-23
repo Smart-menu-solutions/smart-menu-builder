@@ -664,9 +664,18 @@ function renderSmartServiceHubExtra(client) {
 	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const tableNumbersEl = $('#smartServiceHubTableNumbers');
 	if (tableNumbersEl) {
+		// The link itself is predictable (client.slug + table_number, see
+		// 0017_table_hub.sql) - what the owner actually needs from here is a
+		// printable QR *image* for each table's physical sticker, same
+		// on-demand QR image service the main "Client QR code" panel uses
+		// (see #qrImage).
 		tableNumbersEl.innerHTML = tables.length
-			? tables.map((table) => `<span class="table-chip">${escapeHtml(String(table.table_number))}<button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></span>`).join('')
-			: `<span class="language-hint">${escapeHtml(strings().noTablesYet)}</span>`;
+			? tables.map((table) => {
+				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
+				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
+				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', table.table_number))}"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">${escapeHtml(strings().openQr)}</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
+			}).join('')
+			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
 
 	renderOnboardingTemplate(client);
@@ -1105,9 +1114,9 @@ if (smartServiceHubPanel) {
 			}
 			return;
 		}
-		const button = event.target.closest('[data-staff-link]');
+		const button = event.target.closest('[data-staff-link], [data-table-link]');
 		if (!button) return;
-		const link = button.dataset.staffLink;
+		const link = button.dataset.staffLink || button.dataset.tableLink;
 		if (!link) return;
 		await navigator.clipboard.writeText(link);
 		notify(strings().linkCopied);

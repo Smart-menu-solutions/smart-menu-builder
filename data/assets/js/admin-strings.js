@@ -90,6 +90,7 @@ window.ADMIN_STRINGS = {
 		onboardingCopiedRich: 'Kopiert (mit QR-Code-Bildern) – in ein E-Mail-Programm einfügen',
 		onboardingCopiedText: 'Text kopiert (Bilder konnten in diesem Browser nicht mitkopiert werden)',
 		couldNotAddTable: 'Tisch konnte nicht hinzugefügt werden: {error}', tableAdded: 'Tisch {n} hinzugefügt',
+		tableLabel: 'Tisch {n}', tableQrAlt: 'QR-Code für Tisch {n}', openQr: 'QR öffnen',
 		noTablesYet: 'Noch keine Tische angelegt.', removeTable: 'Tisch entfernen',
 		removeTableConfirm: 'Tisch {n} wirklich entfernen?', couldNotRemoveTable: 'Tisch konnte nicht entfernt werden: {error}', tableRemoved: 'Tisch {n} entfernt',
 
@@ -232,6 +233,7 @@ window.ADMIN_STRINGS = {
 		onboardingCopiedRich: 'Copied (with QR code images) - paste into an email program',
 		onboardingCopiedText: 'Text copied (the images could not be copied along in this browser)',
 		couldNotAddTable: 'Could not add table: {error}', tableAdded: 'Table {n} added',
+		tableLabel: 'Table {n}', tableQrAlt: 'QR code for table {n}', openQr: 'Open QR',
 		noTablesYet: 'No tables added yet.', removeTable: 'Remove table',
 		removeTableConfirm: 'Really remove table {n}?', couldNotRemoveTable: 'Could not remove table: {error}', tableRemoved: 'Table {n} removed',
 
