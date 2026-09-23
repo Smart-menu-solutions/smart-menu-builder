@@ -478,13 +478,15 @@ const ADDON_FREE_TOGGLES = [
 
 const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
 let smartServiceAccessBySlug = {};
-let smartServiceTablesBySlug = {};
 
-// Onboarding template: one plain-text block combining every table's guest
-// QR link and all 4 staff links, in whichever of the 6 menu languages the
-// owner picks - meant to be copied straight into an email to the client.
-// Reuses staff-strings.js's translations (roleLabels/table) rather than
-// keeping a second copy of the same words.
+// Onboarding template: the 4 staff links, in whichever of the 6 menu
+// languages the owner picks - meant to be copied straight into an email to
+// the client. Guest table links aren't listed here - they're just
+// menu.html?client=<slug>&table=<n> (see 0017_table_hub.sql), so the
+// restaurant can work those out/print them itself from its own table
+// numbers rather than the owner managing a per-table list. Reuses
+// staff-strings.js's translations (roleLabels) rather than keeping a
+// second copy of the same words.
 const ONBOARDING_LANGS = ['de', 'en', 'el', 'it', 'es', 'fr'];
 let onboardingTemplateLang = 'de';
 
@@ -492,38 +494,25 @@ function onboardingTemplateText(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
 	const base = window.location.href.replace(/admin\.html.*$/, '');
 	const access = smartServiceAccessBySlug[client.slug] || {};
-	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
-	const tableLines = tables.length
-		? tables.map((table) => `${strings.table || 'Table'} ${table.table_number}: ${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`).join('\n')
-		: '-';
 	const staffLines = STAFF_ROLES.map((role) => {
 		const token = access[role];
 		const label = strings.roleLabels?.[role] || role;
 		return `${label}: ${token ? `${base}${role}.html?t=${token}` : '-'}`;
 	}).join('\n');
-	return `${heading}\n\n${strings.tablesHeading || 'Tables'}:\n${tableLines}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}`;
+	return `${heading}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}`;
 }
 
-// Rich version of the same content, with real QR code images (not just
-// links) - used both for the on-screen preview and, via the clipboard's
-// text/html entry, for pasting into an email client that keeps images
-// (onboardingTemplateText's plain-text version rides along as the
+// Rich version of the same content - used both for the on-screen preview
+// and, via the clipboard's text/html entry, for pasting into an email
+// client (onboardingTemplateText's plain-text version rides along as the
 // text/plain fallback for clients that don't).
 function onboardingTemplateHtml(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
 	const base = window.location.href.replace(/admin\.html.*$/, '');
 	const access = smartServiceAccessBySlug[client.slug] || {};
-	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
-	const tableRows = tables.length
-		? tables.map((table) => {
-			const url = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
-			const qr = `https://api.qrserver.com/v1/create-qr-code/?size=110x110&margin=6&data=${encodeURIComponent(url)}`;
-			return `<tr><td style="padding:0 12px 12px 0;vertical-align:top"><img src="${escapeAttr(qr)}" width="90" height="90" alt="QR"></td><td style="padding:0 0 12px 0;vertical-align:top"><strong>${escapeHtml(strings.table || 'Table')} ${escapeHtml(String(table.table_number))}</strong><br><a href="${escapeAttr(url)}">${escapeHtml(url)}</a></td></tr>`;
-		}).join('')
-		: '<tr><td>-</td></tr>';
 	const staffRows = STAFF_ROLES.map((role) => {
 		const token = access[role];
 		const label = strings.roleLabels?.[role] || role;
@@ -532,26 +521,19 @@ function onboardingTemplateHtml(client, lang) {
 	}).join('');
 	return `<div style="font-family:Arial,Helvetica,sans-serif">
 		<p style="font-weight:700;font-size:15px;margin:0 0 16px">${escapeHtml(heading)}</p>
-		<p style="${sectionLabelStyle}">${escapeHtml(strings.tablesHeading || 'Tables')}</p>
-		<table cellpadding="0" cellspacing="0" style="margin:0 0 16px">${tableRows}</table>
 		<p style="${sectionLabelStyle}">${escapeHtml(strings.staffHeading || 'Staff access')}</p>
 		<table cellpadding="0" cellspacing="0">${staffRows}</table>
 	</div>`;
 }
 
-// restaurant_access/restaurant_tables aren't in the `clients` (menus) rows
-// or subscriptionsBySlug - separate tables, own fetch, same "map keyed by
-// menu_slug then render()" shape as syncSubscriptions().
+// restaurant_access isn't in the `clients` (menus) rows or subscriptionsBySlug
+// - separate table, own fetch, same "map keyed by menu_slug then render()"
+// shape as syncSubscriptions().
 async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
-	const [{ data: access }, { data: tables }] = await Promise.all([
-		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
-		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, status').order('table_number')
-	]);
+	const { data: access } = await supabaseClient.from('restaurant_access').select('menu_slug, role, token');
 	smartServiceAccessBySlug = {};
 	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
-	smartServiceTablesBySlug = {};
-	(tables || []).forEach((row) => { (smartServiceTablesBySlug[row.menu_slug] ||= []).push(row); });
 	render();
 }
 
@@ -636,8 +618,8 @@ function renderAddonBoard(client, clientSubscription) {
 }
 
 // Same "Ready/Not ready" hint pattern as Smart Food Match, plus - only once
-// the add-on is actually active - the 4 staff links and the table list.
-// Both come from syncSmartServiceHub(), not from `client` itself.
+// the add-on is actually active - the 4 staff links. Comes from
+// syncSmartServiceHub(), not from `client` itself.
 function renderSmartServiceHubExtra(client) {
 	const statusEl = $('#addonStatusSmartServiceHub');
 	if (statusEl) statusEl.classList.toggle('active', !!client.smartservice_hub_enabled);
@@ -667,22 +649,6 @@ function renderSmartServiceHubExtra(client) {
 			const label = roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1);
 			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(label)}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>${escapeHtml(strings().copyLink)}</button></div>`;
 		}).join('');
-	}
-
-	const tables = smartServiceTablesBySlug[client.slug] || [];
-	const tableList = $('#smartServiceHubTables');
-	if (tableList) {
-		// Same on-demand QR image service the main "Client QR code" panel
-		// already uses (see #qrImage) - a small inline thumbnail here so the
-		// owner can see/print each table's actual QR code, not just copy a
-		// raw link.
-		tableList.innerHTML = tables.length
-			? tables.map((table) => {
-				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
-				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
-				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', table.table_number))}"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">${escapeHtml(strings().openQr)}</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button></div>`;
-			}).join('')
-			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
 
 	renderOnboardingTemplate(client);
@@ -1110,25 +1076,14 @@ if (smartServiceHubPanel) {
 			}
 			return;
 		}
-		const button = event.target.closest('[data-staff-link], [data-table-link]');
+		const button = event.target.closest('[data-staff-link]');
 		if (!button) return;
-		const link = button.dataset.staffLink || button.dataset.tableLink;
+		const link = button.dataset.staffLink;
 		if (!link) return;
 		await navigator.clipboard.writeText(link);
 		notify(strings().linkCopied);
 	});
 }
-if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {
-	const client = selectedClient();
-	const input = $('#smartServiceHubNewTable');
-	const tableNumber = input.value.trim();
-	if (!client || !tableNumber) return;
-	const { error } = await supabaseClient.from('restaurant_tables').insert({ menu_slug: client.slug, table_number: tableNumber });
-	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
-	input.value = '';
-	notify(strings().tableAdded.replace('{n}', tableNumber));
-	await syncSmartServiceHub();
-});
 
 // Read-only reference copy of what the Edge Functions actually send (see
 // stripe-webhook/check-subscriptions/manage-addons index.ts) - kept here as

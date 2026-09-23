@@ -40,7 +40,7 @@ window.ADMIN_STRINGS = {
 
 		addonsIntro: 'Grün bedeutet, dass der Kunde das Modul bereits hat. Setzen Sie den Haken bei „Gratis“, um ein Zusatzmodul kostenlos freizuschalten (ohne Kauf). „Link senden“ kopiert den persönlichen Zusatzmodul-Link des Kunden, damit Sie ihn beliebig weitergeben können.',
 		gratis: 'Gratis', giveForFree: 'Dieses Zusatzmodul kostenlos freischalten', viewStats: 'Statistik ansehen ↗', sendLink: 'Link senden',
-		staffLinks: 'Personal-Links', tables: 'Tische', tableNumberPlaceholder: 'Tischnummer, z. B. 12', addTable: '＋ Tisch hinzufügen',
+		staffLinks: 'Personal-Links',
 		onboardingTemplate: 'Onboarding-Vorlage', copyForEmail: 'Für E-Mail kopieren',
 
 		emailTemplatesIntro: 'Nur zur Ansicht: zeigt, was tatsächlich versendet wird, und kopiert den reinen Text, damit Sie ihn in eine manuelle E-Mail einfügen können. Die echten Vorlagen zu ändern erfordert weiterhin eine Code-Änderung. Vorlagen mit „(manual)“ werden nicht automatisch versendet – sie stehen hier nur zum selbst Versenden bereit.',
@@ -86,12 +86,9 @@ window.ADMIN_STRINGS = {
 		sfmNotReady: 'Noch nicht bereit – es braucht mindestens je einen zugeordneten Vorspeisen-, Hauptgerichte- und Nachspeisen-Bereich (Tab „Menü & Fotos“).',
 		hubReady: 'Bereit – jeder Menü-Bereich ist Küche oder Bar zugeordnet (Tab „Menü & Fotos“).',
 		hubNotReady: 'Noch nicht bereit – jeder Bereich mit Gerichten braucht eine Küche/Bar/…-Zuordnung (Tab „Menü & Fotos“), sonst haben Bestellungen aus einem nicht zugeordneten Bereich kein Ziel.',
-		tableLabel: 'Tisch {n}', tableQrAlt: 'QR-Code für Tisch {n}', openQr: 'QR öffnen',
-		noTablesYet: 'Noch keine Tische – legen Sie unten den ersten an.',
 		addonsLinkCopied: 'Zusatzmodul-Link kopiert', linkCopied: 'Link kopiert',
 		onboardingCopiedRich: 'Kopiert (mit QR-Code-Bildern) – in ein E-Mail-Programm einfügen',
 		onboardingCopiedText: 'Text kopiert (Bilder konnten in diesem Browser nicht mitkopiert werden)',
-		couldNotAddTable: 'Tisch konnte nicht hinzugefügt werden: {error}', tableAdded: 'Tisch {n} hinzugefügt',
 
 		// Sits in a fixed 100x64 preview box, so it has to stay about as short
 		// as the English text.
@@ -182,7 +179,7 @@ window.ADMIN_STRINGS = {
 
 		addonsIntro: 'Green means the client already has it. Tick "Free" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever\'s convenient.',
 		gratis: 'Free', giveForFree: 'Give this add-on for free', viewStats: 'View stats ↗', sendLink: 'Send link',
-		staffLinks: 'Staff links', tables: 'Tables', tableNumberPlaceholder: 'Table number, e.g. 12', addTable: '＋ Add table',
+		staffLinks: 'Staff links',
 		onboardingTemplate: 'Onboarding template', copyForEmail: 'Copy for email',
 
 		emailTemplatesIntro: 'Read-only reference for what\'s actually sent - copies the plain text so you can paste it into a manual email. Editing the real templates still needs a code change. Templates marked "(manual)" are not sent automatically - they are only here for you to send yourself.',
@@ -228,12 +225,9 @@ window.ADMIN_STRINGS = {
 		sfmNotReady: 'Not ready yet - needs at least one tagged starter, main and dessert section (Menu & Photos tab).',
 		hubReady: 'Ready - every menu section is tagged Kitchen or Bar (Menu & Photos tab).',
 		hubNotReady: 'Not ready yet - every section with dishes needs a Kitchen/Bar/etc. tag (Menu & Photos tab), or orders from an untagged section have nowhere to go.',
-		tableLabel: 'Table {n}', tableQrAlt: 'QR code for table {n}', openQr: 'Open QR',
-		noTablesYet: 'No tables yet - add the first one below.',
 		addonsLinkCopied: 'Add-ons link copied', linkCopied: 'Link copied',
 		onboardingCopiedRich: 'Copied (with QR code images) - paste into an email program',
 		onboardingCopiedText: 'Text copied (the images could not be copied along in this browser)',
-		couldNotAddTable: 'Could not add table: {error}', tableAdded: 'Table {n} added',
 
 		noCustomBackground: 'No custom background — using default',
 		changeSectionPhoto: 'Change section photo', changeDishPhoto: 'Change dish photo',

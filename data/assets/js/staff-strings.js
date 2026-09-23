@@ -40,14 +40,14 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Hier siehst du alle Tische mit Preisen und Summe.",
-					"💳 Der Gast möchte zahlen.",
+					"🔔 Der Gast möchte zahlen.",
 					"✕ = Position löschen (du wirst vorher gefragt).",
 					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
 				]
 			},
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
-		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', tablesHeading: 'Tische (Gäste-QR-Codes)', staffHeading: 'Personal-Zugänge'
+		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
 		roleLabels: { waiter: 'Admin Hub', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
@@ -83,14 +83,14 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"All tables with prices and the total are shown here.",
-					"💳 The guest wants to pay.",
+					"🔔 The guest wants to pay.",
 					"✕ = delete an item (you will be asked first).",
 					"“Close table” = the guest has paid, the table is free again.",
 					"📊 Overview = the total across every table that's currently open."
 				]
 			},
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
-		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', tablesHeading: 'Tables (guest QR codes)', staffHeading: 'Staff access'
+		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access'
 	},
 	el: {
 		roleLabels: { waiter: 'Admin Hub', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
@@ -126,14 +126,14 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Εδώ βλέπεις όλα τα τραπέζια με τιμές και σύνολο.",
-					"💳 Ο πελάτης θέλει να πληρώσει.",
+					"🔔 Ο πελάτης θέλει να πληρώσει.",
 					"✕ = διαγραφή προϊόντος (θα σε ρωτήσει πρώτα).",
 					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
 				]
 			},
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
-		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', tablesHeading: 'Τραπέζια (QR κωδικοί για πελάτες)', staffHeading: 'Πρόσβαση προσωπικού'
+		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού'
 	},
 	it: {
 		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
@@ -169,14 +169,14 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Qui vedi tutti i tavoli con prezzi e totale.",
-					"💳 L’ospite vuole pagare.",
+					"🔔 L’ospite vuole pagare.",
 					"✕ = elimina un articolo (prima ti viene chiesto).",
 					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
 				]
 			},
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
-		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', tablesHeading: 'Tavoli (codici QR per gli ospiti)', staffHeading: 'Accesso per il personale'
+		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale'
 	},
 	es: {
 		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
@@ -212,14 +212,14 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Aquí ves todas las mesas con precios y total.",
-					"💳 El cliente quiere pagar.",
+					"🔔 El cliente quiere pagar.",
 					"✕ = borrar un artículo (antes te preguntará).",
 					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
 				]
 			},
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
-		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', tablesHeading: 'Mesas (códigos QR para clientes)', staffHeading: 'Acceso del personal'
+		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal'
 	},
 	fr: {
 		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
@@ -255,13 +255,13 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Vous voyez ici toutes les tables avec prix et total.",
-					"💳 Le client veut payer.",
+					"🔔 Le client veut payer.",
 					"✕ = supprimer un article (une confirmation est demandée).",
 					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
 				]
 			},
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
-		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', tablesHeading: 'Tables (codes QR pour les clients)', staffHeading: 'Accès du personnel'
+		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'
 	}
 };
