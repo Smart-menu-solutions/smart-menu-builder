@@ -12,7 +12,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Frei', ACTIVE: 'Aktiv', PAYMENT_PENDING: 'Besetzt' },
 		allDone: 'Alles fertig', addItem: '+ Artikel', add: 'Hinzufügen',
 		requestBill: '💳 Rechnung anfordern', billRequested: '💳 Rechnung angefragt', billFlagHint: 'Rechnung raus – bitte Tisch schließen',
-		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen',
+		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen', deactivateTable: 'Tisch wieder freigeben',
 		closeConfirm: 'Tisch wirklich schließen? Das entfernt die Bestellung aus allen Ansichten.',
 			removeItem: 'Position löschen', removeConfirm: '{item} wirklich löschen?',
 			guideButton: 'Anleitung', guideTitle: 'So funktioniert’s',
@@ -24,7 +24,7 @@ window.STAFF_STRINGS = {
 					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
 					"🔔 auf der Kachel = etwas ist fertig und wartet zum Abholen.",
 					"Gast will zahlen, hat aber nicht über sein Handy Bescheid gegeben? Im Popup „Rechnung anfordern“ drücken – der Tisch wird rot, die Kasse sieht es sofort.",
-					"Bezahlt wird an der Kasse – dort wird der Tisch danach auch wieder freigegeben, nicht hier."
+					"Bezahlt wird an der Kasse – dort wird der Tisch danach wieder freigegeben. Nur ein aus Versehen aktivierter, noch leerer Tisch lässt sich direkt hier über „Tisch wieder freigeben“ zurücksetzen."
 				],
 				kitchen: [
 					"Hier siehst du, was die Gäste bestellt haben.",
@@ -55,7 +55,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Free', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupied' },
 		allDone: 'All done', addItem: '+ Item', add: 'Add',
 		requestBill: '💳 Request bill', billRequested: '💳 Bill requested', billFlagHint: 'Bill is out - please close the table',
-		notesPlaceholder: 'Note (optional)', closeTable: 'Close table',
+		notesPlaceholder: 'Note (optional)', closeTable: 'Close table', deactivateTable: 'Free this table again',
 		closeConfirm: 'Really close this table? This removes the order from every view.',
 			removeItem: 'Delete item', removeConfirm: 'Really delete {item}?',
 			guideButton: 'Guide', guideTitle: 'How it works',
@@ -67,7 +67,7 @@ window.STAFF_STRINGS = {
 					"Tap an active tile to see its order and add items.",
 					"🔔 on a tile = something is ready and waiting to be picked up.",
 					"Guest wants to pay but didn't say so via their phone? Tap \"Request bill\" in the popup - the tile turns red and the cashier sees it right away.",
-					"Payment happens at the cashier - that's also where the table gets freed again, not here."
+					"Payment happens at the cashier - that's also where the table gets freed again. Only a table you activated by mistake and that's still empty can be freed right here, via \"Free this table again\"."
 				],
 				kitchen: [
 					"Here you see what the guests ordered.",
@@ -98,7 +98,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Ελεύθερο', ACTIVE: 'Ενεργό', PAYMENT_PENDING: 'Κατειλημμένο' },
 		allDone: 'Όλα έτοιμα', addItem: '+ Προσθήκη', add: 'Προσθήκη',
 		requestBill: '💳 Ζήτα λογαριασμό', billRequested: '💳 Ζητήθηκε λογαριασμός', billFlagHint: 'Ζητήθηκε ο λογαριασμός - κλείσε το τραπέζι',
-		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού',
+		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού', deactivateTable: 'Ελευθέρωσε ξανά το τραπέζι',
 		closeConfirm: 'Κλείσιμο τραπεζιού; Η παραγγελία θα αφαιρεθεί από όλες τις προβολές.',
 			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή του {item};',
 			guideButton: 'Οδηγός', guideTitle: 'Πώς λειτουργεί',
@@ -110,7 +110,7 @@ window.STAFF_STRINGS = {
 					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
 					"🔔 σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
 					"Ο πελάτης θέλει να πληρώσει αλλά δεν το έκανε από το κινητό του; Πάτα «Ζήτα λογαριασμό» στο popup - το πλακίδιο γίνεται κόκκινο και το ταμείο το βλέπει αμέσως.",
-					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται και το τραπέζι ξανά, όχι εδώ."
+					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται το τραπέζι ξανά. Μόνο ένα τραπέζι που ενεργοποιήθηκε κατά λάθος και είναι ακόμα άδειο μπορεί να ελευθερωθεί εδώ, με «Ελευθέρωσε ξανά το τραπέζι»."
 				],
 				kitchen: [
 					"Εδώ βλέπεις τι παρήγγειλαν οι πελάτες.",
@@ -141,7 +141,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libero', ACTIVE: 'Attivo', PAYMENT_PENDING: 'Occupato' },
 		allDone: 'Tutto pronto', addItem: '+ Articolo', add: 'Aggiungi',
 		requestBill: '💳 Richiedi conto', billRequested: '💳 Conto richiesto', billFlagHint: 'Conto richiesto - chiudi il tavolo',
-		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo',
+		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo', deactivateTable: 'Libera di nuovo il tavolo',
 		closeConfirm: 'Chiudere davvero il tavolo? L’ordine sparirà da tutte le viste.',
 			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero {item}?',
 			guideButton: 'Guida', guideTitle: 'Come funziona',
@@ -153,7 +153,7 @@ window.STAFF_STRINGS = {
 					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
 					"🔔 sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
 					"L'ospite vuole pagare ma non l'ha detto dal telefono? Tocca «Richiedi conto» nel popup - il riquadro diventa rosso e la cassa lo vede subito.",
-					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo, non qui."
+					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo. Solo un tavolo attivato per errore e ancora vuoto può essere liberato direttamente qui, con «Libera di nuovo il tavolo»."
 				],
 				kitchen: [
 					"Qui vedi cosa hanno ordinato gli ospiti.",
@@ -184,7 +184,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Activa', PAYMENT_PENDING: 'Ocupada' },
 		allDone: 'Todo listo', addItem: '+ Artículo', add: 'Añadir',
 		requestBill: '💳 Pedir la cuenta', billRequested: '💳 Cuenta solicitada', billFlagHint: 'Cuenta pedida - cierra la mesa',
-		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa',
+		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa', deactivateTable: 'Liberar la mesa de nuevo',
 		closeConfirm: '¿Cerrar esta mesa de verdad? El pedido desaparecerá de todas las vistas.',
 			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar {item} de verdad?',
 			guideButton: 'Guía', guideTitle: 'Cómo funciona',
@@ -196,7 +196,7 @@ window.STAFF_STRINGS = {
 					"Toca una ficha activa para ver el pedido y añadir artículos.",
 					"🔔 en la ficha = algo está listo y espera a que lo recojas.",
 					"¿El cliente quiere pagar pero no lo dijo desde su móvil? Pulsa «Pedir la cuenta» en el popup - la ficha se pone roja y caja lo ve al instante.",
-					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo, no aquí."
+					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo. Solo una mesa activada por error y que sigue vacía se puede liberar aquí mismo, con «Liberar la mesa de nuevo»."
 				],
 				kitchen: [
 					"Aquí ves lo que han pedido los clientes.",
@@ -227,7 +227,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupée' },
 		allDone: 'Tout est prêt', addItem: '+ Article', add: 'Ajouter',
 		requestBill: '💳 Demander l’addition', billRequested: '💳 Addition demandée', billFlagHint: 'Addition demandée - fermez la table',
-		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table',
+		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table', deactivateTable: 'Libérer à nouveau la table',
 		closeConfirm: 'Vraiment fermer cette table ? La commande disparaîtra de toutes les vues.',
 			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer {item} ?',
 			guideButton: 'Guide', guideTitle: 'Comment ça marche',
@@ -239,7 +239,7 @@ window.STAFF_STRINGS = {
 					"Touchez une tuile active pour voir la commande et ajouter des articles.",
 					"🔔 sur une tuile = quelque chose est prêt et attend d'être récupéré.",
 					"Le client veut payer mais ne l'a pas dit via son téléphone ? Appuyez sur « Demander l'addition » dans la fenêtre - la tuile devient rouge et la caisse le voit tout de suite.",
-					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau, pas ici."
+					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau. Seule une table activée par erreur et encore vide peut être libérée ici, via « Libérer à nouveau la table »."
 				],
 				kitchen: [
 					"Vous voyez ici ce que les clients ont commandé.",

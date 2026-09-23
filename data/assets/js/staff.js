@@ -176,6 +176,12 @@ function hubPopupMarkup(table) {
 	if (!table) return '';
 	const total = `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>`;
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, true, false)).join('') || `<p class="staff-empty">${escapeHtml(strings().hubEmptyOrder)}</p>`;
+	// Only offered while the table is still genuinely empty - a wrong tile
+	// tapped by mistake shouldn't need a trip to the cashier to undo. Once
+	// there's an order, only close_table (cashier) can free the table again.
+	const deactivate = !table.items.length
+		? `<button type="button" class="staff-btn" data-deactivate-table="${table.tableId}">${escapeHtml(strings().deactivateTable)}</button>`
+		: '';
 	return `<div class="hub-popup-overlay" id="hubPopupOverlay">
 		<div class="hub-popup-box" role="dialog" aria-modal="true">
 			<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
@@ -184,6 +190,7 @@ function hubPopupMarkup(table) {
 			<div class="staff-card-actions">
 				<button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button>
 				<button type="button" class="staff-btn staff-btn-primary" data-request-bill="${table.tableId}" ${table.billRequested ? 'disabled' : ''}>${escapeHtml(table.billRequested ? strings().billRequested : strings().requestBill)}</button>
+				${deactivate}
 			</div>
 			${addFormMarkup(table.tableId)}
 		</div>
@@ -265,6 +272,7 @@ async function onAppClick(event) {
 	const toggleAdd = event.target.closest('[data-toggle-add]');
 	const addSubmit = event.target.closest('[data-add-submit]');
 	const closeTable = event.target.closest('[data-close-table]');
+	const deactivateTable = event.target.closest('[data-deactivate-table]');
 	const removeItem = event.target.closest('[data-remove-item]');
 	const requestBill = event.target.closest('[data-request-bill]');
 	const hubTile = event.target.closest('[data-hub-table]');
@@ -332,6 +340,9 @@ async function onAppClick(event) {
 		} else if (closeTable) {
 			if (!confirm(strings().closeConfirm)) return;
 			await callStaff({ action: 'close_table', tableId: closeTable.dataset.closeTable });
+			await refresh();
+		} else if (deactivateTable) {
+			await callStaff({ action: 'deactivate_table', tableId: deactivateTable.dataset.deactivateTable });
 			await refresh();
 		}
 	} catch (error) {

@@ -183,6 +183,24 @@ Deno.serve(async (request) => {
 		return json({ success: true });
 	}
 
+	if (body.action === 'deactivate_table') {
+		// Undoes a mis-tapped FREE tile without a trip through the cashier's
+		// close flow - only while the table is still genuinely empty, so an
+		// in-progress order can never be silently dropped this way (that's
+		// still close_table, cashier-only, on purpose).
+		if (role !== 'waiter') return json({ error: 'Not allowed for this role.' }, 403);
+		const tableId = String(body.tableId || '');
+		const { data: group } = await supabase.from('order_groups').select('id, order_items(id)').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
+		if (!group) return json({ error: 'No open order for this table.' }, 400);
+		if ((group.order_items || []).length) return json({ error: 'This table already has items - ask the cashier to close it.' }, 400);
+		const { error: groupError } = await supabase.from('order_groups').update({ status: 'CANCELLED', closed_at: new Date().toISOString() }).eq('id', group.id);
+		if (groupError) return json({ error: groupError.message }, 500);
+		const { error: tableError } = await supabase.from('restaurant_tables').update({ status: 'FREE' }).eq('id', tableId);
+		if (tableError) return json({ error: tableError.message }, 500);
+		await broadcast(menuSlug, { type: 'table_deactivated', tableId });
+		return json({ success: true });
+	}
+
 	if (body.action === 'request_bill') {
 		// Lets the Admin Hub flag a table as wanting to pay even when the
 		// guest never touches "Rechnung anfordern" themselves (they just told
