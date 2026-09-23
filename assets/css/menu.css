@@ -38,14 +38,18 @@
 .cart-row:last-child{border-bottom:0}
 .cart-row-top{display:flex;justify-content:space-between;align-items:center;gap:.8rem}
 .cart-row-name{font-weight:600;font-size:.92rem}
+.cart-row-actions{display:flex;align-items:center;gap:.7rem}
+.cart-row-price{font-size:.85rem;color:var(--muted);white-space:nowrap}
 .cart-row-qty{display:flex;gap:.5rem}
 .cart-row-qty button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:1rem;line-height:1;cursor:pointer}
 .cart-row-notes{width:100%;margin-top:.4rem;padding:.4rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.82rem}
+.cart-total{display:flex;justify-content:space-between;font-weight:700;font-size:.95rem;padding-top:.6rem;margin:.4rem 0 0;border-top:2px solid var(--line)}
 .order-panel{max-width:900px;margin:1.6rem auto 0;padding:0 1.5rem}
 .order-panel h2{font-size:1.1rem;margin:0 0 .8rem}
 .order-panel-rows{background:#fff;border:1px solid var(--line);border-radius:14px;padding:.4rem 1.1rem}
 .order-panel-row{display:flex;align-items:center;gap:.6rem;padding:.55rem 0;border-bottom:1px solid var(--line);font-size:.92rem}
 .order-panel-row:last-child{border-bottom:0}
+.order-panel-row-price{margin-left:auto;color:var(--muted);font-size:.85rem;white-space:nowrap}
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .status-dot.dot-red{background:#c9403a}
 .status-dot.dot-green{background:#2fa360}

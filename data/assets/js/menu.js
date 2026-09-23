@@ -411,6 +411,18 @@ function saveCart() {
 }
 function cartCount() { return [...cart.values()].reduce((sum, item) => sum + item.quantity, 0); }
 
+// Menu prices are entered by the client and may use a comma decimal
+// separator (see order-session's own findProduct(), which does the same
+// replace before parsing) - normalized here too so cart/order totals add up
+// regardless of how a dish's price was typed in the builder.
+function parsePrice(value) {
+	const parsed = parseFloat(String(value ?? '').replace(',', '.'));
+	return Number.isFinite(parsed) ? parsed : 0;
+}
+function formatPrice(amount) {
+	return `${amount.toFixed(2)} ${orderState?.menu?.currency || '€'}`;
+}
+
 // Guests never activate a table themselves (see 0017_table_hub.sql) - if
 // staff haven't activated it yet, the moment they try to order anything at
 // all they get told to ask staff, instead of quietly building a cart that
@@ -444,6 +456,7 @@ function cartPopupMarkup() {
 			<div class="smart-match-scroll">
 				<h2>${escapeHtml(orderStrings().cartTitle)}</h2>
 				<div id="cartRows"></div>
+				<p class="cart-total" id="cartTotal" hidden></p>
 				<p class="message error" id="cartError" hidden></p>
 				<button type="button" class="smart-match-submit" id="cartSubmit">${escapeHtml(orderStrings().sendOrder)}</button>
 			</div>
@@ -459,9 +472,12 @@ function renderCartRows() {
 			<div class="cart-row" data-cart-product="${escapeHtml(item.productId)}">
 				<div class="cart-row-top">
 					<span class="cart-row-name">${escapeHtml(item.name)} × ${item.quantity}</span>
-					<span class="cart-row-qty">
-						<button type="button" data-cart-action="decrease" aria-label="Weniger">−</button>
-						<button type="button" data-cart-action="increase" aria-label="Mehr">+</button>
+					<span class="cart-row-actions">
+						<span class="cart-row-price">${formatPrice(parsePrice(item.price) * item.quantity)}</span>
+						<span class="cart-row-qty">
+							<button type="button" data-cart-action="decrease" aria-label="Weniger">−</button>
+							<button type="button" data-cart-action="increase" aria-label="Mehr">+</button>
+						</span>
 					</span>
 				</div>
 				<input type="text" class="cart-row-notes" data-cart-notes placeholder="${escapeHtml(orderStrings().notesPlaceholder)}" value="${escapeHtml(item.notes || '')}">
@@ -471,6 +487,12 @@ function renderCartRows() {
 	if (submit) submit.disabled = !rows.length;
 	const count = document.getElementById('cartCount');
 	if (count) count.textContent = String(cartCount());
+	const totalBox = document.getElementById('cartTotal');
+	if (totalBox) {
+		const total = rows.reduce((sum, item) => sum + parsePrice(item.price) * item.quantity, 0);
+		totalBox.hidden = !rows.length;
+		totalBox.textContent = `${orderStrings().total}: ${formatPrice(total)}`;
+	}
 }
 
 function wireCart() {
@@ -562,14 +584,21 @@ function orderPanelMarkup() {
 		<div class="order-panel-row">
 			<span class="status-dot ${item.dispatched_at ? 'dot-green' : 'dot-red'}"></span>
 			<span>${item.quantity}× ${escapeHtml(orderItemDisplayName(item.product_name))}</span>
+			<span class="order-panel-row-price">${formatPrice((item.unit_price_cents || 0) / 100 * item.quantity)}</span>
 		</div>`).join('');
+	const total = items.reduce((sum, item) => sum + (item.unit_price_cents || 0) * item.quantity, 0);
 	const recent = [...new Map(items.map((item) => [item.product_name, item])).values()];
-	const quickTray = recent.map((item) => `<button type="button" class="quick-add" data-add-product="${escapeHtml(item.product_id)}" data-add-name="${escapeHtml(item.product_name)}" data-add-price="0">${escapeHtml(orderItemDisplayName(item.product_name))} +</button>`).join('');
+	// data-add-price is the same decimal-string format the menu's own
+	// add-to-cart buttons use (see buildCategory()) - built from
+	// unit_price_cents (the real price the server charged) rather than
+	// hardcoded, so a re-added dish prices correctly in the cart total above.
+	const quickTray = recent.map((item) => `<button type="button" class="quick-add" data-add-product="${escapeHtml(item.product_id)}" data-add-name="${escapeHtml(item.product_name)}" data-add-price="${((item.unit_price_cents || 0) / 100).toFixed(2)}">${escapeHtml(orderItemDisplayName(item.product_name))} +</button>`).join('');
 	const billRequested = orderState.order.billRequestedAt;
 	return `
 	<section class="order-panel" id="orderPanel">
 		<h2>${escapeHtml(orderStrings().currentOrder)}</h2>
 		<div class="order-panel-rows">${rows}</div>
+		<p class="cart-total">${escapeHtml(orderStrings().total)}: ${formatPrice(total / 100)}</p>
 		${quickTray ? `<p class="order-panel-label">${escapeHtml(orderStrings().recentlyOrdered)}</p><div class="quick-tray">${quickTray}</div>` : ''}
 		<div class="order-panel-actions">
 			<button type="button" class="order-action-btn" id="requestBillButton" ${billRequested ? 'disabled' : ''}>${escapeHtml(billRequested ? orderStrings().billRequested : orderStrings().requestBill)}</button>

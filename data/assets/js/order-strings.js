@@ -10,7 +10,7 @@ window.ORDER_STRINGS = {
 		notActiveYet: 'Dieser Tisch ist noch nicht aktiv. Bitte das Personal um Aktivierung bitten.',
 		cartTitle: 'Warenkorb', cartEmpty: 'Noch leer.', notesPlaceholder: 'Anmerkung (optional)',
 		sendOrder: 'Bestellung senden', sending: 'Wird gesendet…', added: '✓ Hinzugefügt', addToCart: '+ Warenkorb',
-		orderFailed: 'Bestellung konnte nicht gesendet werden.'
+		orderFailed: 'Bestellung konnte nicht gesendet werden.', total: 'Gesamt'
 	},
 	en: {
 		currentOrder: 'Current order', recentlyOrdered: 'Recently ordered',
@@ -18,7 +18,7 @@ window.ORDER_STRINGS = {
 		notActiveYet: 'This table is not active yet. Please ask staff to activate it.',
 		cartTitle: 'Cart', cartEmpty: 'Still empty.', notesPlaceholder: 'Note (optional)',
 		sendOrder: 'Send order', sending: 'Sending…', added: '✓ Added', addToCart: '+ Cart',
-		orderFailed: 'Could not send the order.'
+		orderFailed: 'Could not send the order.', total: 'Total'
 	},
 	el: {
 		currentOrder: 'Τρέχουσα παραγγελία', recentlyOrdered: 'Πρόσφατη παραγγελία',
@@ -26,7 +26,7 @@ window.ORDER_STRINGS = {
 		notActiveYet: 'Αυτό το τραπέζι δεν είναι ακόμα ενεργό. Ζήτα από το προσωπικό να το ενεργοποιήσει.',
 		cartTitle: 'Καλάθι', cartEmpty: 'Ακόμα άδειο.', notesPlaceholder: 'Σημείωση (προαιρετικό)',
 		sendOrder: 'Αποστολή παραγγελίας', sending: 'Αποστολή…', added: '✓ Προστέθηκε', addToCart: '+ Καλάθι',
-		orderFailed: 'Η παραγγελία δεν στάλθηκε.'
+		orderFailed: 'Η παραγγελία δεν στάλθηκε.', total: 'Σύνολο'
 	},
 	it: {
 		currentOrder: 'Ordine attuale', recentlyOrdered: 'Ordinati di recente',
@@ -34,7 +34,7 @@ window.ORDER_STRINGS = {
 		notActiveYet: 'Questo tavolo non è ancora attivo. Chiedi al personale di attivarlo.',
 		cartTitle: 'Carrello', cartEmpty: 'Ancora vuoto.', notesPlaceholder: 'Nota (opzionale)',
 		sendOrder: 'Invia ordine', sending: 'Invio…', added: '✓ Aggiunto', addToCart: '+ Carrello',
-		orderFailed: "Impossibile inviare l'ordine."
+		orderFailed: "Impossibile inviare l'ordine.", total: 'Totale'
 	},
 	es: {
 		currentOrder: 'Pedido actual', recentlyOrdered: 'Pedido recientemente',
@@ -42,7 +42,7 @@ window.ORDER_STRINGS = {
 		notActiveYet: 'Esta mesa aún no está activa. Pide al personal que la active.',
 		cartTitle: 'Carrito', cartEmpty: 'Todavía vacío.', notesPlaceholder: 'Nota (opcional)',
 		sendOrder: 'Enviar pedido', sending: 'Enviando…', added: '✓ Añadido', addToCart: '+ Carrito',
-		orderFailed: 'No se pudo enviar el pedido.'
+		orderFailed: 'No se pudo enviar el pedido.', total: 'Total'
 	},
 	fr: {
 		currentOrder: 'Commande actuelle', recentlyOrdered: 'Commandé récemment',
@@ -50,6 +50,6 @@ window.ORDER_STRINGS = {
 		notActiveYet: "Cette table n'est pas encore active. Demandez au personnel de l'activer.",
 		cartTitle: 'Panier', cartEmpty: 'Encore vide.', notesPlaceholder: 'Remarque (optionnel)',
 		sendOrder: 'Envoyer la commande', sending: 'Envoi…', added: '✓ Ajouté', addToCart: '+ Panier',
-		orderFailed: "La commande n'a pas pu être envoyée."
+		orderFailed: "La commande n'a pas pu être envoyée.", total: 'Total'
 	}
 };
