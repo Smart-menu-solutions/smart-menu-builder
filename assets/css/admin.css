@@ -91,6 +91,8 @@
 .onboarding-template-preview img{display:block;border-radius:4px;border:1px solid var(--line)}
 .table-qr-row{gap:12px}
 .table-qr-thumb{width:44px;height:44px;border-radius:6px;border:1px solid var(--line);flex-shrink:0}
+.table-qr-wrap{position:relative;display:inline-block;flex-shrink:0}
+.table-qr-number{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:1px solid var(--ink);border-radius:4px;padding:1px 4px;font-weight:700;color:var(--ink);line-height:1.2}
 .template-board{display:grid;gap:14px;margin-top:14px}
 .template-card{border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .template-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}

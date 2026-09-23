@@ -668,17 +668,42 @@ function renderSmartServiceHubExtra(client) {
 		// 0017_table_hub.sql) - what the owner actually needs from here is a
 		// printable QR *image* for each table's physical sticker, same
 		// on-demand QR image service the main "Client QR code" panel uses
-		// (see #qrImage).
+		// (see #qrImage). The table number is overlaid on the QR itself (not
+		// just printed as a caption) so two printed codes can't get mixed up -
+		// ecc=H (highest error correction) is what makes a QR code tolerate an
+		// obstruction like this in the first place.
 		tableNumbersEl.innerHTML = tables.length
 			? tables.map((table) => {
 				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
-				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&data=${encodeURIComponent(tableUrl)}`;
-				return `<div class="addon-board-row table-qr-row"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', table.table_number))}"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><a class="button button-ghost addon-board-send" href="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" target="_blank" rel="noopener">${escapeHtml(strings().openQr)}</a><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
+				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&ecc=H&data=${encodeURIComponent(tableUrl)}`;
+				return `<div class="addon-board-row table-qr-row">${qrWithNumberMarkup(qrSrc, table.table_number, 44)}<span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><button type="button" class="button button-ghost addon-board-send" data-print-table-qr="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" data-print-table-number="${escapeAttr(String(table.table_number))}">${escapeHtml(strings().openQr)}</button><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
 			}).join('')
 			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
 
 	renderOnboardingTemplate(client);
+}
+
+// Overlays the table number on the QR image itself (centered, white badge)
+// rather than just captioning it - two printed codes can't get mixed up
+// even if someone tears off/loses the surrounding label. Safe to obscure
+// that much of the code because the QR is generated with ecc=H (highest
+// error correction, tolerates a sizeable chunk of the image being covered).
+function qrWithNumberMarkup(qrSrc, tableNumber, size) {
+	return `<span class="table-qr-wrap" style="width:${size}px;height:${size}px"><img class="table-qr-thumb" src="${escapeAttr(qrSrc)}" alt="${escapeAttr(strings().tableQrAlt.replace('{n}', tableNumber))}" style="width:${size}px;height:${size}px"><span class="table-qr-number" style="font-size:${Math.round(size * 0.28)}px">${escapeHtml(String(tableNumber))}</span></span>`;
+}
+
+// Opens a small standalone print page with the same overlaid QR, full size.
+function openPrintableTableQr(qrSrc, tableNumber) {
+	const win = window.open('', '_blank');
+	if (!win) return;
+	win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${escapeHtml(strings().tableLabel.replace('{n}', tableNumber))}</title>
+		<style>body{font-family:system-ui,sans-serif;text-align:center;padding:48px 24px}
+		.table-qr-wrap{position:relative;display:inline-block}
+		.table-qr-number{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border:2px solid #262421;border-radius:8px;padding:6px 14px;font-weight:700;color:#262421}
+		</style>
+		</head><body>${qrWithNumberMarkup(qrSrc, tableNumber, 320)}</body></html>`);
+	win.document.close();
 }
 
 function renderOnboardingTemplate(client) {
@@ -1073,6 +1098,11 @@ wireAddonFreeCheckboxes();
 const smartServiceHubPanel = document.querySelector('[data-tab-panel="addons"]');
 if (smartServiceHubPanel) {
 	smartServiceHubPanel.addEventListener('click', async (event) => {
+		const printTableQr = event.target.closest('[data-print-table-qr]');
+		if (printTableQr) {
+			openPrintableTableQr(printTableQr.dataset.printTableQr, printTableQr.dataset.printTableNumber);
+			return;
+		}
 		const removeTable = event.target.closest('[data-remove-table]');
 		if (removeTable) {
 			const tableId = removeTable.dataset.removeTable;
