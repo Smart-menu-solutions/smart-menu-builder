@@ -1,12 +1,16 @@
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 const app = isBrowser ? document.querySelector('#app') : null;
 const slug = isBrowser ? new URLSearchParams(location.search).get('client') : null;
-// SmartService Hub ordering mode: a table's link is ?client=<slug>&table=
-// <table_number> - see order-session Edge Function. The table number is
-// printed openly on the table (never a secret, never rotates - see
-// 0017_table_hub.sql), so it just rides alongside the same ?client= the
-// plain read-only menu already uses, rather than a separate secret token.
+// SmartService Hub ordering mode: a table's link is
+// ?client=<slug>&table=<table_number>&k=<link_secret> - see order-session
+// Edge Function. The table number alone is printed openly on the table and
+// never rotates (see 0017_table_hub.sql), but reading/writing that table's
+// order additionally requires k, a per-table random value that also never
+// rotates (see 0019_table_link_secret.sql) - without it, guessing another
+// table's number in the URL only 404s instead of exposing or letting you
+// order onto someone else's tab.
 const tableNumber = isBrowser ? new URLSearchParams(location.search).get('table') : null;
+const linkSecret = isBrowser ? new URLSearchParams(location.search).get('k') : null;
 const urlLanguageParam = isBrowser ? new URLSearchParams(location.search).get('lang') : null;
 // No explicit ?lang= in the URL (the normal case when a customer scans the
 // QR code) — falls back to 'en' until renderMenu() swaps it for the menu's
@@ -45,12 +49,12 @@ function logoMarkup(client) {
 	return `<img class="menu-logo" src="${escapeHtml(source)}" alt="${escapeHtml(client.name)} logo">`;
 }
 
-// Ordering mode links stay on the same table (&table=) across a language
+// Ordering mode links stay on the same table (&table=&k=) across a language
 // switch. Either way this is a full navigation/reload - the draft cart
 // survives it via localStorage keyed by slug+table (see loadCart/saveCart),
 // not by keeping the cart in memory.
 function pageUrl(client, language, hash) {
-	const base = tableNumber ? `?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(tableNumber)}` : `?client=${encodeURIComponent(client.slug)}`;
+	const base = tableNumber ? `?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(tableNumber)}&k=${encodeURIComponent(linkSecret || '')}` : `?client=${encodeURIComponent(client.slug)}`;
 	return `${base}&lang=${encodeURIComponent(language)}${hash ? `#${hash}` : ''}`;
 }
 
@@ -546,7 +550,7 @@ async function submitCart() {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
-				slug, table: tableNumber, sessionId: orderState.sessionId,
+				slug, table: tableNumber, k: linkSecret, sessionId: orderState.sessionId,
 				items: [...cart.values()].map((item) => ({ productId: item.productId, quantity: item.quantity, notes: item.notes || undefined }))
 			})
 		});
@@ -610,7 +614,7 @@ function wireOrderPanel() {
 	const billButton = document.getElementById('requestBillButton');
 	if (billButton) billButton.addEventListener('click', async () => {
 		billButton.disabled = true;
-		const response = await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, table: tableNumber, sessionId: orderState.sessionId, action: 'request_bill' }) }).catch(() => null);
+		const response = await fetch(orderEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, table: tableNumber, k: linkSecret, sessionId: orderState.sessionId, action: 'request_bill' }) }).catch(() => null);
 		if (response && response.ok) { orderState.order.billRequestedAt = new Date().toISOString(); renderOrderPanel(); }
 		else billButton.disabled = false;
 	});
@@ -649,13 +653,13 @@ async function subscribeRealtime(menuSlug) {
 		const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
 		const channel = client.channel(`restaurant:${menuSlug}`);
 		channel.on('broadcast', { event: 'update' }, async () => {
-			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`).catch(() => null);
+			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}&k=${encodeURIComponent(linkSecret || '')}`).catch(() => null);
 			const data = response ? await response.json().catch(() => null) : null;
 			if (data?.table) { orderState.active = data.active; orderState.sessionId = data.sessionId; orderState.order = data.order; renderOrderPanel(); }
 		});
 		channel.on('broadcast', { event: 'menu_updated' }, async () => {
 			const cartOpen = document.getElementById('cartOverlay') && !document.getElementById('cartOverlay').hidden;
-			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`).catch(() => null);
+			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}&k=${encodeURIComponent(linkSecret || '')}`).catch(() => null);
 			const data = response ? await response.json().catch(() => null) : null;
 			if (!data?.menu) return;
 			orderState.active = data.active;
@@ -670,7 +674,7 @@ async function subscribeRealtime(menuSlug) {
 }
 
 async function loadOrderSession() {
-	const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}`);
+	const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}&k=${encodeURIComponent(linkSecret || '')}`);
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) throw new Error(data.error || 'This menu link is no longer valid.');
 	orderState = { tableId: data.table.id, active: data.active, sessionId: data.sessionId, order: data.order, menu: data.menu };

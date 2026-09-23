@@ -482,12 +482,12 @@ let smartServiceTablesBySlug = {};
 
 // Onboarding template: the 4 staff links, in whichever of the 6 menu
 // languages the owner picks - meant to be copied straight into an email to
-// the client. Guest table links aren't listed here - they're just
-// menu.html?client=<slug>&table=<n> (see 0017_table_hub.sql), so the
-// restaurant can work those out/print them itself from its own table
-// numbers rather than the owner managing a per-table list. Reuses
-// staff-strings.js's translations (roleLabels) rather than keeping a
-// second copy of the same words.
+// the client. Guest table links aren't listed here - each one also needs
+// its per-table link_secret (see 0019_table_link_secret.sql), so those come
+// from the QR codes/copy-link buttons in the table list below instead of
+// being typed out from the table number alone. Reuses staff-strings.js's
+// translations (roleLabels) rather than keeping a second copy of the same
+// words.
 const ONBOARDING_LANGS = ['de', 'en', 'el', 'it', 'es', 'fr'];
 let onboardingTemplateLang = 'de';
 
@@ -538,7 +538,7 @@ async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
 	const [{ data: access }, { data: tables }] = await Promise.all([
 		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
-		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number').order('table_number')
+		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, link_secret').order('table_number')
 	]);
 	smartServiceAccessBySlug = {};
 	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
@@ -664,17 +664,19 @@ function renderSmartServiceHubExtra(client) {
 	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const tableNumbersEl = $('#smartServiceHubTableNumbers');
 	if (tableNumbersEl) {
-		// The link itself is predictable (client.slug + table_number, see
-		// 0017_table_hub.sql) - what the owner actually needs from here is a
-		// printable QR *image* for each table's physical sticker, same
-		// on-demand QR image service the main "Client QR code" panel uses
-		// (see #qrImage). The table number is overlaid on the QR itself (not
-		// just printed as a caption) so two printed codes can't get mixed up -
-		// ecc=H (highest error correction) is what makes a QR code tolerate an
-		// obstruction like this in the first place.
+		// The link needs both the table number and its link_secret (see
+		// 0019_table_link_secret.sql - table number alone is guessable, the
+		// secret is what actually keeps another table's order private) - what
+		// the owner actually needs from here is a printable QR *image* for
+		// each table's physical sticker, same on-demand QR image service the
+		// main "Client QR code" panel uses (see #qrImage). The table number is
+		// overlaid on the QR itself (not just printed as a caption) so two
+		// printed codes can't get mixed up - ecc=H (highest error correction)
+		// is what makes a QR code tolerate an obstruction like this in the
+		// first place.
 		tableNumbersEl.innerHTML = tables.length
 			? tables.map((table) => {
-				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}`;
+				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}&k=${encodeURIComponent(table.link_secret)}`;
 				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&ecc=H&data=${encodeURIComponent(tableUrl)}`;
 				return `<div class="addon-board-row table-qr-row">${qrWithNumberMarkup(qrSrc, table.table_number, 44)}<span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><button type="button" class="button button-ghost addon-board-send" data-print-table-qr="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" data-print-table-number="${escapeAttr(String(table.table_number))}">${escapeHtml(strings().openQr)}</button><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
 			}).join('')
@@ -1152,9 +1154,8 @@ if (smartServiceHubPanel) {
 		notify(strings().linkCopied);
 	});
 }
-// Just a table_number insert - no QR code to generate here, see
-// 0017_table_hub.sql (a table's link is just menu.html?client=<slug>&table=
-// <n>, worked out from its number, not a per-table secret to manage).
+// Just a table_number insert - link_secret fills itself in via the column
+// default (see 0019_table_link_secret.sql), no need to generate one here.
 if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {
 	const client = selectedClient();
 	const input = $('#smartServiceHubNewTable');

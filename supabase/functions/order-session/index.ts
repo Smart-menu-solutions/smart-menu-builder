@@ -1,12 +1,16 @@
 // Guest-facing ordering API for SmartService Hub. The table's number in the
-// URL is not a secret (it's printed on the table) - anyone can look at a
-// table's menu. What guards actual writes is the session id: staff activate
-// a table from the Table Hub, which opens a fresh order_groups row; its id
-// (a random UUID, never shown to the guest - the browser just holds it in
-// memory/localStorage after the first fetch) is required on every write. A
-// closed table has no such row, so a stale id from a departed guest's phone
-// stops matching anything the moment staff free the table - no rotating
-// per-table secret or reprinted sticker needed. See 0017_table_hub.sql.
+// URL is printed openly on the table, so it's not treated as a secret by
+// itself - the link also carries link_secret (see 0019_table_link_secret.sql
+// and resolveTable() below), a second, long random value required on every
+// call, which is what actually keeps one table's menu link from working for
+// another. What guards actual writes on top of that is the session id:
+// staff activate a table from the Table Hub, which opens a fresh
+// order_groups row; its id is required on every write, but is only ever
+// handed to a caller who already proved they hold that table's link_secret.
+// A closed table has no open order_groups row, so a stale id from a
+// departed guest's phone stops matching anything the moment staff free the
+// table - no rotating per-table secret or reprinted sticker needed.
+// See 0017_table_hub.sql.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -44,10 +48,21 @@ function findProduct(categories: MenuCategory[], productId: string): { name: str
 	return null;
 }
 
-async function resolveTable(slug: string, tableNumber: string) {
+// The table number alone (printed openly, never rotates) used to be the
+// only thing gating this table's order data and write access - but the
+// GET response below hands back sessionId, which is all a write needs, so
+// guessing another table's number was enough to read AND order onto their
+// tab. link_secret closes that: a long random value that also never
+// rotates (so the printed/scanned link still never needs reprinting), set
+// once per table (see 0019_table_link_secret.sql) and required alongside
+// the table number on every call.
+const TABLE_LINK_SECRET_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function resolveTable(slug: string, tableNumber: string, linkSecret: string) {
+	if (!TABLE_LINK_SECRET_PATTERN.test(linkSecret)) return null;
 	const { data: menu } = await supabase.from('menus').select('*').eq('slug', slug).maybeSingle();
 	if (!menu || !menu.smartservice_hub_enabled) return null;
-	const { data: table } = await supabase.from('restaurant_tables').select('id, menu_slug, table_number, status').eq('menu_slug', slug).eq('table_number', tableNumber).maybeSingle();
+	const { data: table } = await supabase.from('restaurant_tables').select('id, menu_slug, table_number, status').eq('menu_slug', slug).eq('table_number', tableNumber).eq('link_secret', linkSecret).maybeSingle();
 	if (!table) return null;
 	return { table, menu };
 }
@@ -75,8 +90,9 @@ Deno.serve(async (request) => {
 		const url = new URL(request.url);
 		const slug = url.searchParams.get('slug') || '';
 		const tableNumber = url.searchParams.get('table') || '';
+		const linkSecret = url.searchParams.get('k') || '';
 		if (!slug || !tableNumber) return json({ error: 'Invalid or missing link.' }, 400);
-		const resolved = await resolveTable(slug, tableNumber);
+		const resolved = await resolveTable(slug, tableNumber, linkSecret);
 		if (!resolved) return json({ error: 'This table does not exist.' }, 404);
 		const { table, menu } = resolved;
 		const group = table.status !== 'FREE' ? await openGroup(table.id) : null;
@@ -91,7 +107,7 @@ Deno.serve(async (request) => {
 
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
-	let body: { slug?: string; table?: string; sessionId?: string; action?: string; items?: { productId?: string; quantity?: number; notes?: string }[] };
+	let body: { slug?: string; table?: string; k?: string; sessionId?: string; action?: string; items?: { productId?: string; quantity?: number; notes?: string }[] };
 	try {
 		body = await request.json();
 	} catch {
@@ -100,9 +116,10 @@ Deno.serve(async (request) => {
 
 	const slug = String(body.slug || '');
 	const tableNumber = String(body.table || '');
+	const linkSecret = String(body.k || '');
 	const sessionId = String(body.sessionId || '');
 	if (!slug || !tableNumber || !sessionId) return json({ error: 'Invalid or missing link.' }, 400);
-	const resolved = await resolveTable(slug, tableNumber);
+	const resolved = await resolveTable(slug, tableNumber, linkSecret);
 	if (!resolved) return json({ error: 'This table does not exist.' }, 404);
 	const { table, menu } = resolved;
 
