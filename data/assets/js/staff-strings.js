@@ -21,7 +21,8 @@ window.STAFF_STRINGS = {
 					"Hier siehst du alle Tische als Kacheln: Orange = frei, Grün = aktiv, Rot = Rechnung angefordert.",
 					"Neue Gäste an einem freien (orangen) Tisch? Kachel antippen aktiviert ihn sofort.",
 					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
-					"🔔 auf der Kachel = etwas ist fertig und wartet zum Abholen."
+					"🔔 auf der Kachel = etwas ist fertig und wartet zum Abholen.",
+					"Bezahlt wird an der Kasse – dort wird der Tisch danach auch wieder freigegeben, nicht hier."
 				],
 				kitchen: [
 					"Hier siehst du, was die Gäste bestellt haben.",
@@ -61,7 +62,8 @@ window.STAFF_STRINGS = {
 					"All tables are shown as tiles: orange = free, green = active, red = bill requested.",
 					"New guests at a free (orange) table? Tap the tile to activate it right away.",
 					"Tap an active tile to see its order and add items.",
-					"🔔 on a tile = something is ready and waiting to be picked up."
+					"🔔 on a tile = something is ready and waiting to be picked up.",
+					"Payment happens at the cashier - that's also where the table gets freed again, not here."
 				],
 				kitchen: [
 					"Here you see what the guests ordered.",
@@ -101,7 +103,8 @@ window.STAFF_STRINGS = {
 					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πορτοκαλί = ελεύθερο, πράσινο = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
 					"Νέοι πελάτες σε ελεύθερο (πορτοκαλί) τραπέζι; Πάτα το πλακίδιο για να το ενεργοποιήσεις αμέσως.",
 					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
-					"🔔 σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις."
+					"🔔 σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
+					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται και το τραπέζι ξανά, όχι εδώ."
 				],
 				kitchen: [
 					"Εδώ βλέπεις τι παρήγγειλαν οι πελάτες.",
@@ -141,7 +144,8 @@ window.STAFF_STRINGS = {
 					"Tutti i tavoli sono mostrati come riquadri: arancione = libero, verde = attivo, rosso = conto richiesto.",
 					"Nuovi ospiti a un tavolo libero (arancione)? Tocca il riquadro per attivarlo subito.",
 					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
-					"🔔 sul riquadro = qualcosa è pronto e aspetta di essere ritirato."
+					"🔔 sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
+					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo, non qui."
 				],
 				kitchen: [
 					"Qui vedi cosa hanno ordinato gli ospiti.",
@@ -181,7 +185,8 @@ window.STAFF_STRINGS = {
 					"Todas las mesas se muestran como fichas: naranja = libre, verde = activa, rojo = cuenta solicitada.",
 					"¿Nuevos clientes en una mesa libre (naranja)? Toca la ficha para activarla al instante.",
 					"Toca una ficha activa para ver el pedido y añadir artículos.",
-					"🔔 en la ficha = algo está listo y espera a que lo recojas."
+					"🔔 en la ficha = algo está listo y espera a que lo recojas.",
+					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo, no aquí."
 				],
 				kitchen: [
 					"Aquí ves lo que han pedido los clientes.",
@@ -221,7 +226,8 @@ window.STAFF_STRINGS = {
 					"Toutes les tables sont affichées en tuiles : orange = libre, vert = active, rouge = addition demandée.",
 					"Nouveaux clients à une table libre (orange) ? Touchez la tuile pour l'activer immédiatement.",
 					"Touchez une tuile active pour voir la commande et ajouter des articles.",
-					"🔔 sur une tuile = quelque chose est prêt et attend d'être récupéré."
+					"🔔 sur une tuile = quelque chose est prêt et attend d'être récupéré.",
+					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau, pas ici."
 				],
 				kitchen: [
 					"Vous voyez ici ce que les clients ont commandé.",
