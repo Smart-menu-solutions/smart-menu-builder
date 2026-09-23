@@ -183,6 +183,22 @@ Deno.serve(async (request) => {
 		return json({ success: true });
 	}
 
+	if (body.action === 'request_bill') {
+		// Lets the Admin Hub flag a table as wanting to pay even when the
+		// guest never touches "Rechnung anfordern" themselves (they just told
+		// the waiter directly) - same effect as the guest-facing action in
+		// order-session: turns the tile red so the cashier notices it.
+		if (!['waiter', 'cashier'].includes(role)) return json({ error: 'Not allowed for this role.' }, 403);
+		const tableId = String(body.tableId || '');
+		const { data: group } = await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
+		if (!group) return json({ error: 'This table is not active yet.' }, 400);
+		const { error } = await supabase.from('order_groups').update({ bill_requested_at: new Date().toISOString() }).eq('id', group.id);
+		if (error) return json({ error: error.message }, 500);
+		await supabase.from('restaurant_tables').update({ status: 'PAYMENT_PENDING' }).eq('id', tableId);
+		await broadcast(menuSlug, { type: 'bill_requested', tableId });
+		return json({ success: true });
+	}
+
 	if (body.action === 'add_item') {
 		if (!['waiter', 'bar', 'cashier'].includes(role)) return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');

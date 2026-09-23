@@ -140,7 +140,10 @@ function hubPopupMarkup(table) {
 			<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
 			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${table.billRequested ? ' <span class="staff-bill-flag">💳</span>' : ''}</h3>${total}</div>
 			<div class="staff-card-rows">${rows}</div>
-			<div class="staff-card-actions"><button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button></div>
+			<div class="staff-card-actions">
+				<button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button>
+				<button type="button" class="staff-btn staff-btn-primary" data-request-bill="${table.tableId}" ${table.billRequested ? 'disabled' : ''}>${escapeHtml(table.billRequested ? strings().billRequested : strings().requestBill)}</button>
+			</div>
 			${addFormMarkup(table.tableId)}
 		</div>
 	</div>`;
@@ -222,6 +225,7 @@ async function onAppClick(event) {
 	const addSubmit = event.target.closest('[data-add-submit]');
 	const closeTable = event.target.closest('[data-close-table]');
 	const removeItem = event.target.closest('[data-remove-item]');
+	const requestBill = event.target.closest('[data-request-bill]');
 	const hubTile = event.target.closest('[data-hub-table]');
 	const hubPopupClose = event.target.closest('#hubPopupClose') || event.target.id === 'hubPopupOverlay' && event.target;
 	const openTotals = event.target.closest('[data-open-totals]');
@@ -275,6 +279,9 @@ async function onAppClick(event) {
 			addSubmit.disabled = true;
 			await callStaff({ action: 'add_item', tableId, items: [{ productId, quantity, notes }] });
 			openAddFormFor = null;
+			await refresh();
+		} else if (requestBill) {
+			await callStaff({ action: 'request_bill', tableId: requestBill.dataset.requestBill });
 			await refresh();
 		} else if (removeItem && ROLE === 'cashier') {
 			if (!confirm(strings().removeConfirm.replace('{item}', removeItem.dataset.removeLabel))) return;
