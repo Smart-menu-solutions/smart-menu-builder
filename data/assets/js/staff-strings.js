@@ -12,7 +12,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Frei', ACTIVE: 'Aktiv', PAYMENT_PENDING: 'Besetzt' },
 		allDone: 'Alles fertig', addItem: '+ Artikel', add: 'Hinzufügen',
 		requestBill: '💳 Rechnung anfordern', billRequested: '💳 Rechnung angefragt', billFlagHint: 'Rechnung raus – bitte Tisch schließen',
-		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen', deactivateTable: 'Tisch wieder freigeben',
+		notesPlaceholder: 'Anmerkung (optional)', closeTable: 'Tisch schließen', deactivateTable: 'Tisch wieder freigeben', activateTable: 'Aktivieren',
 		closeConfirm: 'Tisch wirklich schließen? Das entfernt die Bestellung aus allen Ansichten.',
 			removeItem: 'Position löschen', removeConfirm: '{item} wirklich löschen?',
 			guideButton: 'Anleitung', guideTitle: 'So funktioniert’s',
@@ -20,9 +20,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"Hier siehst du alle Tische als Kacheln: Orange = frei, Grün = aktiv, Rot = Rechnung angefordert.",
-					"Neue Gäste an einem freien (orangen) Tisch? Kachel antippen aktiviert ihn sofort.",
+					"Neue Gäste an einem freien (orangen) Tisch? Kachel antippen zeigt ein Popup mit „Aktivieren“ - erst dieser Klick öffnet den Tisch wirklich.",
 					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
-					"🔔 auf der Kachel = etwas ist fertig und wartet zum Abholen.",
+					"🛎️ auf der Kachel = etwas ist fertig und wartet zum Abholen.",
 					"Gast will zahlen, hat aber nicht über sein Handy Bescheid gegeben? Im Popup „Rechnung anfordern“ drücken – der Tisch wird rot, die Kasse sieht es sofort.",
 					"Bezahlt wird an der Kasse – dort wird der Tisch danach wieder freigegeben. Nur ein aus Versehen aktivierter, noch leerer Tisch lässt sich direkt hier über „Tisch wieder freigeben“ zurücksetzen."
 				],
@@ -40,7 +40,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Hier siehst du alle Tische mit Preisen und Summe.",
-					"🔔 Der Gast möchte zahlen.",
+					"🛎️ Der Gast möchte zahlen.",
 					"✕ = Position löschen (du wirst vorher gefragt).",
 					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
@@ -55,7 +55,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Free', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupied' },
 		allDone: 'All done', addItem: '+ Item', add: 'Add',
 		requestBill: '💳 Request bill', billRequested: '💳 Bill requested', billFlagHint: 'Bill is out - please close the table',
-		notesPlaceholder: 'Note (optional)', closeTable: 'Close table', deactivateTable: 'Free this table again',
+		notesPlaceholder: 'Note (optional)', closeTable: 'Close table', deactivateTable: 'Free this table again', activateTable: 'Activate',
 		closeConfirm: 'Really close this table? This removes the order from every view.',
 			removeItem: 'Delete item', removeConfirm: 'Really delete {item}?',
 			guideButton: 'Guide', guideTitle: 'How it works',
@@ -63,9 +63,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"All tables are shown as tiles: orange = free, green = active, red = bill requested.",
-					"New guests at a free (orange) table? Tap the tile to activate it right away.",
+					"New guests at a free (orange) table? Tap the tile to see a popup with \"Activate\" - that button is what actually opens the table.",
 					"Tap an active tile to see its order and add items.",
-					"🔔 on a tile = something is ready and waiting to be picked up.",
+					"🛎️ on a tile = something is ready and waiting to be picked up.",
 					"Guest wants to pay but didn't say so via their phone? Tap \"Request bill\" in the popup - the tile turns red and the cashier sees it right away.",
 					"Payment happens at the cashier - that's also where the table gets freed again. Only a table you activated by mistake and that's still empty can be freed right here, via \"Free this table again\"."
 				],
@@ -83,7 +83,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"All tables with prices and the total are shown here.",
-					"🔔 The guest wants to pay.",
+					"🛎️ The guest wants to pay.",
 					"✕ = delete an item (you will be asked first).",
 					"“Close table” = the guest has paid, the table is free again.",
 					"📊 Overview = the total across every table that's currently open."
@@ -98,7 +98,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Ελεύθερο', ACTIVE: 'Ενεργό', PAYMENT_PENDING: 'Κατειλημμένο' },
 		allDone: 'Όλα έτοιμα', addItem: '+ Προσθήκη', add: 'Προσθήκη',
 		requestBill: '💳 Ζήτα λογαριασμό', billRequested: '💳 Ζητήθηκε λογαριασμός', billFlagHint: 'Ζητήθηκε ο λογαριασμός - κλείσε το τραπέζι',
-		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού', deactivateTable: 'Ελευθέρωσε ξανά το τραπέζι',
+		notesPlaceholder: 'Σημείωση (προαιρετικό)', closeTable: 'Κλείσιμο τραπεζιού', deactivateTable: 'Ελευθέρωσε ξανά το τραπέζι', activateTable: 'Ενεργοποίηση',
 		closeConfirm: 'Κλείσιμο τραπεζιού; Η παραγγελία θα αφαιρεθεί από όλες τις προβολές.',
 			removeItem: 'Διαγραφή προϊόντος', removeConfirm: 'Διαγραφή του {item};',
 			guideButton: 'Οδηγός', guideTitle: 'Πώς λειτουργεί',
@@ -106,9 +106,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"Όλα τα τραπέζια εμφανίζονται ως πλακίδια: πορτοκαλί = ελεύθερο, πράσινο = ενεργό, κόκκινο = ζητήθηκε λογαριασμός.",
-					"Νέοι πελάτες σε ελεύθερο (πορτοκαλί) τραπέζι; Πάτα το πλακίδιο για να το ενεργοποιήσεις αμέσως.",
+					"Νέοι πελάτες σε ελεύθερο (πορτοκαλί) τραπέζι; Πάτα το πλακίδιο για να δεις ένα popup με «Ενεργοποίηση» - μόνο αυτό το κουμπί ανοίγει πραγματικά το τραπέζι.",
 					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
-					"🔔 σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
+					"🛎️ σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
 					"Ο πελάτης θέλει να πληρώσει αλλά δεν το έκανε από το κινητό του; Πάτα «Ζήτα λογαριασμό» στο popup - το πλακίδιο γίνεται κόκκινο και το ταμείο το βλέπει αμέσως.",
 					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται το τραπέζι ξανά. Μόνο ένα τραπέζι που ενεργοποιήθηκε κατά λάθος και είναι ακόμα άδειο μπορεί να ελευθερωθεί εδώ, με «Ελευθέρωσε ξανά το τραπέζι»."
 				],
@@ -126,7 +126,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Εδώ βλέπεις όλα τα τραπέζια με τιμές και σύνολο.",
-					"🔔 Ο πελάτης θέλει να πληρώσει.",
+					"🛎️ Ο πελάτης θέλει να πληρώσει.",
 					"✕ = διαγραφή προϊόντος (θα σε ρωτήσει πρώτα).",
 					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
@@ -141,7 +141,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libero', ACTIVE: 'Attivo', PAYMENT_PENDING: 'Occupato' },
 		allDone: 'Tutto pronto', addItem: '+ Articolo', add: 'Aggiungi',
 		requestBill: '💳 Richiedi conto', billRequested: '💳 Conto richiesto', billFlagHint: 'Conto richiesto - chiudi il tavolo',
-		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo', deactivateTable: 'Libera di nuovo il tavolo',
+		notesPlaceholder: 'Nota (opzionale)', closeTable: 'Chiudi tavolo', deactivateTable: 'Libera di nuovo il tavolo', activateTable: 'Attiva',
 		closeConfirm: 'Chiudere davvero il tavolo? L’ordine sparirà da tutte le viste.',
 			removeItem: 'Elimina articolo', removeConfirm: 'Eliminare davvero {item}?',
 			guideButton: 'Guida', guideTitle: 'Come funziona',
@@ -149,9 +149,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"Tutti i tavoli sono mostrati come riquadri: arancione = libero, verde = attivo, rosso = conto richiesto.",
-					"Nuovi ospiti a un tavolo libero (arancione)? Tocca il riquadro per attivarlo subito.",
+					"Nuovi ospiti a un tavolo libero (arancione)? Tocca il riquadro per vedere un popup con «Attiva» - solo quel pulsante apre davvero il tavolo.",
 					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
-					"🔔 sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
+					"🛎️ sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
 					"L'ospite vuole pagare ma non l'ha detto dal telefono? Tocca «Richiedi conto» nel popup - il riquadro diventa rosso e la cassa lo vede subito.",
 					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo. Solo un tavolo attivato per errore e ancora vuoto può essere liberato direttamente qui, con «Libera di nuovo il tavolo»."
 				],
@@ -169,7 +169,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Qui vedi tutti i tavoli con prezzi e totale.",
-					"🔔 L’ospite vuole pagare.",
+					"🛎️ L’ospite vuole pagare.",
 					"✕ = elimina un articolo (prima ti viene chiesto).",
 					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
@@ -184,7 +184,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Activa', PAYMENT_PENDING: 'Ocupada' },
 		allDone: 'Todo listo', addItem: '+ Artículo', add: 'Añadir',
 		requestBill: '💳 Pedir la cuenta', billRequested: '💳 Cuenta solicitada', billFlagHint: 'Cuenta pedida - cierra la mesa',
-		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa', deactivateTable: 'Liberar la mesa de nuevo',
+		notesPlaceholder: 'Nota (opcional)', closeTable: 'Cerrar mesa', deactivateTable: 'Liberar la mesa de nuevo', activateTable: 'Activar',
 		closeConfirm: '¿Cerrar esta mesa de verdad? El pedido desaparecerá de todas las vistas.',
 			removeItem: 'Eliminar artículo', removeConfirm: '¿Eliminar {item} de verdad?',
 			guideButton: 'Guía', guideTitle: 'Cómo funciona',
@@ -192,9 +192,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"Todas las mesas se muestran como fichas: naranja = libre, verde = activa, rojo = cuenta solicitada.",
-					"¿Nuevos clientes en una mesa libre (naranja)? Toca la ficha para activarla al instante.",
+					"¿Nuevos clientes en una mesa libre (naranja)? Toca la ficha para ver un popup con «Activar» - solo ese botón abre de verdad la mesa.",
 					"Toca una ficha activa para ver el pedido y añadir artículos.",
-					"🔔 en la ficha = algo está listo y espera a que lo recojas.",
+					"🛎️ en la ficha = algo está listo y espera a que lo recojas.",
 					"¿El cliente quiere pagar pero no lo dijo desde su móvil? Pulsa «Pedir la cuenta» en el popup - la ficha se pone roja y caja lo ve al instante.",
 					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo. Solo una mesa activada por error y que sigue vacía se puede liberar aquí mismo, con «Liberar la mesa de nuevo»."
 				],
@@ -212,7 +212,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Aquí ves todas las mesas con precios y total.",
-					"🔔 El cliente quiere pagar.",
+					"🛎️ El cliente quiere pagar.",
 					"✕ = borrar un artículo (antes te preguntará).",
 					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
@@ -227,7 +227,7 @@ window.STAFF_STRINGS = {
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupée' },
 		allDone: 'Tout est prêt', addItem: '+ Article', add: 'Ajouter',
 		requestBill: '💳 Demander l’addition', billRequested: '💳 Addition demandée', billFlagHint: 'Addition demandée - fermez la table',
-		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table', deactivateTable: 'Libérer à nouveau la table',
+		notesPlaceholder: 'Remarque (optionnel)', closeTable: 'Fermer la table', deactivateTable: 'Libérer à nouveau la table', activateTable: 'Activer',
 		closeConfirm: 'Vraiment fermer cette table ? La commande disparaîtra de toutes les vues.',
 			removeItem: "Supprimer l'article", removeConfirm: 'Vraiment supprimer {item} ?',
 			guideButton: 'Guide', guideTitle: 'Comment ça marche',
@@ -235,9 +235,9 @@ window.STAFF_STRINGS = {
 			guide: {
 				waiter: [
 					"Toutes les tables sont affichées en tuiles : orange = libre, vert = active, rouge = addition demandée.",
-					"Nouveaux clients à une table libre (orange) ? Touchez la tuile pour l'activer immédiatement.",
+					"Nouveaux clients à une table libre (orange) ? Touchez la tuile pour voir une fenêtre avec « Activer » - seul ce bouton ouvre vraiment la table.",
 					"Touchez une tuile active pour voir la commande et ajouter des articles.",
-					"🔔 sur une tuile = quelque chose est prêt et attend d'être récupéré.",
+					"🛎️ sur une tuile = quelque chose est prêt et attend d'être récupéré.",
 					"Le client veut payer mais ne l'a pas dit via son téléphone ? Appuyez sur « Demander l'addition » dans la fenêtre - la tuile devient rouge et la caisse le voit tout de suite.",
 					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau. Seule une table activée par erreur et encore vide peut être libérée ici, via « Libérer à nouveau la table »."
 				],
@@ -255,7 +255,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Vous voyez ici toutes les tables avec prix et total.",
-					"🔔 Le client veut payer.",
+					"🛎️ Le client veut payer.",
 					"✕ = supprimer un article (une confirmation est demandée).",
 					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."

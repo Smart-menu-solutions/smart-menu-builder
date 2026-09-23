@@ -122,12 +122,12 @@ function cardActionsMarkup(table) {
 // The bill-requested flag: a plain span for roles that can't act on it, but
 // for the cashier a clickable shortcut straight to "Tisch schließen" - a
 // bell rather than a card-suit emoji, since 💳 doesn't render everywhere
-// (shows as a blank/tofu box on some devices) while 🔔 already has to work
+// (shows as a blank/tofu box on some devices) while 🛎️ already has to work
 // reliably for the Table Hub's own bell.
 function billFlagMarkup(table) {
 	if (!table.billRequested) return '';
-	if (ROLE !== 'cashier') return `<span class="staff-bill-flag" title="${escapeHtml(strings().billFlagHint)}">🔔</span>`;
-	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">🔔</button>`;
+	if (ROLE !== 'cashier') return `<span class="staff-bill-flag" title="${escapeHtml(strings().billFlagHint)}">🛎️</span>`;
+	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">🛎️</button>`;
 }
 
 function cardMarkup(table) {
@@ -153,7 +153,7 @@ function hubTileMarkup(table) {
 	const dispatchedCount = (table.items || []).filter((item) => item.dispatched).length;
 	const bell = table.status !== 'FREE' && dispatchedCount > (ackDispatchedCount[table.tableId] || 0);
 	return `<button type="button" class="hub-tile ${statusClass}" data-hub-table="${table.tableId}" data-hub-status="${table.status}">
-		${bell ? '<span class="hub-bell" aria-hidden="true">🔔</span>' : ''}
+		${bell ? '<span class="hub-bell" aria-hidden="true">🛎️</span>' : ''}
 		<span class="hub-tile-number">${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</span>
 		<span class="hub-tile-status">${escapeHtml(strings().hubStatus?.[table.status] || table.status)}</span>
 	</button>`;
@@ -174,6 +174,21 @@ function hubGridMarkup(tables) {
 
 function hubPopupMarkup(table) {
 	if (!table) return '';
+	// A free table just gets a confirm step - tap the tile, see which table
+	// it is, press "Aktivieren" to actually open it. No server call happens
+	// until that button is pressed, so tapping the wrong tile by mistake is
+	// a no-op (close with ✕), not something that needs undoing afterwards.
+	if (table.status === 'FREE') {
+		return `<div class="hub-popup-overlay" id="hubPopupOverlay">
+			<div class="hub-popup-box" role="dialog" aria-modal="true">
+				<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
+				<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</h3></div>
+				<div class="staff-card-actions">
+					<button type="button" class="staff-btn staff-btn-primary" data-activate-table="${table.tableId}">${escapeHtml(strings().activateTable)}</button>
+				</div>
+			</div>
+		</div>`;
+	}
 	const total = `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>`;
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, true, false)).join('') || `<p class="staff-empty">${escapeHtml(strings().hubEmptyOrder)}</p>`;
 	// Only offered while the table is still genuinely empty - a wrong tile
@@ -273,6 +288,7 @@ async function onAppClick(event) {
 	const addSubmit = event.target.closest('[data-add-submit]');
 	const closeTable = event.target.closest('[data-close-table]');
 	const deactivateTable = event.target.closest('[data-deactivate-table]');
+	const activateTable = event.target.closest('[data-activate-table]');
 	const removeItem = event.target.closest('[data-remove-item]');
 	const requestBill = event.target.closest('[data-request-bill]');
 	const hubTile = event.target.closest('[data-hub-table]');
@@ -300,20 +316,19 @@ async function onAppClick(event) {
 
 	try {
 		if (hubTile) {
+			// Free tiles just open the confirm popup below (data-activate-table
+			// is what actually calls the server) - no activation happens from
+			// this tap alone, so the wrong tile is a harmless close (✕).
 			const tableId = hubTile.dataset.hubTable;
-			if (hubTile.dataset.hubStatus === 'FREE') {
-				await callStaff({ action: 'activate_table', tableId });
-				// Same popup a tap on an already-active tile opens - right after
-				// activating, staff lands straight on that table's (still empty)
-				// order screen instead of back on the grid with no feedback.
-				openHubTable = tableId;
-				await refresh();
-			} else {
-				openHubTable = tableId;
+			openHubTable = tableId;
+			if (hubTile.dataset.hubStatus !== 'FREE') {
 				ackDispatchedCount[tableId] = (lastTables.find((table) => table.tableId === tableId)?.items || []).filter((item) => item.dispatched).length;
 				saveAckDispatchedCount();
-				rerender();
 			}
+			rerender();
+		} else if (activateTable) {
+			await callStaff({ action: 'activate_table', tableId: activateTable.dataset.activateTable });
+			await refresh();
 		} else if (dispatchItem && isTicketRole) {
 			await callStaff({ action: 'dispatch_item', itemId: dispatchItem.dataset.itemId });
 			await refresh();
