@@ -303,6 +303,10 @@ async function onAppClick(event) {
 			const tableId = hubTile.dataset.hubTable;
 			if (hubTile.dataset.hubStatus === 'FREE') {
 				await callStaff({ action: 'activate_table', tableId });
+				// Same popup a tap on an already-active tile opens - right after
+				// activating, staff lands straight on that table's (still empty)
+				// order screen instead of back on the grid with no feedback.
+				openHubTable = tableId;
 				await refresh();
 			} else {
 				openHubTable = tableId;
