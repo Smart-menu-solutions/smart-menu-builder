@@ -47,7 +47,9 @@ body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',s
 .staff-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem}
 .staff-card-head h3{margin:0;font-size:1rem}
 .staff-card-total{font-weight:700;color:var(--orange);font-size:.9rem}
-.staff-bill-flag{display:inline-block;background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;margin-left:.5rem}
+.staff-bill-flag{display:inline-block;background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;margin-left:.5rem;border:0;font-family:inherit}
+button.staff-bill-flag{cursor:pointer}
+button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .staff-item-row{display:flex;align-items:center;gap:.55rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.9rem;cursor:pointer}
 .staff-item-row:last-child{border-bottom:0}
 .staff-item-row.is-done{color:var(--muted)}

@@ -102,9 +102,20 @@ function cardActionsMarkup(table) {
 	return `<div class="staff-card-actions">${buttons.join('')}</div>${canAddItems ? addFormMarkup(table.tableId) : ''}`;
 }
 
+// The bill-requested flag: a plain span for roles that can't act on it, but
+// for the cashier a clickable shortcut straight to "Tisch schließen" - a
+// bell rather than a card-suit emoji, since 💳 doesn't render everywhere
+// (shows as a blank/tofu box on some devices) while 🔔 already has to work
+// reliably for the Table Hub's own bell.
+function billFlagMarkup(table) {
+	if (!table.billRequested) return '';
+	if (ROLE !== 'cashier') return `<span class="staff-bill-flag" title="${escapeHtml(strings().billFlagHint)}">🔔</span>`;
+	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">🔔</button>`;
+}
+
 function cardMarkup(table) {
 	const withPrice = ROLE === 'cashier';
-	const bill = table.billRequested ? '<span class="staff-bill-flag">💳</span>' : '';
+	const bill = billFlagMarkup(table);
 	const total = withPrice ? `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>` : '';
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''}" data-table-id="${table.tableId}">
@@ -138,7 +149,7 @@ function hubPopupMarkup(table) {
 	return `<div class="hub-popup-overlay" id="hubPopupOverlay">
 		<div class="hub-popup-box" role="dialog" aria-modal="true">
 			<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
-			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${table.billRequested ? ' <span class="staff-bill-flag">💳</span>' : ''}</h3>${total}</div>
+			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${billFlagMarkup(table)}</h3>${total}</div>
 			<div class="staff-card-rows">${rows}</div>
 			<div class="staff-card-actions">
 				<button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button>
