@@ -40,7 +40,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Hier siehst du alle Tische mit Preisen und Summe.",
-					"🛎️ Der Gast möchte zahlen.",
+					"💳 Der Gast möchte zahlen.",
 					"✕ = Position löschen (du wirst vorher gefragt).",
 					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
@@ -83,7 +83,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"All tables with prices and the total are shown here.",
-					"🛎️ The guest wants to pay.",
+					"💳 The guest wants to pay.",
 					"✕ = delete an item (you will be asked first).",
 					"“Close table” = the guest has paid, the table is free again.",
 					"📊 Overview = the total across every table that's currently open."
@@ -126,7 +126,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Εδώ βλέπεις όλα τα τραπέζια με τιμές και σύνολο.",
-					"🛎️ Ο πελάτης θέλει να πληρώσει.",
+					"💳 Ο πελάτης θέλει να πληρώσει.",
 					"✕ = διαγραφή προϊόντος (θα σε ρωτήσει πρώτα).",
 					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
@@ -169,7 +169,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Qui vedi tutti i tavoli con prezzi e totale.",
-					"🛎️ L’ospite vuole pagare.",
+					"💳 L’ospite vuole pagare.",
 					"✕ = elimina un articolo (prima ti viene chiesto).",
 					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
@@ -212,7 +212,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Aquí ves todas las mesas con precios y total.",
-					"🛎️ El cliente quiere pagar.",
+					"💳 El cliente quiere pagar.",
 					"✕ = borrar un artículo (antes te preguntará).",
 					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
@@ -255,7 +255,7 @@ window.STAFF_STRINGS = {
 				],
 				cashier: [
 					"Vous voyez ici toutes les tables avec prix et total.",
-					"🛎️ Le client veut payer.",
+					"💳 Le client veut payer.",
 					"✕ = supprimer un article (une confirmation est demandée).",
 					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
