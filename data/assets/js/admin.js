@@ -478,7 +478,7 @@ const ADDON_FREE_TOGGLES = [
 
 const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
 let smartServiceAccessBySlug = {};
-let smartServiceTableNumbersBySlug = {};
+let smartServiceTablesBySlug = {};
 
 // Onboarding template: the 4 staff links, in whichever of the 6 menu
 // languages the owner picks - meant to be copied straight into an email to
@@ -529,20 +529,21 @@ function onboardingTemplateHtml(client, lang) {
 
 // restaurant_access/restaurant_tables aren't in the `clients` (menus) rows
 // or subscriptionsBySlug - separate tables, own fetch, same "map keyed by
-// menu_slug then render()" shape as syncSubscriptions(). Only table_number
-// is fetched for tables - no qr_token/status to show here, that's the
-// Admin Hub's job now (see 0017_table_hub.sql); this is just so the owner
-// can see what's already there before adding another.
+// menu_slug then render()" shape as syncSubscriptions(). Only id/table_number
+// is fetched for tables - no qr_token/status to show here, that's the Admin
+// Hub's job now (see 0017_table_hub.sql); this is just so the owner can see
+// what's already there (and remove one, e.g. after a typo) before adding
+// another.
 async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
 	const [{ data: access }, { data: tables }] = await Promise.all([
 		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
-		supabaseClient.from('restaurant_tables').select('menu_slug, table_number').order('table_number')
+		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number').order('table_number')
 	]);
 	smartServiceAccessBySlug = {};
 	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
-	smartServiceTableNumbersBySlug = {};
-	(tables || []).forEach((row) => { (smartServiceTableNumbersBySlug[row.menu_slug] ||= []).push(row.table_number); });
+	smartServiceTablesBySlug = {};
+	(tables || []).forEach((row) => { (smartServiceTablesBySlug[row.menu_slug] ||= []).push(row); });
 	render();
 }
 
@@ -660,12 +661,12 @@ function renderSmartServiceHubExtra(client) {
 		}).join('');
 	}
 
-	const tableNumbers = smartServiceTableNumbersBySlug[client.slug] || [];
+	const tables = smartServiceTablesBySlug[client.slug] || [];
 	const tableNumbersEl = $('#smartServiceHubTableNumbers');
 	if (tableNumbersEl) {
-		tableNumbersEl.textContent = tableNumbers.length
-			? strings().existingTables.replace('{list}', tableNumbers.join(', '))
-			: strings().noTablesYet;
+		tableNumbersEl.innerHTML = tables.length
+			? tables.map((table) => `<span class="table-chip">${escapeHtml(String(table.table_number))}<button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></span>`).join('')
+			: `<span class="language-hint">${escapeHtml(strings().noTablesYet)}</span>`;
 	}
 
 	renderOnboardingTemplate(client);
@@ -1063,6 +1064,17 @@ wireAddonFreeCheckboxes();
 const smartServiceHubPanel = document.querySelector('[data-tab-panel="addons"]');
 if (smartServiceHubPanel) {
 	smartServiceHubPanel.addEventListener('click', async (event) => {
+		const removeTable = event.target.closest('[data-remove-table]');
+		if (removeTable) {
+			const tableId = removeTable.dataset.removeTable;
+			const tableNumber = removeTable.dataset.removeTableNumber;
+			if (!confirm(strings().removeTableConfirm.replace('{n}', tableNumber))) return;
+			const { error } = await supabaseClient.from('restaurant_tables').delete().eq('id', tableId);
+			if (error) { notify(strings().couldNotRemoveTable.replace('{error}', error.message)); return; }
+			notify(strings().tableRemoved.replace('{n}', tableNumber));
+			await syncSmartServiceHub();
+			return;
+		}
 		const langButton = event.target.closest('[data-onboarding-lang]');
 		if (langButton) {
 			onboardingTemplateLang = langButton.dataset.onboardingLang;
