@@ -72,18 +72,20 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .staff-add-form.is-open{display:flex}
 .staff-add-form select,.staff-add-form input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
 
-/* Table Hub (waiter role, see staff.js hubTileMarkup/hubPopupMarkup): a
-   grid of every table, colored by restaurant_tables.status. Free is the
-   inviting "tap to seat someone here" color (brand orange, same as every
-   other primary action in this UI); active/pending intentionally reuse the
-   same green/red as the per-item status dots elsewhere in this file, so
-   "green = good/ready, red = needs attention" stays one consistent
-   language across the whole app. */
+/* Table Hub (waiter role, see staff.js hubTileMarkup/hubGridMarkup/
+   hubPopupMarkup): tables grouped into three rows by restaurant_tables.status
+   - Free on top, Active in the middle, Payment-pending at the bottom - so a
+   table visibly jumps rows the moment its status changes. Free = green
+   (good to seat), Active = brand orange (the "in progress" color used for
+   primary actions elsewhere in this UI), Payment-pending = red (needs the
+   cashier's attention), matching the per-item status dots elsewhere in this
+   file for the same "red = needs attention" language. */
 .hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;padding:1.5rem;max-width:1400px;margin:0 auto}
 .hub-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;aspect-ratio:1;border-radius:18px;border:2px solid transparent;box-shadow:var(--shadow);color:#fff;font-weight:700;cursor:pointer}
-.hub-tile-free{background:var(--orange)}
-.hub-tile-free:hover{background:var(--orange-dark)}
-.hub-tile-active{background:#2fa360}
+.hub-tile-free{background:#2fa360}
+.hub-tile-free:hover{background:#268a52}
+.hub-tile-active{background:var(--orange)}
+.hub-tile-active:hover{background:var(--orange-dark)}
 .hub-tile-pending{background:#c9403a}
 .hub-tile-number{font-size:1.05rem}
 .hub-tile-status{font-size:.7rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.03em}

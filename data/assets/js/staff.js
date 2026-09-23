@@ -142,6 +142,19 @@ function hubTileMarkup(table) {
 	</button>`;
 }
 
+// Grouped into three rows by status - Frei on top, Aktiv in the middle,
+// Besetzt/Rechnung at the bottom - instead of one mixed grid, so a table
+// visibly jumps to the row that matches its current status the moment it
+// changes, rather than staying in place with just its color/label updating.
+const HUB_STATUS_ORDER = ['FREE', 'ACTIVE', 'PAYMENT_PENDING'];
+function hubGridMarkup(tables) {
+	return HUB_STATUS_ORDER
+		.map((status) => tables.filter((table) => table.status === status))
+		.filter((group) => group.length)
+		.map((group) => `<div class="hub-grid">${group.map(hubTileMarkup).join('')}</div>`)
+		.join('');
+}
+
 function hubPopupMarkup(table) {
 	if (!table) return '';
 	const total = `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>`;
@@ -207,7 +220,7 @@ function render(data) {
 	if (data.translations) translationsState = data.translations;
 	const tables = data.tables || [];
 	const body = isHub
-		? `<div class="hub-grid">${tables.map(hubTileMarkup).join('')}</div>${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
+		? `${hubGridMarkup(tables)}${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
 		: (tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup();
 	app.innerHTML = `
 		<header class="staff-header">
