@@ -142,6 +142,19 @@ function cardMarkup(table) {
 	</div>`;
 }
 
+// Cashier only: bill-requested tables get their own row up top, same "group
+// into rows instead of just recoloring in place" idea as the Table Hub's
+// three status rows - so the ones actually waiting to be paid don't get
+// lost among every other still-running table. Kitchen/bar keep one flat
+// grid, since their cards have no billRequested field to group by.
+function cardGridMarkup(tables) {
+	if (ROLE !== 'cashier') return `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>`;
+	return [tables.filter((table) => table.billRequested), tables.filter((table) => !table.billRequested)]
+		.filter((group) => group.length)
+		.map((group) => `<div class="staff-grid">${group.map(cardMarkup).join('')}</div>`)
+		.join('');
+}
+
 // --- Table Hub (waiter role): a grid of every table instead of a card list.
 // Tapping a FREE tile activates it right away (no confirmation - it's the
 // low-risk direction, closing is what actually settles a bill). Tapping an
@@ -278,7 +291,7 @@ function render(data) {
 	const tables = data.tables || [];
 	const body = isHub
 		? `${hubGridMarkup(tables)}${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
-		: (tables.length ? `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>` : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup() + workflowPopupMarkup();
+		: (tables.length ? cardGridMarkup(tables) : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup() + workflowPopupMarkup();
 	app.innerHTML = `
 		<header class="staff-header">
 			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
