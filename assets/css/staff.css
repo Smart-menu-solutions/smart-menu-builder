@@ -126,7 +126,6 @@ button{font-family:inherit}
 .sh-legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}
 .sh-legend li{display:grid;grid-template-columns:12px 1fr auto;gap:.45rem;align-items:center}
 .sh-legend strong{font-size:.9rem}
-.sh-legend-total{grid-template-columns:1fr auto!important;border-top:1px solid var(--line);padding-top:.45rem;margin-top:.15rem}
 .sh-swatch{width:12px;height:12px;border-radius:3px}
 .sh-swatch-guest{background:var(--orange)}
 .sh-swatch-staff{background:var(--ink)}

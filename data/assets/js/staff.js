@@ -389,7 +389,7 @@ function activityText(event) {
 		case 'order': return (event.source === 'GUEST' ? strings().evOrderGuest : strings().evOrderStaff.replace('{who}', strings().roleLabels?.[event.source === 'CASHIER' ? 'cashier' : event.source === 'BAR' ? 'bar' : 'waiter'] || event.source)).replace('{items}', itemList);
 		case 'ready': return (event.station === 'BAR' ? strings().evReadyBar : strings().evReadyKitchen).replace('{n}', event.count);
 		case 'bill': return strings().evBill;
-		case 'closed': return strings().evClosed.replace('{total}', formatMoney(event.totalCents));
+		case 'closed': return strings().evClosed; // no amount - the hub may be visible to guests
 		default: return '';
 	}
 }
@@ -440,7 +440,6 @@ function summaryMarkup(summary) {
 		<ul class="sh-legend">
 			<li><span class="sh-swatch sh-swatch-guest"></span><span>${escapeHtml(strings().qrOrders)}</span><strong>${guest}</strong></li>
 			<li><span class="sh-swatch sh-swatch-staff"></span><span>${escapeHtml(strings().staffOrders)}</span><strong>${staff}</strong></li>
-			<li class="sh-legend-total"><span>${escapeHtml(strings().orderValue)}</span><strong>${formatMoney(summary.valueCents)}</strong></li>
 		</ul>
 	</div>`;
 }
