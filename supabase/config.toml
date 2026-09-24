@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.staff-access]
 verify_jwt = false
+
+[functions.contact-form]
+verify_jwt = false
