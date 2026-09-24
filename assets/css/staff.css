@@ -62,8 +62,8 @@ button{font-family:inherit}
 .sh-hub{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1.3rem;align-items:start}
 .sh-hub-main{display:flex;flex-direction:column;gap:1.3rem;min-width:0}
 .sh-side{display:flex;flex-direction:column;gap:1.3rem}
-/* Light warm cream behind the tables (instead of plain white), so the green/orange/red tiles stand out as on a floor plan. */
-.sh-floor{background:#fbf5ec radial-gradient(circle at 1px 1px,#eadfce 1px,transparent 0) 0 0/22px 22px;border-color:#f1e6d6}
+/* Light warm cream behind the tables (instead of plain white), so the green/orange/red tiles stand out. */
+.sh-floor{background:#fbf5ec;border-color:#f1e6d6}
 .hub-grid+.hub-grid{border-top-color:#e6d8c4}
 .sh-legend-inline{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.75rem;font-weight:600;color:var(--muted)}
 .sh-legend-dot{display:inline-flex;align-items:center;gap:.35rem}
