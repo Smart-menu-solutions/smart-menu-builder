@@ -73,7 +73,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Datenschutz', imprintLink: 'Impressum',
 		offline: 'Keine Internetverbindung. Die Seite lädt automatisch neu, sobald du wieder online bist.',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
-		tablesEmailHeading: 'Tisch-QR-Codes für {name}', tablesEmailHint: 'Jeder QR-Code gehört zu genau einem Tisch – bitte ausdrucken und auf den passenden Tisch stellen. Gäste scannen ihn und können bestellen, sobald der Tisch im Service Hub aktiviert ist.',
+		tablesEmailLinkText: 'Link zum Tisch', tablesEmailHeading: 'Tisch-QR-Codes für {name}', tablesEmailHint: 'Jeder QR-Code gehört zu genau einem Tisch – bitte ausdrucken und auf den passenden Tisch stellen. Gäste scannen ihn und können bestellen, sobald der Tisch im Service Hub aktiviert ist.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
@@ -143,7 +143,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Privacy', imprintLink: 'Legal notice',
 		offline: 'No internet connection. This page reloads automatically once you are back online.',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
-		tablesEmailHeading: 'Table QR codes for {name}', tablesEmailHint: 'Each QR code belongs to exactly one table – please print it and place it on the matching table. Guests scan it and can order as soon as the table is activated in the Service Hub.',
+		tablesEmailLinkText: 'Table link', tablesEmailHeading: 'Table QR codes for {name}', tablesEmailHint: 'Each QR code belongs to exactly one table – please print it and place it on the matching table. Guests scan it and can order as soon as the table is activated in the Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access'
 	},
 	el: {
@@ -213,7 +213,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Απόρρητο', imprintLink: 'Νομικές πληροφορίες',
 		offline: 'Δεν υπάρχει σύνδεση στο διαδίκτυο. Η σελίδα θα ανανεωθεί αυτόματα μόλις συνδεθείτε ξανά.',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
-		tablesEmailHeading: 'QR codes τραπεζιών για {name}', tablesEmailHint: 'Κάθε QR code ανήκει σε ένα μόνο τραπέζι – εκτυπώστε το και τοποθετήστε το στο αντίστοιχο τραπέζι. Οι πελάτες το σκανάρουν και μπορούν να παραγγείλουν μόλις ενεργοποιηθεί το τραπέζι στο Service Hub.',
+		tablesEmailLinkText: 'Σύνδεσμος τραπεζιού', tablesEmailHeading: 'QR codes τραπεζιών για {name}', tablesEmailHint: 'Κάθε QR code ανήκει σε ένα μόνο τραπέζι – εκτυπώστε το και τοποθετήστε το στο αντίστοιχο τραπέζι. Οι πελάτες το σκανάρουν και μπορούν να παραγγείλουν μόλις ενεργοποιηθεί το τραπέζι στο Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού'
 	},
 	it: {
@@ -283,7 +283,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Privacy', imprintLink: 'Note legali',
 		offline: 'Nessuna connessione a Internet. La pagina si ricarica automaticamente quando torni online.',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
-		tablesEmailHeading: 'QR code dei tavoli per {name}', tablesEmailHint: 'Ogni QR code appartiene a un solo tavolo: stampalo e mettilo sul tavolo corrispondente. Gli ospiti lo scansionano e possono ordinare non appena il tavolo è attivato nel Service Hub.',
+		tablesEmailLinkText: 'Link del tavolo', tablesEmailHeading: 'QR code dei tavoli per {name}', tablesEmailHint: 'Ogni QR code appartiene a un solo tavolo: stampalo e mettilo sul tavolo corrispondente. Gli ospiti lo scansionano e possono ordinare non appena il tavolo è attivato nel Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale'
 	},
 	es: {
@@ -353,7 +353,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Privacidad', imprintLink: 'Aviso legal',
 		offline: 'Sin conexión a Internet. La página se recargará automáticamente cuando vuelvas a estar en línea.',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
-		tablesEmailHeading: 'Códigos QR de las mesas para {name}', tablesEmailHint: 'Cada código QR pertenece a una sola mesa: imprímelo y colócalo en la mesa correspondiente. Los clientes lo escanean y pueden pedir en cuanto la mesa se active en el Service Hub.',
+		tablesEmailLinkText: 'Enlace de la mesa', tablesEmailHeading: 'Códigos QR de las mesas para {name}', tablesEmailHint: 'Cada código QR pertenece a una sola mesa: imprímelo y colócalo en la mesa correspondiente. Los clientes lo escanean y pueden pedir en cuanto la mesa se active en el Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal'
 	},
 	fr: {
@@ -423,7 +423,7 @@ window.STAFF_STRINGS = {
 		privacyLink: 'Confidentialité', imprintLink: 'Mentions légales',
 		offline: 'Pas de connexion Internet. La page se recharge automatiquement dès que vous êtes de nouveau en ligne.',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
-		tablesEmailHeading: 'QR codes des tables pour {name}', tablesEmailHint: 'Chaque QR code correspond à une seule table : imprimez-le et placez-le sur la bonne table. Les clients le scannent et peuvent commander dès que la table est activée dans le Service Hub.',
+		tablesEmailLinkText: 'Lien de la table', tablesEmailHeading: 'QR codes des tables pour {name}', tablesEmailHint: 'Chaque QR code correspond à une seule table : imprimez-le et placez-le sur la bonne table. Les clients le scannent et peuvent commander dès que la table est activée dans le Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'
 	}
 };

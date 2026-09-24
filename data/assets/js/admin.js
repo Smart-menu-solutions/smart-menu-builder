@@ -548,8 +548,6 @@ function tableGuestUrl(client, table) {
 // "Copy for email" under the table list: every table's QR code image, name
 // and link, in the language picked for the onboarding template below, so
 // the owner can send the whole set to the venue for printing in one go.
-// The number is printed under each QR image (the on-screen overlay is a CSS
-// trick that wouldn't survive being pasted into an email).
 function tablesEmailRows(client) {
 	return [...(smartServiceTablesBySlug[client.slug] || [])]
 		.sort((a, b) => String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true }));
@@ -562,16 +560,93 @@ function tablesEmailText(client, lang) {
 	return `${heading}\n\n${strings.tablesEmailHint || ''}\n\n${lines.join('\n')}`;
 }
 
-function tablesEmailHtml(client, lang) {
+// The on-screen number overlay (qrWithNumberMarkup) is a CSS trick that
+// wouldn't survive being pasted into an email, so for the email the number
+// is drawn into the QR image itself: same white box with a dark border, in
+// the middle - safe because the code uses ecc=H (tolerates ~30% covered).
+// The finished PNG goes to the public menu-images bucket under the table's
+// random id (not guessable) so every email client can load it. The file name
+// also carries a short hash of the table's link, so copying again reuses the
+// same file (the owner may insert and delete in that bucket, not overwrite),
+// while a renamed table gets a fresh image. Removing a table deletes them.
+const TABLE_QR_SIZE = 360;
+const TABLE_QR_FOLDER = (client) => `table-qr/${client.slug}`;
+const tableQrImageCache = new Map();
+
+async function shortHash(text) {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+	return [...new Uint8Array(digest)].slice(0, 6).map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function loadCrossOriginImage(src) {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		img.crossOrigin = 'anonymous';
+		img.onload = () => resolve(img);
+		img.onerror = () => reject(new Error('QR image could not be loaded'));
+		img.src = src;
+	});
+}
+
+async function tableQrImageUrl(client, table) {
+	const url = tableGuestUrl(client, table);
+	const cacheKey = `${table.id}|${url}`;
+	if (tableQrImageCache.has(cacheKey)) return tableQrImageCache.get(cacheKey);
+	const qr = await loadCrossOriginImage(`https://api.qrserver.com/v1/create-qr-code/?size=${TABLE_QR_SIZE}x${TABLE_QR_SIZE}&margin=12&ecc=H&data=${encodeURIComponent(url)}`);
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = TABLE_QR_SIZE;
+	const ctx = canvas.getContext('2d');
+	ctx.drawImage(qr, 0, 0, TABLE_QR_SIZE, TABLE_QR_SIZE);
+	const label = String(table.table_number);
+	// Largest bold font whose box stays within ~42% of the width (a longer
+	// label like "T12" or "Terrasse 3" shrinks to fit instead of covering more).
+	let fontSize = Math.round(TABLE_QR_SIZE * 0.2);
+	ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+	while (ctx.measureText(label).width > TABLE_QR_SIZE * 0.34 && fontSize > 18) {
+		fontSize -= 2;
+		ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+	}
+	const padX = fontSize * 0.35;
+	const boxW = ctx.measureText(label).width + padX * 2;
+	const boxH = fontSize * 1.3;
+	const x = (TABLE_QR_SIZE - boxW) / 2;
+	const y = (TABLE_QR_SIZE - boxH) / 2;
+	ctx.fillStyle = '#ffffff';
+	ctx.strokeStyle = '#262421';
+	ctx.lineWidth = Math.max(2, TABLE_QR_SIZE / 120);
+	ctx.beginPath();
+	if (ctx.roundRect) ctx.roundRect(x, y, boxW, boxH, fontSize * 0.15); else ctx.rect(x, y, boxW, boxH);
+	ctx.fill();
+	ctx.stroke();
+	ctx.fillStyle = '#262421';
+	ctx.textAlign = 'center';
+	ctx.textBaseline = 'middle';
+	ctx.fillText(label, TABLE_QR_SIZE / 2, TABLE_QR_SIZE / 2 + fontSize * 0.05);
+	const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+	const path = `${TABLE_QR_FOLDER(client)}/${table.id}-${await shortHash(url)}.png`;
+	const { error } = await supabaseClient.storage.from('menu-images').upload(path, blob, { contentType: 'image/png', upsert: false });
+	// Already there from an earlier copy = same table, same link: reuse it.
+	if (error && !/exist|duplicate/i.test(error.message || '')) throw new Error(error.message);
+	const publicUrl = supabaseClient.storage.from('menu-images').getPublicUrl(path).data.publicUrl;
+	tableQrImageCache.set(cacheKey, publicUrl);
+	return publicUrl;
+}
+
+async function tableQrImageUrls(client) {
+	const entries = await Promise.all(tablesEmailRows(client).map(async (table) => [table.id, await tableQrImageUrl(client, table)]));
+	return Object.fromEntries(entries);
+}
+
+function tablesEmailHtml(client, lang, imageUrls) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
 	const heading = (strings.tablesEmailHeading || 'Table QR codes – {name}').replace('{name}', client.name);
 	const cells = tablesEmailRows(client).map((table) => {
 		const url = tableGuestUrl(client, table);
-		const qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
+		const label = `${strings.table || 'Table'} ${table.table_number}`;
 		return `<td style="padding:0 16px 22px 0;vertical-align:top;text-align:center;width:170px">
-			<img src="${escapeAttr(qr)}" width="150" height="150" alt="${escapeAttr(`${strings.table || 'Table'} ${table.table_number}`)}" style="display:block;margin:0 auto 6px;border:0">
-			<div style="font-weight:700;font-size:15px">${escapeHtml(`${strings.table || 'Table'} ${table.table_number}`)}</div>
-			<a href="${escapeAttr(url)}" style="font-size:11px;color:#f66a09;word-break:break-all">${escapeHtml(url)}</a>
+			<img src="${escapeAttr(imageUrls[table.id])}" width="150" height="150" alt="${escapeAttr(label)}" style="display:block;margin:0 auto 6px;border:0">
+			<div style="font-weight:700;font-size:15px">${escapeHtml(label)}</div>
+			<a href="${escapeAttr(url)}" style="font-size:12px;color:#f66a09">${escapeHtml(strings.tablesEmailLinkText || 'Link')}</a>
 		</td>`;
 	});
 	// Three QR codes per row - fits an email body and a printed A4 page.
@@ -585,16 +660,25 @@ function tablesEmailHtml(client, lang) {
 }
 
 // Rich copy for email clients (QR images included), plain text as fallback.
+// html may be a Promise: the clipboard write has to start right inside the
+// click (browsers only allow it during the user's gesture), while the table
+// QR images are still being drawn and uploaded - ClipboardItem accepts a
+// promise and waits for it.
 async function copyForEmail(html, text) {
+	const htmlBlob = Promise.resolve(html).then((value) => new Blob([value], { type: 'text/html' }));
 	try {
 		await navigator.clipboard.write([
 			new ClipboardItem({
-				'text/html': new Blob([html], { type: 'text/html' }),
+				'text/html': htmlBlob,
 				'text/plain': new Blob([text], { type: 'text/plain' })
 			})
 		]);
 		notify(strings().onboardingCopiedRich);
 	} catch (error) {
+		// The rich version itself failing (e.g. an image upload) is a real
+		// error worth showing; otherwise fall back to plain text.
+		const htmlError = await htmlBlob.then(() => null, (reason) => reason);
+		if (htmlError) { notify(strings().couldNotCreateTableQr.replace('{error}', htmlError.message)); return; }
 		await navigator.clipboard.writeText(text);
 		notify(strings().onboardingCopiedText);
 	}
@@ -1213,6 +1297,16 @@ if (smartServiceHubPanel) {
 			if (!confirm(strings().removeTableConfirm.replace('{n}', tableNumber))) return;
 			const { error } = await supabaseClient.from('restaurant_tables').delete().eq('id', tableId);
 			if (error) { notify(strings().couldNotRemoveTable.replace('{error}', error.message)); return; }
+			// Its emailed QR image (if one was ever made) goes too - best effort.
+			const removedFrom = selectedClient();
+			if (removedFrom) {
+				supabaseClient.storage.from('menu-images').list(TABLE_QR_FOLDER(removedFrom), { search: tableId })
+					.then(({ data }) => {
+						const names = (data || []).filter((file) => file.name.startsWith(`${tableId}-`)).map((file) => `${TABLE_QR_FOLDER(removedFrom)}/${file.name}`);
+						if (names.length) return supabaseClient.storage.from('menu-images').remove(names);
+					})
+					.catch(() => {});
+			}
 			notify(strings().tableRemoved.replace('{n}', tableNumber));
 			await syncSmartServiceHub();
 			return;
@@ -1256,7 +1350,9 @@ if (smartServiceHubPanel) {
 		if (event.target.closest('#tablesEmailCopy')) {
 			const client = selectedClient();
 			if (!client || !tablesEmailRows(client).length) return;
-			await copyForEmail(tablesEmailHtml(client, onboardingTemplateLang), tablesEmailText(client, onboardingTemplateLang));
+			const lang = onboardingTemplateLang;
+			notify(strings().tablesEmailPreparing);
+			await copyForEmail(tableQrImageUrls(client).then((urls) => tablesEmailHtml(client, lang, urls)), tablesEmailText(client, lang));
 			return;
 		}
 		const button = event.target.closest('[data-staff-link], [data-table-link]');
