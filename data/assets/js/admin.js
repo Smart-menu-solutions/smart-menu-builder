@@ -362,7 +362,7 @@ function normalizeTranslationCasing(text) {
 async function translateViaDeepL(text, source, target) {
 	const response = await fetch(`${AUTH_CONFIG.supabaseUrl}/functions/v1/translate`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json', apikey: AUTH_CONFIG.supabasePublishableKey },
+		headers: await ownerFunctionHeaders(),
 		body: JSON.stringify({ text, source, target })
 	});
 	if (!response.ok) throw new Error(`HTTP ${response.status}`);

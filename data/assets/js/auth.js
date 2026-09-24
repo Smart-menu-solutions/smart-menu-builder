@@ -11,6 +11,18 @@ async function hasValidSession() {
 	return assurance?.currentLevel === 'aal2';
 }
 
+// Headers for owner-only Edge Functions (translate, scrape-website): they
+// check the signed-in session themselves, so the publishable key alone
+// isn't enough.
+async function ownerFunctionHeaders() {
+	const { data } = await supabaseClient.auth.getSession();
+	return {
+		'Content-Type': 'application/json',
+		apikey: AUTH_CONFIG.supabasePublishableKey,
+		Authorization: `Bearer ${data.session?.access_token || ''}`
+	};
+}
+
 async function logout() {
 	await supabaseClient.auth.signOut();
 	location.replace('login.html');

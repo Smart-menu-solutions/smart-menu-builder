@@ -24,3 +24,14 @@ verify_jwt = false
 
 [functions.manage-addons]
 verify_jwt = false
+
+# These three are called by guests, staff links and the owner without a
+# Supabase JWT - each checks its own credential inside the function.
+[functions.scrape-website]
+verify_jwt = false
+
+[functions.order-session]
+verify_jwt = false
+
+[functions.staff-access]
+verify_jwt = false

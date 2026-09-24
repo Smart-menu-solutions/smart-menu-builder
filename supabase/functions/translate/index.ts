@@ -9,6 +9,8 @@
 // category names. admin.js falls back to MyMemory only if this function
 // errors or the language pair isn't one DeepL supports.
 
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
 const DEEPL_API_KEY = Deno.env.get('DEEPL_API_KEY') ?? '';
 // API Free keys are always suffixed ":fx" and only work against the
 // api-free host; a Pro key (no suffix) needs api.deepl.com instead. Reading
@@ -42,6 +44,7 @@ Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 	if (!DEEPL_API_KEY) return json({ error: 'Translation is not configured.' }, 500);
+	if (!(await isOwnerRequest(request))) return json({ error: 'Not authorized.' }, 401);
 
 	try {
 		const body = await request.json();
@@ -87,4 +90,19 @@ function json(data: unknown, status = 200) {
 		status,
 		headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' }
 	});
+}
+
+// Owner-only: without this, anyone who found the function URL could run
+// requests on our account. The caller's own session token is checked by the
+// database's is_owner() (owner email + completed 2FA), the same rule every
+// owner RLS policy uses - one place decides who the owner is.
+async function isOwnerRequest(request: Request) {
+	const authorization = request.headers.get('Authorization') || '';
+	if (!authorization.startsWith('Bearer ')) return false;
+	const client = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_ANON_KEY') ?? '', {
+		global: { headers: { Authorization: authorization } },
+		auth: { persistSession: false }
+	});
+	const { data, error } = await client.rpc('is_owner');
+	return !error && data === true;
 }

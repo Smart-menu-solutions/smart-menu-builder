@@ -63,6 +63,16 @@ async function resolveAccess(token: string) {
 	return { menuSlug: data.menu_slug as string, role: data.role as 'waiter' | 'kitchen' | 'bar' | 'cashier', menu };
 }
 
+// Every tableId/itemId in a POST body comes from the caller, so it has to be
+// checked against the restaurant the staff token belongs to - otherwise one
+// restaurant's staff link could act on another restaurant's table just by
+// knowing its id (table ids travel in the public realtime broadcasts).
+async function tableBelongsTo(tableId: string, menuSlug: string) {
+	if (!TOKEN_PATTERN.test(tableId)) return false;
+	const { data } = await supabase.from('restaurant_tables').select('id').eq('id', tableId).eq('menu_slug', menuSlug).maybeSingle();
+	return !!data;
+}
+
 function itemView(item: OrderItemRow, withPrice: boolean) {
 	return {
 		id: item.id, name: item.product_name, quantity: item.quantity, notes: item.notes,
@@ -154,6 +164,12 @@ Deno.serve(async (request) => {
 
 	if (body.action === 'dispatch_item' || body.action === 'dispatch_all') {
 		if (role !== 'kitchen' && role !== 'bar') return json({ error: 'Not allowed for this role.' }, 403);
+		if (body.action === 'dispatch_item') {
+			const { data: item } = await supabase.from('order_items').select('serve_table_id').eq('id', String(body.itemId || '')).maybeSingle();
+			if (!item || !(await tableBelongsTo(item.serve_table_id, menuSlug))) return json({ error: 'Item not found.' }, 404);
+		} else if (!(await tableBelongsTo(String(body.tableId || ''), menuSlug))) {
+			return json({ error: 'Table not found.' }, 404);
+		}
 		const ownStation = role === 'kitchen' ? 'KITCHEN' : 'BAR';
 		let query = supabase.from('order_items').update({ dispatched_at: new Date().toISOString() }).is('dispatched_at', null).eq('station', ownStation);
 		query = body.action === 'dispatch_item' ? query.eq('id', String(body.itemId || '')) : query.eq('serve_table_id', String(body.tableId || ''));
@@ -190,6 +206,7 @@ Deno.serve(async (request) => {
 		// still close_table, cashier-only, on purpose).
 		if (role !== 'waiter') return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
+		if (!(await tableBelongsTo(tableId, menuSlug))) return json({ error: 'Table not found.' }, 404);
 		const { data: group } = await supabase.from('order_groups').select('id, order_items(id)').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
 		if (!group) return json({ error: 'No open order for this table.' }, 400);
 		if ((group.order_items || []).length) return json({ error: 'This table already has items - ask the cashier to close it.' }, 400);
@@ -208,6 +225,7 @@ Deno.serve(async (request) => {
 		// order-session: turns the tile red so the cashier notices it.
 		if (!['waiter', 'cashier'].includes(role)) return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
+		if (!(await tableBelongsTo(tableId, menuSlug))) return json({ error: 'Table not found.' }, 404);
 		const { data: group } = await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
 		if (!group) return json({ error: 'This table is not active yet.' }, 400);
 		const { error } = await supabase.from('order_groups').update({ bill_requested_at: new Date().toISOString() }).eq('id', group.id);
@@ -221,6 +239,7 @@ Deno.serve(async (request) => {
 		if (!['waiter', 'bar', 'cashier'].includes(role)) return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
 		if (!tableId) return json({ error: 'Missing table.' }, 400);
+		if (!(await tableBelongsTo(tableId, menuSlug))) return json({ error: 'Table not found.' }, 404);
 		const requested = Array.isArray(body.items) ? body.items : [];
 		if (!requested.length) return json({ error: 'No items to add.' }, 400);
 
@@ -265,6 +284,7 @@ Deno.serve(async (request) => {
 	if (body.action === 'close_table') {
 		if (role !== 'cashier') return json({ error: 'Not allowed for this role.' }, 403);
 		const tableId = String(body.tableId || '');
+		if (!(await tableBelongsTo(tableId, menuSlug))) return json({ error: 'Table not found.' }, 404);
 		const { data: group } = await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
 		if (!group) return json({ error: 'No open order for this table.' }, 400);
 		const { error: groupError } = await supabase.from('order_groups').update({ status: 'PAID', closed_at: new Date().toISOString() }).eq('id', group.id);

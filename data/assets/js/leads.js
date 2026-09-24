@@ -670,7 +670,7 @@ async function performSearch() {
 async function applyEnrichment(lead) {
 	const response = await fetch(`${AUTH_CONFIG.supabaseUrl}/functions/v1/scrape-website`, {
 		method: 'POST',
-		headers: { 'Content-Type': 'application/json', apikey: AUTH_CONFIG.supabasePublishableKey },
+		headers: await ownerFunctionHeaders(),
 		body: JSON.stringify({ url: lead.website })
 	});
 	const data = await response.json();

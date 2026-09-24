@@ -7,6 +7,12 @@
 <title>Sign in — Smart Menu Builder</title>
 <link rel="icon" type="image/png" href="https://primary.jwwb.nl/public/q/b/h/temp-qwfllybferzrbmruxsqy/designer-6-photoroom-high.png?enable-io=true&amp;enable=upscale&amp;height=64">
 <link rel="stylesheet" href="assets/css/auth.css?v=mobile-1">
+<link rel="manifest" href="manifest-admin.webmanifest">
+<meta name="theme-color" content="#262421">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Menu Builder">
 </head>
 <body>
 
@@ -68,7 +74,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="data/assets/js/auth-config.js"></script>
-<script src="data/assets/js/auth.js"></script>
+<script src="data/assets/js/auth.js?v=owner-fn-1"></script>
 <script>
 const loginLanguages = {
   de: { sign_in: 'Anmelden', intro: 'Melde dich mit deiner E-Mail-Adresse, deinem Passwort und dem 6-stelligen Code deiner Authenticator-App an.', access: 'Zugang nur für das Smart Menu Solutions Team.', email: 'E-Mail-Adresse', password: 'Passwort', code: 'Authenticator-Code', hint: '6-stelliger Code von Google Authenticator, Microsoft Authenticator, Authy usw.', setup: 'Die Einrichtung erfolgt einmalig im Supabase-Dashboard.', back_to_website: '← Zurück zur Website', footer_note: '© 2026 Smart Menu Builder — Powered by', checking: 'Wird geprüft…' },
@@ -118,5 +124,6 @@ applyLoginLanguage(localStorage.getItem('selectedLang') === 'de' ? 'de' : 'en');
 	});
 </script>
 
+<script src="data/assets/js/pwa.js?v=3" defer></script>
 </body>
 </html>

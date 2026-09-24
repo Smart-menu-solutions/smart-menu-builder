@@ -136,7 +136,14 @@ function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, tota
 	`;
 }
 
-Deno.serve(async (_request) => {
+Deno.serve(async (request) => {
+	// Only the Supabase Cron job may trigger this (see 0021_cron_secret.sql):
+	// the function runs without JWT verification, so without this check
+	// anyone who found the URL could set it off again and again.
+	const cronSecret = Deno.env.get('CRON_SECRET') ?? '';
+	if (!cronSecret || request.headers.get('x-cron-secret') !== cronSecret) {
+		return new Response(JSON.stringify({ error: 'Not authorized.' }), { status: 401, headers: { 'Content-Type': 'application/json' } });
+	}
 	const today = new Date();
 	const rangeEnd = isoDate(addDays(today, -1));
 	const rangeStart = isoDate(addDays(today, -7));
