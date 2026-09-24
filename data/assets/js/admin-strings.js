@@ -40,6 +40,10 @@ window.ADMIN_STRINGS = {
 
 		addonsIntro: 'Grün bedeutet, dass der Kunde das Modul bereits hat. Setzen Sie den Haken bei „Gratis“, um ein Zusatzmodul kostenlos freizuschalten (ohne Kauf). „Link senden“ kopiert den persönlichen Zusatzmodul-Link des Kunden, damit Sie ihn beliebig weitergeben können.',
 		gratis: 'Gratis', giveForFree: 'Dieses Zusatzmodul kostenlos freischalten', viewStats: 'Statistik ansehen ↗', sendLink: 'Link senden',
+		addAccess: '＋ Zugang hinzufügen', accessNamePlaceholder: 'Name, z. B. Beach Bar oder Küche 2', accessRoleAria: 'Art des Zugangs',
+		renameAccess: 'Umbenennen', renameAccessPrompt: 'Name für diesen Zugang (leer lassen = Standardname):',
+		removeAccess: 'Zugang löschen', removeAccessConfirm: 'Zugang „{name}“ wirklich löschen? Sein Link funktioniert danach nicht mehr.',
+		couldNotSaveAccess: 'Zugang konnte nicht gespeichert werden: {error}', accessAdded: 'Zugang hinzugefügt', accessSaved: 'Name gespeichert', accessRemoved: 'Zugang „{name}“ gelöscht',
 		staffLinks: 'Personal-Links', tables: 'Tische', tableNumberPlaceholder: 'Tischnummer, z. B. 12', addTable: '＋ Tisch hinzufügen',
 		onboardingTemplate: 'Onboarding-Vorlage', copyForEmail: 'Für E-Mail kopieren',
 
@@ -183,6 +187,10 @@ window.ADMIN_STRINGS = {
 
 		addonsIntro: 'Green means the client already has it. Tick "Free" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever\'s convenient.',
 		gratis: 'Free', giveForFree: 'Give this add-on for free', viewStats: 'View stats ↗', sendLink: 'Send link',
+		addAccess: '＋ Add access', accessNamePlaceholder: 'Name, e.g. Beach Bar or Kitchen 2', accessRoleAria: 'Access type',
+		renameAccess: 'Rename', renameAccessPrompt: 'Name for this access (leave empty = default name):',
+		removeAccess: 'Delete access', removeAccessConfirm: 'Really delete access "{name}"? Its link will stop working.',
+		couldNotSaveAccess: 'Could not save access: {error}', accessAdded: 'Access added', accessSaved: 'Name saved', accessRemoved: 'Access "{name}" deleted',
 		staffLinks: 'Staff links', tables: 'Tables', tableNumberPlaceholder: 'Table number, e.g. 12', addTable: '＋ Add table',
 		onboardingTemplate: 'Onboarding template', copyForEmail: 'Copy for email',
 

@@ -19,6 +19,7 @@ const [ROLE_TITLE, PRODUCT_TITLE = 'Smart ServiceHub™'] = document.title.split
 
 let menuState = null;
 let restaurantName = '';
+let accessLabel = '';
 let languagesState = ['de'];
 let translationsState = {};
 let openAddFormFor = null;
@@ -282,11 +283,14 @@ function headerToolsMarkup() {
 
 function render(data) {
 	menuState = data.menu || menuState;
+	// An extra link the owner named, e.g. "Beach Bar" (see
+	// 0023_multiple_staff_access.sql) - shown instead of the role's name.
+	if (data.label !== undefined) accessLabel = data.label || '';
 	if (data.name) {
 		restaurantName = data.name;
 		// "Küche · El Greco — Smart ServiceHub™" - pwa.js names the installed
 		// staff app after the part before " — ".
-		const title = `${ROLE_TITLE} · ${restaurantName} — ${PRODUCT_TITLE}`;
+		const title = `${accessLabel || ROLE_TITLE} · ${restaurantName} — ${PRODUCT_TITLE}`;
 		if (document.title !== title) document.title = title;
 	}
 	if (data.languages?.length) languagesState = data.languages;
@@ -301,7 +305,7 @@ function render(data) {
 		: (tables.length ? cardGridMarkup(tables) : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup() + workflowPopupMarkup();
 	app.innerHTML = `
 		<header class="staff-header">
-			<div><h1>${escapeHtml(strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
+			<div><h1>${escapeHtml(accessLabel || strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
 			<div class="staff-brand">
 				${restaurantName ? `<p class="staff-brand-name">${escapeHtml(restaurantName)}</p>` : ''}
 				<a class="staff-brand-tag" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html" target="_blank" rel="noopener"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>

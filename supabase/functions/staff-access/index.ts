@@ -56,11 +56,15 @@ async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
 }
 
 async function resolveAccess(token: string) {
-	const { data } = await supabase.from('restaurant_access').select('menu_slug, role').eq('token', token).maybeSingle();
+	// A restaurant can have several links per role (see
+	// 0023_multiple_staff_access.sql) - everything below goes by role only,
+	// so a second kitchen link sees the same tickets as the first. label is
+	// just that link's display name (null = the role's default name).
+	const { data } = await supabase.from('restaurant_access').select('menu_slug, role, label').eq('token', token).maybeSingle();
 	if (!data) return null;
 	const { data: menu } = await supabase.from('menus').select('name, categories, languages, translations, smartservice_hub_enabled').eq('slug', data.menu_slug).maybeSingle();
 	if (!menu || !menu.smartservice_hub_enabled) return null;
-	return { menuSlug: data.menu_slug as string, role: data.role as 'waiter' | 'kitchen' | 'bar' | 'cashier', menu };
+	return { menuSlug: data.menu_slug as string, role: data.role as 'waiter' | 'kitchen' | 'bar' | 'cashier', label: (data.label as string | null) || null, menu };
 }
 
 // Every tableId/itemId in a POST body comes from the caller, so it has to be
@@ -141,7 +145,7 @@ Deno.serve(async (request) => {
 		const menu = ['waiter', 'bar', 'cashier'].includes(access.role) ? { categories: access.menu.categories } : undefined;
 		// name goes to every role (header branding), unlike categories above
 		// which only waiter/bar/cashier need for picking products to add.
-		return json({ ...view, menu, name: access.menu.name, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
+		return json({ ...view, menu, name: access.menu.name, label: access.label, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
 	}
 
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);

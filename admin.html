@@ -14,7 +14,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/admin.css?v=table-chips-4">
+<link rel="stylesheet" href="assets/css/admin.css?v=access-1">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -115,7 +115,12 @@
                         <div class="addon-extra" id="smartServiceHubExtra" hidden>
                             <div class="addon-extra-block">
                                 <p class="addon-extra-heading" data-i18n="staffLinks">Staff links</p>
-                                <div id="smartServiceHubLinks"></div>
+                                <div class="table-chip-list" id="smartServiceHubLinks"></div>
+                                <div class="addon-extra-add access-add">
+                                    <select id="smartServiceHubNewAccessRole" data-i18n-aria-label="accessRoleAria" aria-label="Role"></select>
+                                    <input type="text" id="smartServiceHubNewAccessName" maxlength="40" data-i18n-placeholder="accessNamePlaceholder" placeholder="Name, e.g. Beach Bar">
+                                    <button type="button" class="button button-ghost" id="smartServiceHubAddAccess" data-i18n="addAccess">＋ Add access</button>
+                                </div>
                             </div>
                             <div class="addon-extra-block">
                                 <p class="addon-extra-heading" data-i18n="tables">Tables</p>
@@ -187,8 +192,8 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=12"></script>
-<script src="data/assets/js/admin-strings.js?v=6"></script>
-<script src="data/assets/js/admin.js?v=owner-fn-1"></script>
+<script src="data/assets/js/admin-strings.js?v=7"></script>
+<script src="data/assets/js/admin.js?v=access-1"></script>
 <script src="data/assets/js/pwa.js?v=4" defer></script>
 </body>
 </html>

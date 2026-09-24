@@ -477,8 +477,29 @@ const ADDON_FREE_TOGGLES = [
 ];
 
 const STAFF_ROLES = ['waiter', 'kitchen', 'bar', 'cashier'];
+// menu_slug -> every staff link of that restaurant, in STAFF_ROLES order and
+// oldest first within a role. A role can have several links (a 2nd kitchen,
+// a beach bar - see 0023_multiple_staff_access.sql); each carries an
+// optional owner-chosen label, null meaning the role's default name.
 let smartServiceAccessBySlug = {};
 let smartServiceTablesBySlug = {};
+
+function staffAccessUrl(row) {
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	return `${base}${row.role}.html?t=${row.token}`;
+}
+
+function staffAccessName(row, lang) {
+	const roleLabels = window.STAFF_STRINGS?.[lang]?.roleLabels || window.STAFF_STRINGS?.de?.roleLabels || {};
+	return row.label || roleLabels[row.role] || row.role.charAt(0).toUpperCase() + row.role.slice(1);
+}
+
+// Every link of the client, or - before any exist - one placeholder row per
+// role (token null) so the onboarding template still lists all four roles.
+function staffAccessRowsForTemplate(client) {
+	const rows = smartServiceAccessBySlug[client.slug] || [];
+	return rows.length ? rows : STAFF_ROLES.map((role) => ({ role, token: null, label: null }));
+}
 
 // Onboarding template: the 4 staff links, in whichever of the 6 menu
 // languages the owner picks - meant to be copied straight into an email to
@@ -493,14 +514,8 @@ let onboardingTemplateLang = 'de';
 
 function onboardingTemplateText(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
-	const base = window.location.href.replace(/admin\.html.*$/, '');
-	const access = smartServiceAccessBySlug[client.slug] || {};
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
-	const staffLines = STAFF_ROLES.map((role) => {
-		const token = access[role];
-		const label = strings.roleLabels?.[role] || role;
-		return `${label}: ${token ? `${base}${role}.html?t=${token}` : '-'}`;
-	}).join('\n');
+	const staffLines = staffAccessRowsForTemplate(client).map((row) => `${staffAccessName(row, lang)}: ${row.token ? staffAccessUrl(row) : '-'}`).join('\n');
 	return `${heading}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}`;
 }
 
@@ -510,15 +525,11 @@ function onboardingTemplateText(client, lang) {
 // text/plain fallback for clients that don't).
 function onboardingTemplateHtml(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
-	const base = window.location.href.replace(/admin\.html.*$/, '');
-	const access = smartServiceAccessBySlug[client.slug] || {};
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
-	const staffRows = STAFF_ROLES.map((role) => {
-		const token = access[role];
-		const label = strings.roleLabels?.[role] || role;
-		const url = token ? `${base}${role}.html?t=${token}` : '';
-		return `<tr><td style="padding:0 0 6px 0"><strong>${escapeHtml(label)}:</strong> ${url ? `<a href="${escapeAttr(url)}">${escapeHtml(url)}</a>` : '-'}</td></tr>`;
+	const staffRows = staffAccessRowsForTemplate(client).map((row) => {
+		const url = row.token ? staffAccessUrl(row) : '';
+		return `<tr><td style="padding:0 0 6px 0"><strong>${escapeHtml(staffAccessName(row, lang))}:</strong> ${url ? `<a href="${escapeAttr(url)}">${escapeHtml(url)}</a>` : '-'}</td></tr>`;
 	}).join('');
 	return `<div style="font-family:Arial,Helvetica,sans-serif">
 		<p style="font-weight:700;font-size:15px;margin:0 0 16px">${escapeHtml(heading)}</p>
@@ -537,24 +548,38 @@ function onboardingTemplateHtml(client, lang) {
 async function syncSmartServiceHub() {
 	if (typeof supabaseClient === 'undefined') return;
 	const [{ data: access }, { data: tables }] = await Promise.all([
-		supabaseClient.from('restaurant_access').select('menu_slug, role, token'),
+		supabaseClient.from('restaurant_access').select('id, menu_slug, role, token, label, created_at').order('created_at'),
 		supabaseClient.from('restaurant_tables').select('id, menu_slug, table_number, link_secret').order('table_number')
 	]);
 	smartServiceAccessBySlug = {};
-	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= {})[row.role] = row.token; });
+	(access || []).forEach((row) => { (smartServiceAccessBySlug[row.menu_slug] ||= []).push(row); });
+	Object.values(smartServiceAccessBySlug).forEach((rows) => rows.sort((a, b) => STAFF_ROLES.indexOf(a.role) - STAFF_ROLES.indexOf(b.role)));
 	smartServiceTablesBySlug = {};
 	(tables || []).forEach((row) => { (smartServiceTablesBySlug[row.menu_slug] ||= []).push(row); });
 	render();
 }
 
-// Creates the 4 role links the first time SmartService Hub is switched on
-// for a client - a plain insert with `unique (menu_slug, role)` on the
-// table, so it's safe to call again later and just no-op on conflict.
+// Creates one link per role the first time SmartService Hub is switched on
+// for a client. Roles can hold several links now (no unique constraint left
+// to no-op against), so it asks the database which roles already have one
+// and only fills in the missing ones - safe to call again later.
 async function provisionSmartServiceAccess(client) {
-	const rows = STAFF_ROLES.map((role) => ({ menu_slug: client.slug, role }));
-	const { error } = await supabaseClient.from('restaurant_access').upsert(rows, { onConflict: 'menu_slug,role', ignoreDuplicates: true });
-	if (error) { notify(strings().couldNotSetUpStaffLinks.replace('{error}', error.message)); return; }
+	const { data: existing, error: readError } = await supabaseClient.from('restaurant_access').select('role').eq('menu_slug', client.slug);
+	if (readError) { notify(strings().couldNotSetUpStaffLinks.replace('{error}', readError.message)); return; }
+	const have = new Set((existing || []).map((row) => row.role));
+	const rows = STAFF_ROLES.filter((role) => !have.has(role)).map((role) => ({ menu_slug: client.slug, role }));
+	if (rows.length) {
+		const { error } = await supabaseClient.from('restaurant_access').insert(rows);
+		if (error) { notify(strings().couldNotSetUpStaffLinks.replace('{error}', error.message)); return; }
+	}
 	await syncSmartServiceHub();
+}
+
+// Label as the owner typed it, or null for "the role's default name" -
+// matches the check constraint in 0023_multiple_staff_access.sql.
+function cleanAccessLabel(value) {
+	const label = String(value || '').trim().slice(0, 40);
+	return label || null;
 }
 
 // Writes just this one column. saveClients() deliberately never sends the
@@ -647,18 +672,30 @@ function renderSmartServiceHubExtra(client) {
 	if (!client.smartservice_hub_enabled) return;
 
 	const base = window.location.href.replace(/admin\.html.*$/, '');
-	const access = smartServiceAccessBySlug[client.slug] || {};
+	const accessRows = smartServiceAccessBySlug[client.slug] || [];
 	const linksList = $('#smartServiceHubLinks');
 	if (linksList) {
 		// Role names come from staff-strings.js rather than a second copy here -
-		// same reasoning as the onboarding template above.
+		// same reasoning as the onboarding template above. A named link also
+		// shows which role it is, since "Beach Bar" alone doesn't say whether
+		// it gets bar tickets or the cashier view. The last link of a role
+		// can't be deleted - that role would be left with no screen at all.
 		const roleLabels = window.STAFF_STRINGS?.[currentLang]?.roleLabels || {};
-		linksList.innerHTML = STAFF_ROLES.map((role) => {
-			const token = access[role];
-			const link = token ? `${base}${role}.html?t=${token}` : '';
-			const label = roleLabels[role] || role.charAt(0).toUpperCase() + role.slice(1);
-			return `<div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(label)}</span></span><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(link)}" ${link ? '' : 'disabled'}>${escapeHtml(strings().copyLink)}</button></div>`;
+		linksList.innerHTML = accessRows.map((row) => {
+			const roleName = roleLabels[row.role] || row.role;
+			const sameRole = accessRows.filter((other) => other.role === row.role).length;
+			const name = staffAccessName(row, currentLang);
+			const removeButton = sameRole > 1
+				? `<button type="button" class="table-chip-remove" data-remove-access="${escapeAttr(row.id)}" data-access-name="${escapeAttr(name)}" title="${escapeAttr(strings().removeAccess)}" aria-label="${escapeAttr(strings().removeAccess)}">✕</button>`
+				: '';
+			return `<div class="addon-board-row access-row"><span class="addon-board-main"><span class="addon-board-name">${escapeHtml(name)}</span>${row.label ? `<span class="access-role-hint">${escapeHtml(roleName)}</span>` : ''}</span><button type="button" class="button button-ghost addon-board-send" data-rename-access="${escapeAttr(row.id)}" data-access-name="${escapeAttr(row.label || '')}">${escapeHtml(strings().renameAccess)}</button><button type="button" class="button button-ghost addon-board-send" data-staff-link="${escapeAttr(staffAccessUrl(row))}">${escapeHtml(strings().copyLink)}</button>${removeButton}</div>`;
 		}).join('');
+	}
+	const roleSelect = $('#smartServiceHubNewAccessRole');
+	if (roleSelect) {
+		const roleLabels = window.STAFF_STRINGS?.[currentLang]?.roleLabels || {};
+		const chosen = roleSelect.value || 'kitchen';
+		roleSelect.innerHTML = STAFF_ROLES.map((role) => `<option value="${role}"${role === chosen ? ' selected' : ''}>${escapeHtml(roleLabels[role] || role)}</option>`).join('');
 	}
 
 	const tables = smartServiceTablesBySlug[client.slug] || [];
@@ -1116,6 +1153,25 @@ if (smartServiceHubPanel) {
 			await syncSmartServiceHub();
 			return;
 		}
+		const renameAccess = event.target.closest('[data-rename-access]');
+		if (renameAccess) {
+			const input = prompt(strings().renameAccessPrompt, renameAccess.dataset.accessName || '');
+			if (input === null) return;
+			const { error } = await supabaseClient.from('restaurant_access').update({ label: cleanAccessLabel(input) }).eq('id', renameAccess.dataset.renameAccess);
+			if (error) { notify(strings().couldNotSaveAccess.replace('{error}', error.message)); return; }
+			notify(strings().accessSaved);
+			await syncSmartServiceHub();
+			return;
+		}
+		const removeAccess = event.target.closest('[data-remove-access]');
+		if (removeAccess) {
+			if (!confirm(strings().removeAccessConfirm.replace('{name}', removeAccess.dataset.accessName))) return;
+			const { error } = await supabaseClient.from('restaurant_access').delete().eq('id', removeAccess.dataset.removeAccess);
+			if (error) { notify(strings().couldNotSaveAccess.replace('{error}', error.message)); return; }
+			notify(strings().accessRemoved.replace('{name}', removeAccess.dataset.accessName));
+			await syncSmartServiceHub();
+			return;
+		}
 		const langButton = event.target.closest('[data-onboarding-lang]');
 		if (langButton) {
 			onboardingTemplateLang = langButton.dataset.onboardingLang;
@@ -1154,6 +1210,20 @@ if (smartServiceHubPanel) {
 		notify(strings().linkCopied);
 	});
 }
+// Another link for an existing role (a 2nd kitchen, a beach bar...): the
+// token fills itself in via the column default, same as the first four.
+if ($('#smartServiceHubAddAccess')) $('#smartServiceHubAddAccess').addEventListener('click', async () => {
+	const client = selectedClient();
+	const role = $('#smartServiceHubNewAccessRole')?.value;
+	const input = $('#smartServiceHubNewAccessName');
+	if (!client || !STAFF_ROLES.includes(role)) return;
+	const label = cleanAccessLabel(input.value);
+	const { error } = await supabaseClient.from('restaurant_access').insert({ menu_slug: client.slug, role, label });
+	if (error) { notify(strings().couldNotSaveAccess.replace('{error}', error.message)); return; }
+	input.value = '';
+	notify(strings().accessAdded);
+	await syncSmartServiceHub();
+});
 // Just a table_number insert - link_secret fills itself in via the column
 // default (see 0019_table_link_secret.sql), no need to generate one here.
 if ($('#smartServiceHubAddTable')) $('#smartServiceHubAddTable').addEventListener('click', async () => {

@@ -174,3 +174,10 @@
    button, not look like a primary action. */
 #addClient{background:#f66a09!important;border-color:#f66a09!important;color:#fff!important}
 #addClient:hover{background:#d85d06!important;border-color:#d85d06!important;color:#fff!important}
+/* Staff links (several per role, see 0023_multiple_staff_access.sql):
+   rename + copy sit side by side on the right, the role hint under a
+   custom name says which screen that link actually opens. */
+.access-row .addon-board-send+.addon-board-send{margin-left:0}
+.access-role-hint{font-size:11px;color:var(--muted)}
+.access-add{flex-wrap:wrap}
+.access-add select{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}
