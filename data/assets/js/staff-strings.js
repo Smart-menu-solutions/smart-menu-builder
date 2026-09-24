@@ -70,6 +70,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Verlauf heute', noOpenOrders: 'Gerade keine offenen Bestellungen.',
 		tileOpenOrders: 'Offene Bestellungen', tileOpenOrdersSub: 'Alle aktiven Tische auf einen Blick', tileHistorySub: 'Alles, was heute passiert ist',
 		tileTotals: 'Gesamtübersicht', tileTotalsSub: 'Summe aller offenen Tische', tileHelp: 'So funktioniert’s', tileHelpSub: 'Der Ablauf in 10 Schritten',
+		privacyLink: 'Datenschutz', imprintLink: 'Impressum',
 		offline: 'Keine Internetverbindung. Die Seite lädt automatisch neu, sobald du wieder online bist.',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge'
@@ -138,6 +139,7 @@ window.STAFF_STRINGS = {
 		historyTitle: "Today's history", noOpenOrders: 'No open orders right now.',
 		tileOpenOrders: 'Open orders', tileOpenOrdersSub: 'All active tables at a glance', tileHistorySub: 'Everything that happened today',
 		tileTotals: 'Overview', tileTotalsSub: 'Total of all open tables', tileHelp: 'How it works', tileHelpSub: 'The workflow in 10 steps',
+		privacyLink: 'Privacy', imprintLink: 'Legal notice',
 		offline: 'No internet connection. This page reloads automatically once you are back online.',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access'
@@ -206,6 +208,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Ιστορικό σήμερα', noOpenOrders: 'Δεν υπάρχουν ανοιχτές παραγγελίες αυτή τη στιγμή.',
 		tileOpenOrders: 'Ανοιχτές παραγγελίες', tileOpenOrdersSub: 'Όλα τα ενεργά τραπέζια με μια ματιά', tileHistorySub: 'Όλα όσα έγιναν σήμερα',
 		tileTotals: 'Συνολική εικόνα', tileTotalsSub: 'Σύνολο όλων των ανοιχτών τραπεζιών', tileHelp: 'Πώς λειτουργεί', tileHelpSub: 'Η διαδικασία σε 10 βήματα',
+		privacyLink: 'Απόρρητο', imprintLink: 'Νομικές πληροφορίες',
 		offline: 'Δεν υπάρχει σύνδεση στο διαδίκτυο. Η σελίδα θα ανανεωθεί αυτόματα μόλις συνδεθείτε ξανά.',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού'
@@ -274,6 +277,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Cronologia di oggi', noOpenOrders: 'Nessun ordine aperto al momento.',
 		tileOpenOrders: 'Ordini aperti', tileOpenOrdersSub: 'Tutti i tavoli attivi a colpo d’occhio', tileHistorySub: 'Tutto ciò che è successo oggi',
 		tileTotals: 'Panoramica', tileTotalsSub: 'Totale di tutti i tavoli aperti', tileHelp: 'Come funziona', tileHelpSub: 'La procedura in 10 passi',
+		privacyLink: 'Privacy', imprintLink: 'Note legali',
 		offline: 'Nessuna connessione a Internet. La pagina si ricarica automaticamente quando torni online.',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale'
@@ -342,6 +346,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Historial de hoy', noOpenOrders: 'No hay pedidos abiertos ahora.',
 		tileOpenOrders: 'Pedidos abiertos', tileOpenOrdersSub: 'Todas las mesas activas de un vistazo', tileHistorySub: 'Todo lo que pasó hoy',
 		tileTotals: 'Resumen general', tileTotalsSub: 'Total de todas las mesas abiertas', tileHelp: 'Cómo funciona', tileHelpSub: 'El proceso en 10 pasos',
+		privacyLink: 'Privacidad', imprintLink: 'Aviso legal',
 		offline: 'Sin conexión a Internet. La página se recargará automáticamente cuando vuelvas a estar en línea.',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal'
@@ -410,6 +415,7 @@ window.STAFF_STRINGS = {
 		historyTitle: "Historique d'aujourd'hui", noOpenOrders: 'Aucune commande ouverte pour le moment.',
 		tileOpenOrders: 'Commandes ouvertes', tileOpenOrdersSub: "Toutes les tables actives d'un coup d'œil", tileHistorySub: "Tout ce qui s'est passé aujourd'hui",
 		tileTotals: "Vue d'ensemble", tileTotalsSub: 'Total de toutes les tables ouvertes', tileHelp: 'Comment ça marche', tileHelpSub: 'Le déroulement en 10 étapes',
+		privacyLink: 'Confidentialité', imprintLink: 'Mentions légales',
 		offline: 'Pas de connexion Internet. La page se recharge automatiquement dès que vous êtes de nouveau en ligne.',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'

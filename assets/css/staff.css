@@ -36,6 +36,9 @@ button{font-family:inherit}
 .sh-guide-list{margin:0;padding-left:1.1rem;font-size:.85rem;line-height:1.5}
 .sh-guide-list li{margin:.35rem 0}
 .sh-sidebar-foot{margin-top:auto;padding-top:1.2rem}
+.sh-legal{margin-top:.8rem;font-size:.72rem;color:var(--muted)}
+.sh-legal a{color:var(--muted);text-decoration:none}
+.sh-legal a:hover{color:var(--orange);text-decoration:underline}
 .staff-languages{display:flex;gap:.35rem;flex-wrap:wrap}
 .staff-lang-btn{background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.35rem .65rem;font-size:.72rem;font-weight:700;cursor:pointer}
 .staff-lang-btn:hover{border-color:var(--orange)}
@@ -189,7 +192,8 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 	.sh-logo{margin-bottom:.8rem}
 	.sh-station{font-size:1.6rem}
 	.sh-nav{margin-top:.8rem}
-	.sh-sidebar-foot{padding-top:.8rem}
+	.sh-layout{grid-template-rows:auto 1fr}
+	.sh-sidebar-foot{margin-top:0;padding-top:.8rem}
 	.sh-main{padding:1rem}
 }
 @media(max-width:480px){

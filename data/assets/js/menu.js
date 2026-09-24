@@ -24,23 +24,36 @@ function escapeHtml(value) {
 }
 
 const HEADER_FONTS = {
-	playfair: { family: "'Playfair Display', serif", google: 'Playfair+Display:wght@600;700' },
-	montserrat: { family: "'Montserrat', sans-serif", google: 'Montserrat:wght@600;700' },
-	poppins: { family: "'Poppins', sans-serif", google: 'Poppins:wght@600;700' },
-	dancing: { family: "'Dancing Script', cursive", google: 'Dancing+Script:wght@600;700' },
-	oswald: { family: "'Oswald', sans-serif", google: 'Oswald:wght@600;700' }
+	playfair: { family: "'Playfair Display', serif" },
+	montserrat: { family: "'Montserrat', sans-serif" },
+	poppins: { family: "'Poppins', sans-serif" },
+	dancing: { family: "'Dancing Script', cursive" },
+	oswald: { family: "'Oswald', sans-serif" }
 };
-// Only Open Sans is loaded by default (via menu.css); a client's custom
-// header font is fetched on demand so picking one doesn't cost every other
-// client's page load, and skipped entirely once already injected.
-function loadGoogleFont(googleParam) {
-	const id = `google-font-${googleParam}`;
-	if (document.getElementById(id)) return;
+// Only Open Sans is loaded by default (via menu.css); the header fonts are
+// self-hosted (assets/fonts, no request to Google) and their stylesheet is
+// only added when a client actually picked one. It declares all five, but
+// a browser only downloads the font files a page really uses.
+function loadHeaderFonts() {
+	if (document.getElementById('header-fonts')) return;
 	const link = document.createElement('link');
-	link.id = id;
+	link.id = 'header-fonts';
 	link.rel = 'stylesheet';
-	link.href = `https://fonts.googleapis.com/css2?family=${googleParam}&display=swap`;
+	link.href = 'assets/fonts/fonts-menu-headers.css';
 	document.head.appendChild(link);
+}
+
+// Privacy policy + imprint in the menu's current language, so guests can
+// see who processes their data (see the Privacy Policy's guest section).
+// Only German has its own legal pages; every other language gets English.
+const LEGAL_LINK_TEXT = {
+	de: ['Datenschutz', 'Impressum'], en: ['Privacy', 'Legal notice'], el: ['Απόρρητο', 'Νομικές πληροφορίες'],
+	it: ['Privacy', 'Note legali'], es: ['Privacidad', 'Aviso legal'], fr: ['Confidentialité', 'Mentions légales']
+};
+function legalLinksMarkup() {
+	const [privacy, imprint] = LEGAL_LINK_TEXT[requestedLanguage] || LEGAL_LINK_TEXT.en;
+	const base = `https://smartmenusolutions.com/${requestedLanguage === 'de' ? 'de/' : ''}`;
+	return `<nav class="menu-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(privacy)}</a> · <a href="${base}imprint.html" target="_blank" rel="noopener">${escapeHtml(imprint)}</a></nav>`;
 }
 
 function logoMarkup(client) {
@@ -360,7 +373,7 @@ function renderMenu(client, ordering) {
 		? ` style="background-image:linear-gradient(rgba(38,36,33,.5),rgba(38,36,33,.5)), url('${escapeHtml(client.header_background_url)}')"`
 		: '';
 	const headerFont = HEADER_FONTS[client.header_font];
-	if (headerFont) loadGoogleFont(headerFont.google);
+	if (headerFont) loadHeaderFonts();
 	const headerTextStyle = [
 		headerFont ? `font-family:${headerFont.family}` : '',
 		/^#[0-9a-f]{3,8}$/i.test(client.header_text_color || '') ? `color:${client.header_text_color}` : ''
@@ -380,7 +393,7 @@ function renderMenu(client, ordering) {
 			${ordering ? cartButtonMarkup() : ''}
 		</div>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
-		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a></footer>
+		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>${legalLinksMarkup()}</footer>
 		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}
 		${ordering ? cartPopupMarkup() : ''}`;
 	const smartMatchRecoLog = new Set();

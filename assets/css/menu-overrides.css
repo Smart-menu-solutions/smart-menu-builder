@@ -28,3 +28,8 @@ body{background:#fff7ef}.menu-container{background:#fff7ef}
 	.category h2{font-size:1.4rem;overflow-wrap:anywhere}
 	.footer-brand{max-width:100%;flex-wrap:wrap;justify-content:center}
 }
+
+/* Privacy / imprint links under the brand line (menu.js legalLinksMarkup). */
+.menu-legal{margin-top:.8rem;font-size:.75rem;color:#8f8a83}
+.menu-legal a{color:#bcb8b1;text-decoration:none}
+.menu-legal a:hover{color:#fff;text-decoration:underline}
