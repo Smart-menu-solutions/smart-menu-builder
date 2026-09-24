@@ -16,8 +16,8 @@ button{font-family:inherit}
 .sh-sidebar{background:var(--paper);border-right:1px solid var(--line);padding:1.6rem 1.3rem;display:flex;flex-direction:column;gap:.35rem;position:sticky;top:0;height:100vh;overflow-y:auto}
 .sh-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--ink);font-weight:700;font-size:1.15rem;line-height:1.1;margin-bottom:1.4rem}
 .sh-logo img{width:46px;height:46px;flex:0 0 auto}
-.sh-logo-smart{color:var(--ink)}
-.sh-logo-menu{color:var(--orange)}
+.sh-logo-smart{color:var(--orange)}
+.sh-logo-menu{color:var(--ink)}
 .sh-eyebrow{margin:0;color:var(--orange);font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
 .sh-station{margin:0;font-size:2rem;line-height:1.15;font-weight:700;word-break:break-word}
 .sh-restaurant{margin:0;color:var(--muted);font-weight:600}

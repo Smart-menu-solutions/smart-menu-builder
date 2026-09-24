@@ -542,7 +542,7 @@ function sidebarMarkup() {
 	return `<aside class="sh-sidebar">
 		<a class="sh-logo" href="https://smartmenusolutions.com/" target="_blank" rel="noopener">
 			<img src="assets/images/logo-mark.png" alt="">
-			<span><span class="sh-logo-smart">Smart</span><span class="sh-logo-menu">Menu</span><br>Solutions</span>
+			<span><span class="sh-logo-smart">Smart</span> <span class="sh-logo-menu">Menu</span><br>Solutions</span>
 		</a>
 		<p class="sh-eyebrow">Smart ServiceHub™</p>
 		<h1 class="sh-station">${escapeHtml(accessLabel || strings().roleLabels?.[ROLE] || ROLE)}</h1>
