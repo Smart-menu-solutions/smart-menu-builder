@@ -3,11 +3,11 @@
 // already offers and staff.js's language switcher mirrors it. Dish names
 // themselves are never translated here - they come from the menu's own
 // source-language text, same as an order ticket in any real restaurant.
-// "Admin Hub" (the former "Kellner" role) keeps its name untranslated in
+// "Service Hub" (the former "Kellner" role) keeps its name untranslated in
 // every language - see 0017_table_hub.sql / staff.js for what it does.
 window.STAFF_STRINGS = {
 	de: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Küche', bar: 'Bar', cashier: 'Kasse' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Küche', bar: 'Bar', cashier: 'Kasse' },
 		live: 'Live', empty: 'Gerade keine aktiven Tische.', hubEmptyOrder: 'Noch keine Bestellung.', table: 'Tisch',
 		hubStatus: { FREE: 'Frei', ACTIVE: 'Aktiv', PAYMENT_PENDING: 'Besetzt' },
 		allDone: 'Alles fertig', addItem: '+ Artikel', add: 'Hinzufügen',
@@ -20,13 +20,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Ablauf', workflowTitle: 'So läuft der ganze Ablauf',
 			workflow: [
 				"Gäste scannen den QR-Code am Tisch - das Menü öffnet sich, aber bestellen geht erst nach der Aktivierung.",
-				"Im Admin Hub auf den freien (grünen) Tisch tippen und „Aktivieren“ drücken.",
+				"Im Service Hub auf den freien (grünen) Tisch tippen und „Aktivieren“ drücken.",
 				"Ab jetzt bestellt jeder Gast über sein eigenes Handy - alle Bestellungen landen zusammen am selben Tisch.",
 				"Artikel werden automatisch an Küche oder Bar verteilt, je nachdem was bestellt wurde.",
 				"Küche und Bar sehen ihre Artikel als Liste und markieren sie als fertig.",
 				"Gäste sehen live auf ihrem Handy, was schon fertig ist, inklusive Preis und Summe.",
 				"Gäste können jederzeit nachbestellen, ohne das Menü neu zu scannen.",
-				"Rechnung anfordern - entweder der Gast selbst am Handy oder das Personal im Admin Hub.",
+				"Rechnung anfordern - entweder der Gast selbst am Handy oder das Personal im Service Hub.",
 				"Der Tisch wird rot, 💳 erscheint bei der Kasse.",
 				"Kasse prüft die Bestellung, kassiert, drückt „Tisch schließen“ - der Tisch ist sofort wieder frei, derselbe QR-Code bleibt für den nächsten Gast gültig."
 			],
@@ -59,12 +59,23 @@ window.STAFF_STRINGS = {
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
 				]
 			},
+		workflowSteps: ["Gäste scannen den QR-Code", "Tisch aktivieren", "Alle bestellen", "Automatische Verteilung", "Küche & Bar arbeiten", "Gäste sehen den Status live", "Jederzeit nachbestellen", "Rechnung anfordern", "Tisch wird rot", "Tisch schließen"],
+		noTables: 'Noch keine Tische angelegt.', floorTitle: 'Tischplan', ordersTitle: 'Bestellungen',
+		activityTitle: 'Live-Aktivität', viewAll: 'Alle ansehen', statusTitle: 'Stations-Status', summaryTitle: 'Bestell-Übersicht', today: 'Heute',
+		qrOrders: 'Über QR-Code', staffOrders: 'Vom Personal', orderValue: 'Bestellwert heute', itemsLabel: 'Artikel',
+		statusOpen: '{n} offen', statusActiveTables: '{n} aktive Tische', statusBills: '{n} Rechnungen',
+		evOpened: 'Tisch aktiviert', evOrderGuest: 'Gast bestellt: {items}', evOrderStaff: '{who} hat hinzugefügt: {items}',
+		evReadyKitchen: 'Küche: {n} Artikel fertig', evReadyBar: 'Bar: {n} Artikel fertig', evBill: 'Rechnung angefordert', evClosed: 'Bezahlt & geschlossen · {total}',
+		timeJustNow: 'gerade eben', timeMinutes: 'vor {n} Min.', timeHours: 'vor {n} Std.', noActivity: 'Heute noch keine Aktivität.',
+		historyTitle: 'Verlauf heute', noOpenOrders: 'Gerade keine offenen Bestellungen.',
+		tileOpenOrders: 'Offene Bestellungen', tileOpenOrdersSub: 'Alle aktiven Tische auf einen Blick', tileHistorySub: 'Alles, was heute passiert ist',
+		tileTotals: 'Gesamtübersicht', tileTotalsSub: 'Summe aller offenen Tische', tileHelp: 'So funktioniert’s', tileHelpSub: 'Der Ablauf in 10 Schritten',
 		offline: 'Keine Internetverbindung. Die Seite lädt automatisch neu, sobald du wieder online bist.',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge'
 	},
 	en: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
 		live: 'Live', empty: 'No active tables right now.', hubEmptyOrder: 'No order yet.', table: 'Table',
 		hubStatus: { FREE: 'Free', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupied' },
 		allDone: 'All done', addItem: '+ Item', add: 'Add',
@@ -77,13 +88,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Workflow', workflowTitle: 'How the whole flow works',
 			workflow: [
 				"Guests scan the QR code on the table - the menu opens, but ordering only works after activation.",
-				"Tap the free (green) table in the Admin Hub and press \"Activate\".",
+				"Tap the free (green) table in the Service Hub and press \"Activate\".",
 				"From then on, every guest orders from their own phone - all orders land together on the same table.",
 				"Items are automatically split between kitchen and bar, based on what was ordered.",
 				"Kitchen and bar see their items as a list and mark them done.",
 				"Guests see live on their phone what's ready, including price and total.",
 				"Guests can reorder any time without scanning the menu again.",
-				"Request the bill - either the guest themselves on their phone, or staff in the Admin Hub.",
+				"Request the bill - either the guest themselves on their phone, or staff in the Service Hub.",
 				"The table turns red, 💳 shows up at the cashier.",
 				"The cashier checks the order, takes payment, and taps \"Close table\" - the table is free again right away, and the same QR code stays valid for the next guest."
 			],
@@ -116,12 +127,23 @@ window.STAFF_STRINGS = {
 					"📊 Overview = the total across every table that's currently open."
 				]
 			},
+		workflowSteps: ["Guests scan the QR code", "Activate the table", "Everyone orders", "Auto distribution", "Kitchen & bar process", "Guests see live status", "Reorder anytime", "Request the bill", "Table turns red", "Close the table"],
+		noTables: 'No tables set up yet.', floorTitle: 'Restaurant Floor', ordersTitle: 'Orders',
+		activityTitle: 'Live Activity', viewAll: 'View all', statusTitle: 'Service Status', summaryTitle: 'Order Summary', today: 'Today',
+		qrOrders: 'Via QR code', staffOrders: 'By staff', orderValue: 'Order value today', itemsLabel: 'items',
+		statusOpen: '{n} open', statusActiveTables: '{n} active tables', statusBills: '{n} bills',
+		evOpened: 'Table activated', evOrderGuest: 'Guest ordered: {items}', evOrderStaff: '{who} added: {items}',
+		evReadyKitchen: 'Kitchen: {n} ready', evReadyBar: 'Bar: {n} ready', evBill: 'Bill requested', evClosed: 'Paid & closed · {total}',
+		timeJustNow: 'just now', timeMinutes: '{n} min ago', timeHours: '{n} h ago', noActivity: 'No activity yet today.',
+		historyTitle: "Today's history", noOpenOrders: 'No open orders right now.',
+		tileOpenOrders: 'Open orders', tileOpenOrdersSub: 'All active tables at a glance', tileHistorySub: 'Everything that happened today',
+		tileTotals: 'Overview', tileTotalsSub: 'Total of all open tables', tileHelp: 'How it works', tileHelpSub: 'The workflow in 10 steps',
 		offline: 'No internet connection. This page reloads automatically once you are back online.',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access'
 	},
 	el: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
 		live: 'Ζωντανά', empty: 'Κανένα ενεργό τραπέζι αυτή τη στιγμή.', hubEmptyOrder: 'Καμία παραγγελία ακόμα.', table: 'Τραπέζι',
 		hubStatus: { FREE: 'Ελεύθερο', ACTIVE: 'Ενεργό', PAYMENT_PENDING: 'Κατειλημμένο' },
 		allDone: 'Όλα έτοιμα', addItem: '+ Προσθήκη', add: 'Προσθήκη',
@@ -134,13 +156,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Ροή', workflowTitle: 'Πώς λειτουργεί όλη η διαδικασία',
 			workflow: [
 				"Οι πελάτες σκανάρουν τον κωδικό QR στο τραπέζι - το μενού ανοίγει, αλλά η παραγγελία λειτουργεί μόνο μετά την ενεργοποίηση.",
-				"Πάτα το ελεύθερο (πράσινο) τραπέζι στο Admin Hub και πάτα «Ενεργοποίηση».",
+				"Πάτα το ελεύθερο (πράσινο) τραπέζι στο Service Hub και πάτα «Ενεργοποίηση».",
 				"Από εκεί και πέρα κάθε πελάτης παραγγέλνει από το δικό του κινητό - όλες οι παραγγελίες πάνε μαζί στο ίδιο τραπέζι.",
 				"Τα προϊόντα μοιράζονται αυτόματα σε κουζίνα ή μπαρ, ανάλογα με το τι παραγγέλθηκε.",
 				"Κουζίνα και μπαρ βλέπουν τα προϊόντα τους ως λίστα και τα σημειώνουν έτοιμα.",
 				"Οι πελάτες βλέπουν ζωντανά στο κινητό τους τι είναι έτοιμο, με τιμή και σύνολο.",
 				"Οι πελάτες μπορούν να ξαναπαραγγείλουν ανά πάσα στιγμή, χωρίς να σκανάρουν ξανά το μενού.",
-				"Ζήτα τον λογαριασμό - είτε ο ίδιος ο πελάτης από το κινητό, είτε το προσωπικό από το Admin Hub.",
+				"Ζήτα τον λογαριασμό - είτε ο ίδιος ο πελάτης από το κινητό, είτε το προσωπικό από το Service Hub.",
 				"Το τραπέζι γίνεται κόκκινο, το 💳 εμφανίζεται στο ταμείο.",
 				"Το ταμείο ελέγχει την παραγγελία, εισπράττει, πατάει «Κλείσιμο τραπεζιού» - το τραπέζι ελευθερώνεται αμέσως, ο ίδιος κωδικός QR παραμένει έγκυρος για τον επόμενο πελάτη."
 			],
@@ -173,12 +195,23 @@ window.STAFF_STRINGS = {
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
 				]
 			},
+		workflowSteps: ["Οι πελάτες σκανάρουν το QR code", "Ενεργοποίηση τραπεζιού", "Όλοι παραγγέλνουν", "Αυτόματη διανομή", "Κουζίνα & μπαρ ετοιμάζουν", "Οι πελάτες βλέπουν ζωντανά την κατάσταση", "Νέα παραγγελία ανά πάσα στιγμή", "Αίτημα λογαριασμού", "Το τραπέζι γίνεται κόκκινο", "Κλείσιμο τραπεζιού"],
+		noTables: 'Δεν έχουν οριστεί τραπέζια ακόμα.', floorTitle: 'Κάτοψη τραπεζιών', ordersTitle: 'Παραγγελίες',
+		activityTitle: 'Ζωντανή δραστηριότητα', viewAll: 'Προβολή όλων', statusTitle: 'Κατάσταση σταθμών', summaryTitle: 'Σύνοψη παραγγελιών', today: 'Σήμερα',
+		qrOrders: 'Μέσω QR code', staffOrders: 'Από το προσωπικό', orderValue: 'Αξία παραγγελιών σήμερα', itemsLabel: 'είδη',
+		statusOpen: '{n} ανοιχτά', statusActiveTables: '{n} ενεργά τραπέζια', statusBills: '{n} λογαριασμοί',
+		evOpened: 'Το τραπέζι ενεργοποιήθηκε', evOrderGuest: 'Ο πελάτης παρήγγειλε: {items}', evOrderStaff: '{who} πρόσθεσε: {items}',
+		evReadyKitchen: 'Κουζίνα: {n} έτοιμα', evReadyBar: 'Μπαρ: {n} έτοιμα', evBill: 'Ζητήθηκε λογαριασμός', evClosed: 'Πληρώθηκε & έκλεισε · {total}',
+		timeJustNow: 'μόλις τώρα', timeMinutes: 'πριν {n} λεπ.', timeHours: 'πριν {n} ώρ.', noActivity: 'Καμία δραστηριότητα σήμερα ακόμα.',
+		historyTitle: 'Ιστορικό σήμερα', noOpenOrders: 'Δεν υπάρχουν ανοιχτές παραγγελίες αυτή τη στιγμή.',
+		tileOpenOrders: 'Ανοιχτές παραγγελίες', tileOpenOrdersSub: 'Όλα τα ενεργά τραπέζια με μια ματιά', tileHistorySub: 'Όλα όσα έγιναν σήμερα',
+		tileTotals: 'Συνολική εικόνα', tileTotalsSub: 'Σύνολο όλων των ανοιχτών τραπεζιών', tileHelp: 'Πώς λειτουργεί', tileHelpSub: 'Η διαδικασία σε 10 βήματα',
 		offline: 'Δεν υπάρχει σύνδεση στο διαδίκτυο. Η σελίδα θα ανανεωθεί αυτόματα μόλις συνδεθείτε ξανά.',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού'
 	},
 	it: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
 		live: 'Live', empty: 'Nessun tavolo attivo al momento.', hubEmptyOrder: 'Ancora nessun ordine.', table: 'Tavolo',
 		hubStatus: { FREE: 'Libero', ACTIVE: 'Attivo', PAYMENT_PENDING: 'Occupato' },
 		allDone: 'Tutto pronto', addItem: '+ Articolo', add: 'Aggiungi',
@@ -191,13 +224,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Flusso', workflowTitle: 'Come funziona l’intero processo',
 			workflow: [
 				"Gli ospiti scansionano il codice QR al tavolo - il menu si apre, ma si può ordinare solo dopo l'attivazione.",
-				"Tocca il tavolo libero (verde) nell'Admin Hub e premi «Attiva».",
+				"Tocca il tavolo libero (verde) nell'Service Hub e premi «Attiva».",
 				"Da quel momento ogni ospite ordina dal proprio telefono - tutti gli ordini finiscono insieme sullo stesso tavolo.",
 				"Gli articoli vengono divisi automaticamente tra cucina e bar, in base a cosa è stato ordinato.",
 				"Cucina e bar vedono i propri articoli come una lista e li segnano come pronti.",
 				"Gli ospiti vedono in tempo reale sul telefono cosa è pronto, incluso prezzo e totale.",
 				"Gli ospiti possono riordinare in qualsiasi momento senza scansionare di nuovo il menu.",
-				"Richiedi il conto - o l'ospite stesso dal telefono, o il personale dall'Admin Hub.",
+				"Richiedi il conto - o l'ospite stesso dal telefono, o il personale dall'Service Hub.",
 				"Il tavolo diventa rosso, il 💳 appare alla cassa.",
 				"La cassa controlla l'ordine, incassa, preme «Chiudi tavolo» - il tavolo torna subito libero, lo stesso codice QR resta valido per il prossimo ospite."
 			],
@@ -230,12 +263,23 @@ window.STAFF_STRINGS = {
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
 				]
 			},
+		workflowSteps: ["Gli ospiti scansionano il QR code", "Attivare il tavolo", "Tutti ordinano", "Distribuzione automatica", "Cucina e bar preparano", "Gli ospiti vedono lo stato in tempo reale", "Riordinare in qualsiasi momento", "Richiedere il conto", "Il tavolo diventa rosso", "Chiudere il tavolo"],
+		noTables: 'Nessun tavolo configurato.', floorTitle: 'Sala', ordersTitle: 'Ordini',
+		activityTitle: 'Attività in tempo reale', viewAll: 'Vedi tutto', statusTitle: 'Stato delle postazioni', summaryTitle: 'Riepilogo ordini', today: 'Oggi',
+		qrOrders: 'Tramite QR code', staffOrders: 'Dal personale', orderValue: 'Valore ordini oggi', itemsLabel: 'articoli',
+		statusOpen: '{n} aperti', statusActiveTables: '{n} tavoli attivi', statusBills: '{n} conti',
+		evOpened: 'Tavolo attivato', evOrderGuest: 'Ordine del cliente: {items}', evOrderStaff: '{who} ha aggiunto: {items}',
+		evReadyKitchen: 'Cucina: {n} pronti', evReadyBar: 'Bar: {n} pronti', evBill: 'Conto richiesto', evClosed: 'Pagato e chiuso · {total}',
+		timeJustNow: 'proprio ora', timeMinutes: '{n} min fa', timeHours: '{n} h fa', noActivity: 'Ancora nessuna attività oggi.',
+		historyTitle: 'Cronologia di oggi', noOpenOrders: 'Nessun ordine aperto al momento.',
+		tileOpenOrders: 'Ordini aperti', tileOpenOrdersSub: 'Tutti i tavoli attivi a colpo d’occhio', tileHistorySub: 'Tutto ciò che è successo oggi',
+		tileTotals: 'Panoramica', tileTotalsSub: 'Totale di tutti i tavoli aperti', tileHelp: 'Come funziona', tileHelpSub: 'La procedura in 10 passi',
 		offline: 'Nessuna connessione a Internet. La pagina si ricarica automaticamente quando torni online.',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale'
 	},
 	es: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
 		live: 'En vivo', empty: 'No hay mesas activas ahora mismo.', hubEmptyOrder: 'Todavía sin pedido.', table: 'Mesa',
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Activa', PAYMENT_PENDING: 'Ocupada' },
 		allDone: 'Todo listo', addItem: '+ Artículo', add: 'Añadir',
@@ -248,13 +292,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Flujo', workflowTitle: 'Cómo funciona todo el proceso',
 			workflow: [
 				"Los clientes escanean el código QR de la mesa - el menú se abre, pero solo se puede pedir después de la activación.",
-				"Toca la mesa libre (verde) en el Admin Hub y pulsa «Activar».",
+				"Toca la mesa libre (verde) en el Service Hub y pulsa «Activar».",
 				"A partir de ahí, cada cliente pide desde su propio móvil - todos los pedidos llegan juntos a la misma mesa.",
 				"Los artículos se reparten automáticamente entre cocina y bar, según lo que se haya pedido.",
 				"Cocina y bar ven sus artículos como una lista y los marcan como listos.",
 				"Los clientes ven en tiempo real en su móvil qué está listo, con precio y total.",
 				"Los clientes pueden volver a pedir en cualquier momento sin escanear el menú de nuevo.",
-				"Pedir la cuenta - ya sea el propio cliente desde el móvil, o el personal desde el Admin Hub.",
+				"Pedir la cuenta - ya sea el propio cliente desde el móvil, o el personal desde el Service Hub.",
 				"La mesa se pone roja, el 💳 aparece en caja.",
 				"Caja revisa el pedido, cobra, pulsa «Cerrar mesa» - la mesa queda libre al instante, el mismo código QR sigue siendo válido para el próximo cliente."
 			],
@@ -287,12 +331,23 @@ window.STAFF_STRINGS = {
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
 				]
 			},
+		workflowSteps: ["Los clientes escanean el código QR", "Activar la mesa", "Todos piden", "Distribución automática", "Cocina y bar preparan", "Los clientes ven el estado en vivo", "Volver a pedir en cualquier momento", "Pedir la cuenta", "La mesa se pone roja", "Cerrar la mesa"],
+		noTables: 'Todavía no hay mesas.', floorTitle: 'Plano de mesas', ordersTitle: 'Pedidos',
+		activityTitle: 'Actividad en vivo', viewAll: 'Ver todo', statusTitle: 'Estado de las estaciones', summaryTitle: 'Resumen de pedidos', today: 'Hoy',
+		qrOrders: 'Por código QR', staffOrders: 'Por el personal', orderValue: 'Valor de pedidos hoy', itemsLabel: 'artículos',
+		statusOpen: '{n} pendientes', statusActiveTables: '{n} mesas activas', statusBills: '{n} cuentas',
+		evOpened: 'Mesa activada', evOrderGuest: 'El cliente pidió: {items}', evOrderStaff: '{who} añadió: {items}',
+		evReadyKitchen: 'Cocina: {n} listos', evReadyBar: 'Bar: {n} listos', evBill: 'Cuenta solicitada', evClosed: 'Pagada y cerrada · {total}',
+		timeJustNow: 'ahora mismo', timeMinutes: 'hace {n} min', timeHours: 'hace {n} h', noActivity: 'Todavía no hay actividad hoy.',
+		historyTitle: 'Historial de hoy', noOpenOrders: 'No hay pedidos abiertos ahora.',
+		tileOpenOrders: 'Pedidos abiertos', tileOpenOrdersSub: 'Todas las mesas activas de un vistazo', tileHistorySub: 'Todo lo que pasó hoy',
+		tileTotals: 'Resumen general', tileTotalsSub: 'Total de todas las mesas abiertas', tileHelp: 'Cómo funciona', tileHelpSub: 'El proceso en 10 pasos',
 		offline: 'Sin conexión a Internet. La página se recargará automáticamente cuando vuelvas a estar en línea.',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal'
 	},
 	fr: {
-		roleLabels: { waiter: 'Admin Hub', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
 		live: 'En direct', empty: 'Aucune table active pour le moment.', hubEmptyOrder: 'Pas encore de commande.', table: 'Table',
 		hubStatus: { FREE: 'Libre', ACTIVE: 'Active', PAYMENT_PENDING: 'Occupée' },
 		allDone: 'Tout est prêt', addItem: '+ Article', add: 'Ajouter',
@@ -305,13 +360,13 @@ window.STAFF_STRINGS = {
 			workflowButton: 'Déroulement', workflowTitle: 'Comment fonctionne tout le processus',
 			workflow: [
 				"Les clients scannent le QR code de la table - le menu s'ouvre, mais on ne peut commander qu'après l'activation.",
-				"Touchez la table libre (verte) dans l'Admin Hub et appuyez sur « Activer ».",
+				"Touchez la table libre (verte) dans l'Service Hub et appuyez sur « Activer ».",
 				"À partir de là, chaque client commande depuis son propre téléphone - toutes les commandes arrivent ensemble sur la même table.",
 				"Les articles sont répartis automatiquement entre la cuisine et le bar, selon ce qui a été commandé.",
 				"La cuisine et le bar voient leurs articles sous forme de liste et les marquent comme prêts.",
 				"Les clients voient en direct sur leur téléphone ce qui est prêt, avec le prix et le total.",
 				"Les clients peuvent recommander à tout moment sans rescanner le menu.",
-				"Demander l'addition - soit le client lui-même depuis son téléphone, soit le personnel depuis l'Admin Hub.",
+				"Demander l'addition - soit le client lui-même depuis son téléphone, soit le personnel depuis l'Service Hub.",
 				"La table devient rouge, le 💳 apparaît à la caisse.",
 				"La caisse vérifie la commande, encaisse, appuie sur « Fermer la table » - la table est libérée immédiatement, le même QR code reste valable pour le prochain client."
 			],
@@ -344,6 +399,17 @@ window.STAFF_STRINGS = {
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
 				]
 			},
+		workflowSteps: ["Les clients scannent le QR code", "Activer la table", "Tout le monde commande", "Distribution automatique", "Cuisine et bar préparent", "Les clients voient le statut en direct", "Recommander à tout moment", "Demander l'addition", "La table devient rouge", "Fermer la table"],
+		noTables: 'Aucune table configurée.', floorTitle: 'Plan de salle', ordersTitle: 'Commandes',
+		activityTitle: 'Activité en direct', viewAll: 'Tout voir', statusTitle: 'État des postes', summaryTitle: 'Résumé des commandes', today: "Aujourd'hui",
+		qrOrders: 'Via QR code', staffOrders: 'Par le personnel', orderValue: "Valeur des commandes aujourd'hui", itemsLabel: 'articles',
+		statusOpen: '{n} en attente', statusActiveTables: '{n} tables actives', statusBills: '{n} additions',
+		evOpened: 'Table activée', evOrderGuest: 'Commande du client : {items}', evOrderStaff: '{who} a ajouté : {items}',
+		evReadyKitchen: 'Cuisine : {n} prêts', evReadyBar: 'Bar : {n} prêts', evBill: 'Addition demandée', evClosed: 'Payée et fermée · {total}',
+		timeJustNow: "à l'instant", timeMinutes: 'il y a {n} min', timeHours: 'il y a {n} h', noActivity: "Pas encore d'activité aujourd'hui.",
+		historyTitle: "Historique d'aujourd'hui", noOpenOrders: 'Aucune commande ouverte pour le moment.',
+		tileOpenOrders: 'Commandes ouvertes', tileOpenOrdersSub: "Toutes les tables actives d'un coup d'œil", tileHistorySub: "Tout ce qui s'est passé aujourd'hui",
+		tileTotals: "Vue d'ensemble", tileTotalsSub: 'Total de toutes les tables ouvertes', tileHelp: 'Comment ça marche', tileHelpSub: 'Le déroulement en 10 étapes',
 		offline: 'Pas de connexion Internet. La page se recharge automatiquement dès que vous êtes de nouveau en ligne.',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'

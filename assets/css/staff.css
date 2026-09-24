@@ -1,56 +1,149 @@
-/* Shared look for waiter/kitchen/bar/cashier - same visual language as the
-   Weekly Analytics Report's dash-grid/d-card cards (paper background,
-   rounded corners, soft shadow), but the grid auto-flows to however many
-   tables are active instead of a fixed layout, and each card auto-sizes to
-   its own content. */
-:root{--ink:#262421;--muted:#737373;--line:#e7e5e1;--alt:#fafaf9;--paper:#fff;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--shadow:0 14px 30px -18px rgba(38,36,33,.35)}
+/* Shared look for waiter/kitchen/bar/cashier (see staff.js). Light layout:
+   a white sidebar (logo, station, fold-out help, languages) next to the
+   station's own view, which sits in white rounded panels on a soft grey
+   page. Orange is the one accent color; the Table Hub's tiles keep their
+   status colors (green = free, orange = active, red = bill requested). */
+:root{--ink:#262421;--muted:#737373;--line:#ebe9e5;--page:#f4f3f1;--paper:#fff;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--green:#2fa360;--green-dark:#268a52;--red:#c9403a;--red-dark:#ad342f;--shadow:0 10px 30px -18px rgba(38,36,33,.35);--radius:18px}
 *{box-sizing:border-box}
-body{margin:0;color:var(--ink);background:var(--alt);font:16px/1.5 'Open Sans',system-ui,sans-serif}
-.staff-header{display:flex;align-items:center;gap:1rem;padding:1.2rem 1.5rem;background:var(--ink);color:#fff;position:sticky;top:0;z-index:10}
-.staff-header h1{font-size:1.1rem;line-height:1.3;margin:0}
-.staff-header .staff-sub{color:#bcb8b1;font-size:.8rem;line-height:1.3;margin:.2rem 0 0}
-/* .staff-brand is flex:1, so it centers itself in whatever space is left
-   over between the role label and the tools group - but that leftover
-   space isn't centered on the bar, since the tools group (guide + 6
-   language buttons) is much wider than "Kellner / Live". Giving the role
-   label a min-width roughly matching the tools group's own (unwrapped)
-   width balances the two sides so the leftover middle - and .staff-brand
-   in it - lands close to the bar's true center. This is an approximation
-   (not a guaranteed exact match, unlike forcing both sides to the same
-   flex-basis), chosen because forcing an exact match made the tools
-   group itself shrink and wrap onto extra lines it didn't need to. */
-.staff-header>div:first-child{min-width:335px}
-.staff-brand{flex:1;min-width:0;text-align:center;overflow:hidden}
-.staff-brand-name{margin:0 0 .2rem;font-size:.85rem;color:#bcb8b1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.staff-brand-tag{display:inline-flex;max-width:100%;align-items:center;gap:.5rem;color:#e7e4df;text-decoration:none;font-weight:600;font-size:.8rem}
-.staff-brand-tag:hover{color:#fff}
-.staff-brand-tag img{height:22px;width:auto;flex:0 0 auto}
-.staff-brand-tag span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.staff-languages{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
-/* Same rectangular button shape as the marketing site's language switcher
-   (.flag-btn), not a pill. */
-.staff-lang-btn{background:transparent;border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:6px;padding:.35rem .7rem;font-size:.72rem;font-weight:700;cursor:pointer}
-.staff-lang-btn.is-active{background:var(--orange);border-color:var(--orange);color:#fff}
-.staff-header-tools{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:flex-end}
-.staff-guide{position:relative}
-.staff-guide-btn{background:var(--orange);border:1px solid var(--orange);color:#fff;border-radius:6px;padding:.35rem .8rem;font-size:.72rem;font-weight:700;cursor:pointer}
-.staff-guide-btn:hover,.staff-guide-btn.is-open{background:var(--orange-dark);border-color:var(--orange-dark)}
-.staff-guide-panel{position:absolute;right:0;top:calc(100% + .6rem);width:min(320px,86vw);background:var(--paper);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:1rem 1.1rem;z-index:20;text-align:left}
-.staff-guide-panel h2{margin:0 0 .5rem;font-size:.95rem}
-.staff-guide-panel ul{margin:0;padding-left:1.1rem;font-size:.85rem;line-height:1.5}
-.staff-guide-panel li{margin:.3rem 0}
-.staff-refresh-dot{width:8px;height:8px;border-radius:50%;background:#2fa360;display:inline-block;margin-right:.4rem;animation:staff-pulse 2s infinite}
+body{margin:0;color:var(--ink);background:var(--page);font:16px/1.5 'Open Sans',system-ui,sans-serif}
+button{font-family:inherit}
+
+/* --- Page layout ------------------------------------------------------ */
+.sh-layout{display:grid;grid-template-columns:280px minmax(0,1fr);min-height:100vh}
+.sh-main{padding:1.5rem;min-width:0}
+
+/* --- Sidebar ----------------------------------------------------------- */
+.sh-sidebar{background:var(--paper);border-right:1px solid var(--line);padding:1.6rem 1.3rem;display:flex;flex-direction:column;gap:.35rem;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sh-logo{display:flex;align-items:center;gap:.6rem;text-decoration:none;color:var(--ink);font-weight:700;font-size:1.15rem;line-height:1.1;margin-bottom:1.4rem}
+.sh-logo img{width:46px;height:46px;flex:0 0 auto}
+.sh-logo-smart{color:var(--ink)}
+.sh-logo-menu{color:var(--orange)}
+.sh-eyebrow{margin:0;color:var(--orange);font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.sh-station{margin:0;font-size:2rem;line-height:1.15;font-weight:700;word-break:break-word}
+.sh-restaurant{margin:0;color:var(--muted);font-weight:600}
+.staff-sub{margin:.2rem 0 0;color:var(--muted);font-size:.8rem;display:flex;align-items:center}
+.staff-refresh-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:.45rem;animation:staff-pulse 2s infinite}
 @keyframes staff-pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));grid-auto-rows:min-content;gap:1rem;padding:1.5rem;max-width:1400px;margin:0 auto}
-.staff-card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:1.1rem 1.2rem;box-shadow:var(--shadow)}
-.staff-card.is-bill-requested{border-color:var(--orange)}
-.staff-card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7rem}
-.staff-card-head h3{margin:0;font-size:1rem}
-.staff-card-total{font-weight:700;color:var(--orange);font-size:.9rem}
-.staff-bill-flag{display:inline-block;background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;margin-left:.5rem;border:0;font-family:inherit}
+.sh-nav{display:flex;flex-direction:column;gap:.55rem;margin-top:1.3rem}
+.sh-nav-btn,.sh-foldout-btn{display:flex;align-items:center;gap:.65rem;width:100%;padding:.7rem .85rem;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-weight:700;font-size:.88rem;text-align:left;cursor:pointer}
+.sh-nav-btn .sh-icon,.sh-foldout-btn .sh-icon:first-child{color:var(--orange);flex:0 0 auto}
+.sh-nav-btn:hover,.sh-foldout-btn:hover{border-color:var(--orange)}
+.sh-foldout-btn span{flex:1}
+.sh-foldout-btn .sh-icon:last-child{color:var(--muted);transition:transform .2s}
+.sh-foldout.is-open .sh-foldout-btn{border-color:var(--orange);background:var(--tint)}
+.sh-foldout.is-open .sh-foldout-btn .sh-icon:last-child{transform:rotate(180deg)}
+.sh-foldout-body{padding:.8rem .2rem .3rem}
+.sh-guide-list{margin:0;padding-left:1.1rem;font-size:.85rem;line-height:1.5}
+.sh-guide-list li{margin:.35rem 0}
+.sh-sidebar-foot{margin-top:auto;padding-top:1.2rem}
+.staff-languages{display:flex;gap:.35rem;flex-wrap:wrap}
+.staff-lang-btn{background:var(--paper);border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:.35rem .65rem;font-size:.72rem;font-weight:700;cursor:pointer}
+.staff-lang-btn:hover{border-color:var(--orange)}
+.staff-lang-btn.is-active{background:var(--orange);border-color:var(--orange);color:#fff}
+
+/* The 10-step walkthrough ("So läuft der ganze Ablauf") - numbered orange
+   circles, a line icon, bold title + explanation. */
+.sh-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1rem}
+.sh-steps li{display:grid;grid-template-columns:28px 36px 1fr;gap:.55rem;align-items:start}
+.sh-step-number{width:28px;height:28px;border-radius:50%;background:var(--orange);color:#fff;font-weight:700;font-size:.85rem;display:grid;place-items:center}
+.sh-step-icon{width:36px;height:36px;border-radius:50%;background:var(--page);display:grid;place-items:center;color:var(--ink)}
+.sh-step-text{display:flex;flex-direction:column;font-size:.8rem;line-height:1.4;color:var(--muted)}
+.sh-step-text strong{color:var(--ink);font-size:.85rem}
+
+/* --- Panels ------------------------------------------------------------ */
+.sh-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.2rem 1.3rem}
+.sh-panel-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin-bottom:1rem;flex-wrap:wrap}
+.sh-panel-head h2{display:flex;align-items:center;gap:.55rem;margin:0;font-size:1.05rem}
+.sh-panel-head h2 .sh-icon{color:var(--orange)}
+.sh-link{background:none;border:0;color:var(--orange);font-weight:700;font-size:.8rem;cursor:pointer;padding:0;text-decoration:underline}
+.sh-muted{color:var(--muted);font-size:.82rem;margin:0}
+
+/* --- Table Hub --------------------------------------------------------- */
+.sh-hub{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:1.3rem;align-items:start}
+.sh-hub-main{display:flex;flex-direction:column;gap:1.3rem;min-width:0}
+.sh-side{display:flex;flex-direction:column;gap:1.3rem}
+/* Light warm cream behind the tables (instead of plain white), so the green/orange/red tiles stand out as on a floor plan. */
+.sh-floor{background:#fbf5ec radial-gradient(circle at 1px 1px,#eadfce 1px,transparent 0) 0 0/22px 22px;border-color:#f1e6d6}
+.hub-grid+.hub-grid{border-top-color:#e6d8c4}
+.sh-legend-inline{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.75rem;font-weight:600;color:var(--muted)}
+.sh-legend-dot{display:inline-flex;align-items:center;gap:.35rem}
+.sh-legend-dot::before{content:"";width:10px;height:10px;border-radius:50%}
+.sh-legend-free::before{background:var(--green)}
+.sh-legend-active::before{background:var(--orange)}
+.sh-legend-payment_pending::before{background:var(--red)}
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:1rem;padding:.2rem 0 1.1rem}
+.hub-grid+.hub-grid{border-top:1px dashed var(--line);padding-top:1.1rem}
+.hub-grid:last-child{padding-bottom:0}
+.hub-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;aspect-ratio:1;border-radius:20px;border:0;box-shadow:0 12px 24px -14px rgba(38,36,33,.6);color:#fff;cursor:pointer;padding:.6rem;transition:transform .12s,background .12s}
+.hub-tile:hover{transform:translateY(-2px)}
+.hub-tile-free{background:var(--green)}
+.hub-tile-free:hover{background:var(--green-dark)}
+.hub-tile-active{background:var(--orange)}
+.hub-tile-active:hover{background:var(--orange-dark)}
+.hub-tile-pending{background:var(--red)}
+.hub-tile-pending:hover{background:var(--red-dark)}
+.hub-tile-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.85}
+.hub-tile-number{font-size:1.7rem;font-weight:700;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hub-tile-amount{font-size:.95rem;font-weight:700}
+.hub-tile-status{display:inline-flex;align-items:center;gap:.35rem;margin-top:.25rem;background:rgba(255,255,255,.2);border-radius:999px;padding:.12rem .55rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.hub-tile-dot{width:7px;height:7px;border-radius:50%;background:#fff}
+.hub-bell{position:absolute;top:.45rem;right:.55rem;font-size:1rem;animation:staff-pulse 1.4s infinite}
+
+/* Shortcut tiles under the floor */
+.sh-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+@media(min-width:1700px){.sh-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.sh-tile{display:flex;align-items:center;gap:.75rem;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:.9rem 1rem;text-align:left;cursor:pointer;color:var(--ink)}
+.sh-tile:hover{border-color:var(--orange)}
+.sh-tile-icon{width:42px;height:42px;flex:0 0 auto;border-radius:12px;background:var(--tint);color:var(--orange);display:grid;place-items:center}
+.sh-tile strong{display:block;font-size:.85rem}
+.sh-tile small{display:block;color:var(--muted);font-size:.72rem;line-height:1.3}
+
+/* Side column: activity feed, station status, order summary */
+.sh-activity{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.sh-activity li{display:grid;grid-template-columns:34px 1fr auto;gap:.65rem;align-items:start;padding:.6rem 0;border-bottom:1px solid var(--line)}
+.sh-activity li:last-child{border-bottom:0}
+.sh-activity-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--tint);color:var(--orange)}
+.sh-ev-ready{background:#e8f5ec;color:var(--green)}
+.sh-ev-bill{background:#fbe9e8;color:var(--red)}
+.sh-ev-closed{background:var(--page);color:var(--ink)}
+.sh-activity-body{display:flex;flex-direction:column;font-size:.8rem;line-height:1.35;min-width:0}
+.sh-activity-body strong{font-size:.85rem}
+.sh-activity-body span{color:var(--muted);overflow-wrap:anywhere}
+.sh-activity-time{font-size:.72rem;color:var(--muted);white-space:nowrap}
+.sh-status{list-style:none;margin:0;padding:0}
+.sh-status li{display:grid;grid-template-columns:30px 1fr auto;gap:.6rem;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--line);font-size:.85rem}
+.sh-status li:last-child{border-bottom:0}
+.sh-status-icon{color:var(--orange);display:grid;place-items:center}
+.sh-status-name{font-weight:700}
+.sh-status-value{color:var(--muted);font-weight:600;font-size:.8rem}
+.sh-summary{display:grid;grid-template-columns:130px 1fr;gap:1rem;align-items:center}
+.sh-donut{width:130px;height:130px}
+.sh-donut-number{font-size:22px;font-weight:700;fill:var(--ink)}
+.sh-donut-label{font-size:8px;fill:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.sh-legend{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}
+.sh-legend li{display:grid;grid-template-columns:12px 1fr auto;gap:.45rem;align-items:center}
+.sh-legend strong{font-size:.9rem}
+.sh-legend-total{grid-template-columns:1fr auto!important;border-top:1px solid var(--line);padding-top:.45rem;margin-top:.15rem}
+.sh-swatch{width:12px;height:12px;border-radius:3px}
+.sh-swatch-guest{background:var(--orange)}
+.sh-swatch-staff{background:var(--ink)}
+
+/* --- Kitchen / bar / cashier cards ------------------------------------- */
+.staff-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));grid-auto-rows:min-content;gap:1rem}
+.staff-grid+.staff-grid{margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)}
+.staff-card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.staff-card.is-bill-requested{border:2px solid var(--red)}
+.staff-card-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.7rem}
+.staff-card-head h3{margin:0;font-size:1.25rem;display:flex;align-items:center;gap:.35rem}
+.staff-card-label{font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.staff-card-total{font-weight:700;color:var(--orange);font-size:1rem}
+.staff-card-badge{background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;white-space:nowrap}
+.staff-bill-flag{display:inline-block;background:var(--tint);color:var(--orange-dark);font-size:.72rem;font-weight:700;border-radius:999px;padding:.15rem .6rem;margin-left:.35rem;border:0}
 button.staff-bill-flag{cursor:pointer}
 button.staff-bill-flag:hover{background:var(--orange);color:#fff}
-.staff-item-row{display:flex;align-items:center;gap:.55rem;padding:.4rem 0;border-bottom:1px solid var(--line);font-size:.9rem;cursor:pointer}
+.staff-item-row{display:flex;align-items:center;gap:.55rem;padding:.45rem 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.staff-item-row.is-clickable{cursor:pointer}
+.staff-item-row.is-clickable:hover{background:var(--page)}
 .staff-item-row:last-child{border-bottom:0}
 .staff-item-row.is-done{color:var(--muted)}
 .staff-item-name{flex:1}
@@ -59,56 +152,51 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .staff-item-remove{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;width:1.7rem;height:1.7rem;line-height:1;font-size:.8rem;font-weight:700;cursor:pointer;flex-shrink:0}
 .staff-item-remove:hover{background:var(--tint)}
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.status-dot.dot-red{background:#c9403a}
-.status-dot.dot-green{background:#2fa360}
+.status-dot.dot-red{background:var(--red)}
+.status-dot.dot-green{background:var(--green)}
 .staff-card-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
-.staff-btn{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;padding:.45rem 1rem;font-weight:700;font-size:.8rem;cursor:pointer}
+.staff-btn{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;padding:.5rem 1.05rem;font-weight:700;font-size:.8rem;cursor:pointer}
 .staff-btn:hover{background:var(--tint)}
 .staff-btn.staff-btn-primary{background:var(--orange);color:#fff}
 .staff-btn.staff-btn-primary:hover{background:var(--orange-dark)}
 .staff-btn:disabled{opacity:.5;cursor:default}
-.staff-empty{padding:4rem 1.5rem;text-align:center;color:var(--muted)}
+.staff-empty{padding:3rem 1.5rem;text-align:center;color:var(--muted);margin:0}
 .staff-add-form{margin-top:.8rem;padding-top:.7rem;border-top:1px dashed var(--line);display:none;gap:.5rem;flex-direction:column}
 .staff-add-form.is-open{display:flex}
-.staff-add-form select,.staff-add-form input{width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:8px;font:inherit;font-size:.85rem}
+.staff-add-form select,.staff-add-form input{width:100%;padding:.55rem .65rem;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:.85rem}
 
-/* Table Hub (waiter role, see staff.js hubTileMarkup/hubGridMarkup/
-   hubPopupMarkup): tables grouped into three rows by restaurant_tables.status
-   - Free on top, Active in the middle, Payment-pending at the bottom - so a
-   table visibly jumps rows the moment its status changes. Free = green
-   (good to seat), Active = brand orange (the "in progress" color used for
-   primary actions elsewhere in this UI), Payment-pending = red (needs the
-   cashier's attention), matching the per-item status dots elsewhere in this
-   file for the same "red = needs attention" language. */
-.hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1rem;padding:1.5rem;max-width:1400px;margin:0 auto}
-.hub-tile{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;aspect-ratio:1;border-radius:18px;border:2px solid transparent;box-shadow:var(--shadow);color:#fff;font-weight:700;cursor:pointer}
-.hub-tile-free{background:#2fa360}
-.hub-tile-free:hover{background:#268a52}
-.hub-tile-active{background:var(--orange)}
-.hub-tile-active:hover{background:var(--orange-dark)}
-.hub-tile-pending{background:#c9403a}
-.hub-tile-number{font-size:1.05rem}
-.hub-tile-status{font-size:.7rem;font-weight:600;opacity:.85;text-transform:uppercase;letter-spacing:.03em}
-.hub-bell{position:absolute;top:.4rem;right:.5rem;font-size:1rem;animation:staff-pulse 1.4s infinite}
+/* --- Popups ------------------------------------------------------------ */
 .hub-popup-overlay{position:fixed;inset:0;background:rgba(38,36,33,.55);display:flex;align-items:center;justify-content:center;padding:1rem;z-index:30}
-.hub-popup-box{position:relative;background:var(--paper);color:var(--ink);border-radius:18px;box-shadow:var(--shadow);padding:1.4rem 1.3rem;max-width:420px;width:100%;max-height:86vh;overflow-y:auto}
+.hub-popup-box{position:relative;background:var(--paper);color:var(--ink);border-radius:var(--radius);box-shadow:var(--shadow);padding:1.4rem 1.3rem;max-width:460px;width:100%;max-height:86vh;overflow-y:auto}
+.hub-popup-box h2{margin:0 2rem 1rem 0;font-size:1.15rem}
+.hub-popup-box>.staff-card-head{padding-right:1.8rem}
+.sh-popup-section+.sh-popup-section{margin-top:1rem;padding-top:1rem;border-top:1px dashed var(--line)}
 .smart-match-close{position:absolute;top:.7rem;right:.7rem;background:transparent;border:0;font-size:1rem;color:var(--muted);cursor:pointer}
 .staff-grand-total{font-size:1.8rem;text-align:center;margin:1rem 0 0}
-.staff-workflow-list{margin:0;padding-left:1.3rem;font-size:.88rem;line-height:1.55}
-.staff-workflow-list li{margin:.55rem 0}
-@media(max-width:480px){
-	.staff-grid{grid-template-columns:1fr;padding:1rem}
-	.hub-grid{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));padding:1rem}
+
+/* Error / offline / invalid-link message before anything could render. */
+#app>.staff-empty{padding:5rem 1.5rem}
+
+/* --- Smaller screens --------------------------------------------------- */
+@media(max-width:1180px){
+	.sh-hub{grid-template-columns:minmax(0,1fr)}
+	.sh-side{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));align-items:start}
 }
-/* The desktop rule above centers .staff-brand by giving the role label a
-   min-width roughly matching the tools group's own (unwrapped) width -
-   below ~900px there isn't reliably room for role label + that min-width
-   + brand + tools all on one line (tightest around tablet-portrait
-   widths, where it collapsed .staff-brand to nothing), so stack all
-   three full-width instead: role label, then brand, then tools. */
-@media(max-width:900px){
-	.staff-header{padding:1rem;flex-wrap:wrap}
-	.staff-header>div:first-child{flex:1 1 100%;min-width:0}
-	.staff-brand{order:1;flex:0 0 100%;max-width:100%;text-align:left;margin-top:.5rem}
-	.staff-header-tools{order:2;flex:0 0 100%;max-width:100%;justify-content:flex-start;margin-top:.5rem}
+/* Tablet portrait / phone: the sidebar becomes a block on top of the view. */
+@media(max-width:860px){
+	.sh-layout{grid-template-columns:1fr}
+	.sh-sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding:1.1rem 1rem}
+	.sh-logo{margin-bottom:.8rem}
+	.sh-station{font-size:1.6rem}
+	.sh-nav{margin-top:.8rem}
+	.sh-sidebar-foot{padding-top:.8rem}
+	.sh-main{padding:1rem}
+}
+@media(max-width:480px){
+	.hub-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.7rem}
+	.hub-tile-number{font-size:1.4rem}
+	.staff-grid{grid-template-columns:1fr}
+	.sh-tiles{grid-template-columns:1fr}
+	.sh-summary{grid-template-columns:1fr;justify-items:center}
+	.sh-panel{padding:1rem}
 }

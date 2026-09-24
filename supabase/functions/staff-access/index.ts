@@ -125,11 +125,79 @@ async function buildView(menuSlug: string, role: string) {
 	return { role, tables: tableCards };
 }
 
+// Table Hub only: today's timeline and totals for the side column. "Today"
+// starts at the client's own local midnight (?since=, see staff.js
+// localMidnightIso) - clamped to the last 48h so a bad or old value can't
+// make this scan the whole order history. Everything is derived from
+// timestamps already on order_groups/order_items; nothing new is stored.
+type ActivityGroupRow = {
+	id: string; table_id: string; status: string; opened_at: string; closed_at: string | null; bill_requested_at: string | null;
+	order_items: { product_name: string; quantity: number; unit_price_cents: number; source: string; station: string; created_at: string; dispatched_at: string | null }[];
+};
+
+function parseSince(raw: string | null) {
+	const now = Date.now();
+	const parsed = raw ? Date.parse(raw) : NaN;
+	const floor = now - 48 * 3600 * 1000;
+	const since = Number.isFinite(parsed) ? Math.min(Math.max(parsed, floor), now) : now - 24 * 3600 * 1000;
+	return new Date(since).toISOString();
+}
+
+async function buildActivity(menuSlug: string, since: string) {
+	const [{ data: tables }, { data: groups }] = await Promise.all([
+		supabase.from('restaurant_tables').select('id, table_number').eq('menu_slug', menuSlug),
+		supabase.from('order_groups')
+			.select('id, table_id, status, opened_at, closed_at, bill_requested_at, order_items(product_name, quantity, unit_price_cents, source, station, created_at, dispatched_at)')
+			.eq('menu_slug', menuSlug)
+			.neq('status', 'CANCELLED')
+			.or(`status.eq.OPEN,opened_at.gte."${since}",closed_at.gte."${since}"`)
+	]);
+	const sinceMs = Date.parse(since);
+	const isToday = (timestamp: string | null) => !!timestamp && Date.parse(timestamp) >= sinceMs;
+	const numberOf = new Map((tables || []).map((table) => [table.id, table.table_number]));
+	const events: Record<string, unknown>[] = [];
+	const summary = { guestItems: 0, staffItems: 0, valueCents: 0 };
+	for (const group of (groups || []) as ActivityGroupRow[]) {
+		const tableNumber = numberOf.get(group.table_id) ?? '?';
+		if (isToday(group.opened_at)) events.push({ type: 'opened', at: group.opened_at, tableNumber });
+		// One insert = one order: a guest's cart or a staff add_item call lands
+		// as several rows sharing the same created_at and source.
+		const batches = new Map<string, { at: string; source: string; items: { name: string; quantity: number }[] }>();
+		const ready = new Map<string, { at: string; station: string; count: number }>();
+		for (const item of group.order_items || []) {
+			if (isToday(item.created_at)) {
+				const key = `${item.created_at}|${item.source}`;
+				const batch = batches.get(key) || { at: item.created_at, source: item.source, items: [] };
+				batch.items.push({ name: item.product_name, quantity: item.quantity });
+				batches.set(key, batch);
+				if (item.source === 'GUEST') summary.guestItems += item.quantity; else summary.staffItems += item.quantity;
+				summary.valueCents += item.unit_price_cents * item.quantity;
+			}
+			if (item.dispatched_at && isToday(item.dispatched_at)) {
+				const key = `${item.dispatched_at}|${item.station}`;
+				const entry = ready.get(key) || { at: item.dispatched_at, station: item.station, count: 0 };
+				entry.count += item.quantity;
+				ready.set(key, entry);
+			}
+		}
+		batches.forEach((batch) => events.push({ type: 'order', tableNumber, ...batch }));
+		ready.forEach((entry) => events.push({ type: 'ready', tableNumber, ...entry }));
+		if (isToday(group.bill_requested_at)) events.push({ type: 'bill', at: group.bill_requested_at, tableNumber });
+		if (group.status === 'PAID' && isToday(group.closed_at)) {
+			const totalCents = (group.order_items || []).reduce((sum, item) => sum + item.unit_price_cents * item.quantity, 0);
+			events.push({ type: 'closed', at: group.closed_at, tableNumber, totalCents });
+		}
+	}
+	events.sort((a, b) => Date.parse(String(b.at)) - Date.parse(String(a.at)));
+	return { activity: events.slice(0, 80), summary };
+}
+
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
 	if (request.method === 'GET') {
-		const token = new URL(request.url).searchParams.get('t') || '';
+		const requestUrl = new URL(request.url);
+		const token = requestUrl.searchParams.get('t') || '';
 		if (!TOKEN_PATTERN.test(token)) return json({ error: 'Invalid or missing link.' }, 400);
 		const access = await resolveAccess(token);
 		if (!access) return json({ error: 'This link is no longer valid.' }, 404);
@@ -145,7 +213,8 @@ Deno.serve(async (request) => {
 		const menu = ['waiter', 'bar', 'cashier'].includes(access.role) ? { categories: access.menu.categories } : undefined;
 		// name goes to every role (header branding), unlike categories above
 		// which only waiter/bar/cashier need for picking products to add.
-		return json({ ...view, menu, name: access.menu.name, label: access.label, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
+		const hubExtras = access.role === 'waiter' ? await buildActivity(access.menuSlug, parseSince(requestUrl.searchParams.get('since'))) : {};
+		return json({ ...view, ...hubExtras, menu, name: access.menu.name, label: access.label, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
 	}
 
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);

@@ -7,6 +7,12 @@
 // list, because its whole job is showing which tables are FREE and letting
 // staff activate the next one - see 0017_table_hub.sql for why that
 // replaced the old per-table QR secret.
+//
+// Layout (every role): a light sidebar on the left - logo, station name,
+// the help sections as fold-out panels, language switcher - and the
+// station's own view on the right. The Table Hub additionally gets a side
+// column (live activity, station status, today's order summary) and a row
+// of shortcut tiles under the floor.
 
 const ROLE = window.STAFF_ROLE;
 const token = new URLSearchParams(location.search).get('t');
@@ -23,10 +29,20 @@ let accessLabel = '';
 let languagesState = ['de'];
 let translationsState = {};
 let openAddFormFor = null;
-let guideOpen = false;
 let openHubTable = null; // hub only: which table's popup is showing
-let totalsOpen = false; // cashier only: the "Gesamtübersicht" popup
-let workflowOpen = false; // cashier only: the end-to-end walkthrough popup
+let openHubTableWasFree = false; // ...and whether it was opened as a FREE tile
+let totalsOpen = false; // cashier + hub: the "Gesamtübersicht" popup
+let openOrdersOpen = false; // hub only: every open table's order in one popup
+let historyOpen = false; // hub only: today's full activity list
+// Sidebar fold-out panels (role guide + the 10-step walkthrough). Kept
+// outside render() because the page re-renders on every live update and
+// would otherwise snap them shut.
+const helpOpen = { guide: false, workflow: false };
+// Hub only, from staff-access (see buildActivity there): today's events
+// and totals. Undefined until the server sends them - older deployments
+// don't, and the side column then just shows its empty state.
+let activityState = [];
+let summaryState = null;
 
 // hub only: dispatched-item count last seen per table, to know when the
 // bell is "new" - persisted per token (not just kept in memory), otherwise
@@ -53,9 +69,6 @@ function saveAckDispatchedCount() {
 function translateName(sourceName) {
 	return translationsState?.[currentLang]?.items?.[sourceName]?.name || sourceName;
 }
-function translateCategoryName(sourceName) {
-	return translationsState?.[currentLang]?.categories?.[sourceName]?.name || sourceName;
-}
 let currentLang = (() => {
 	try { return localStorage.getItem(LANG_STORAGE_KEY) || 'de'; } catch { return 'de'; }
 })();
@@ -70,7 +83,63 @@ function strings() {
 	return catalog[currentLang] || catalog.de || {};
 }
 
+function formatMoney(cents) {
+	return `${((cents || 0) / 100).toFixed(2)} €`;
+}
+
+// Start of the local day - the server counts "today" from here, so a
+// Greek and a German restaurant both see their own midnight.
+function localMidnightIso() {
+	const now = new Date();
+	return new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+}
+
+function timeAgo(iso) {
+	const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+	if (minutes < 1) return strings().timeJustNow;
+	if (minutes < 60) return strings().timeMinutes.replace('{n}', minutes);
+	return strings().timeHours.replace('{n}', Math.floor(minutes / 60));
+}
+
+// Line icons (24px viewBox, stroke = currentColor) for the sidebar, panel
+// headers, activity feed and the walkthrough - inline so they need no
+// extra request and pick up whatever color the surrounding text has.
+const ICONS = {
+	floor: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+	orders: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
+	history: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/>',
+	totals: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+	help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5h.01"/>',
+	chevron: '<path d="m6 9 6 6 6-6"/>',
+	qr: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>',
+	tap: '<path d="M9 11V5a2 2 0 1 1 4 0v6"/><path d="M13 9a2 2 0 1 1 4 0v3a7 7 0 0 1-7 7h-.5A5.5 5.5 0 0 1 5 16l-1.5-3a1.8 1.8 0 0 1 3-2L9 13"/>',
+	people: '<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M15 14.5a5 5 0 0 1 6 5.5"/>',
+	route: '<path d="M12 3v18M3 12h18M12 3 9 6M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3"/>',
+	chef: '<path d="M6 14a4 4 0 1 1 1.5-7.7A4.5 4.5 0 0 1 16.5 6 4 4 0 1 1 18 14v6H6z"/><path d="M6 17h12"/>',
+	eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+	repeat: '<path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>',
+	receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
+	card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/>',
+	check: '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>',
+	bag: '<path d="M6 8h12l-1 12H7z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+	bell: '<path d="M18 16v-5a6 6 0 1 0-12 0v5l-2 2h16z"/><path d="M10 21h4"/>',
+	open: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 12h8M12 8v8"/>',
+	kitchen: '<path d="M6 14a4 4 0 1 1 1.5-7.7A4.5 4.5 0 0 1 16.5 6 4 4 0 1 1 18 14v6H6z"/>',
+	bar: '<path d="M5 4h14l-7 8z"/><path d="M12 12v8M8 20h8"/>',
+	hub: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+	cashier: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'
+};
+function icon(name, size = 20) {
+	return `<svg class="sh-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
+}
+// One icon per walkthrough step, same order as staff-strings.js workflow[].
+const WORKFLOW_ICONS = ['qr', 'tap', 'people', 'route', 'chef', 'eye', 'repeat', 'receipt', 'card', 'check'];
+
 function staffEndpoint() { return `${AUTH_CONFIG.supabaseUrl}/functions/v1/staff-access`; }
+function viewUrl() {
+	const since = isHub ? `&since=${encodeURIComponent(localMidnightIso())}` : '';
+	return `${staffEndpoint()}?t=${encodeURIComponent(token)}${since}`;
+}
 
 async function callStaff(body) {
 	const response = await fetch(staffEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token, ...body }) });
@@ -84,8 +153,8 @@ function sortItems(items) {
 }
 
 function itemRowMarkup(item, withPrice, clickable) {
-	const priceMarkup = withPrice ? `<span class="staff-item-price">${((item.unitPriceCents || 0) / 100).toFixed(2)} €</span>` : '';
-	return `<div class="staff-item-row ${item.dispatched ? 'is-done' : ''}" ${clickable ? `data-item-id="${item.id}"` : ''}>
+	const priceMarkup = withPrice ? `<span class="staff-item-price">${formatMoney(item.unitPriceCents)}</span>` : '';
+	return `<div class="staff-item-row ${item.dispatched ? 'is-done' : ''} ${clickable ? 'is-clickable' : ''}" ${clickable ? `data-item-id="${item.id}"` : ''}>
 		<span class="status-dot ${item.dispatched ? 'dot-green' : 'dot-red'}"></span>
 		<span class="staff-item-name">${item.quantity}× ${escapeHtml(translateName(item.name))}${item.notes ? ` <em>(${escapeHtml(item.notes)})</em>` : ''}</span>
 		${priceMarkup}
@@ -135,10 +204,12 @@ function billFlagMarkup(table) {
 function cardMarkup(table) {
 	const withPrice = ROLE === 'cashier';
 	const bill = billFlagMarkup(table);
-	const total = withPrice ? `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>` : '';
+	const total = withPrice ? `<span class="staff-card-total">${formatMoney(table.totalCents)}</span>` : '';
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
+	const openCount = table.items.filter((item) => !item.dispatched).length;
+	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(strings().statusOpen.replace('{n}', openCount))}</span>` : '';
 	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''}" data-table-id="${table.tableId}">
-		<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}</div>
+		<div class="staff-card-head"><h3><span class="staff-card-label">${escapeHtml(strings().table)}</span> ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}${badge}</div>
 		<div class="staff-card-rows">${rows}</div>
 		${cardActionsMarkup(table)}
 	</div>`;
@@ -158,19 +229,21 @@ function cardGridMarkup(tables) {
 }
 
 // --- Table Hub (waiter role): a grid of every table instead of a card list.
-// Tapping a FREE tile activates it right away (no confirmation - it's the
-// low-risk direction, closing is what actually settles a bill). Tapping an
-// ACTIVE/PAYMENT_PENDING tile opens a popup with that table's order, same
+// Tapping any tile opens a popup: for a FREE table just the "Aktivieren"
+// confirm step, for an ACTIVE/PAYMENT_PENDING one that table's order, same
 // row markup as the card view. See 0017_table_hub.sql for why FREE tiles
-// carry no secret of any kind.
+// carry no secret of any kind. Colors stay green/orange/red by status.
 function hubTileMarkup(table) {
 	const statusClass = table.status === 'FREE' ? 'hub-tile-free' : table.status === 'PAYMENT_PENDING' ? 'hub-tile-pending' : 'hub-tile-active';
 	const dispatchedCount = (table.items || []).filter((item) => item.dispatched).length;
 	const bell = table.status !== 'FREE' && dispatchedCount > (ackDispatchedCount[table.tableId] || 0);
+	const amount = table.status === 'FREE' ? '' : `<span class="hub-tile-amount">${formatMoney(table.totalCents)}</span>`;
 	return `<button type="button" class="hub-tile ${statusClass}" data-hub-table="${table.tableId}" data-hub-status="${table.status}">
 		${bell ? '<span class="hub-bell" aria-hidden="true">🛎️</span>' : ''}
-		<span class="hub-tile-number">${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</span>
-		<span class="hub-tile-status">${escapeHtml(strings().hubStatus?.[table.status] || table.status)}</span>
+		<span class="hub-tile-label">${escapeHtml(strings().table)}</span>
+		<span class="hub-tile-number">${escapeHtml(String(table.tableNumber))}</span>
+		${amount}
+		<span class="hub-tile-status"><span class="hub-tile-dot"></span>${escapeHtml(strings().hubStatus?.[table.status] || table.status)}</span>
 	</button>`;
 }
 
@@ -180,11 +253,21 @@ function hubTileMarkup(table) {
 // changes, rather than staying in place with just its color/label updating.
 const HUB_STATUS_ORDER = ['FREE', 'ACTIVE', 'PAYMENT_PENDING'];
 function hubGridMarkup(tables) {
+	if (!tables.length) return `<p class="staff-empty">${escapeHtml(strings().noTables)}</p>`;
 	return HUB_STATUS_ORDER
 		.map((status) => tables.filter((table) => table.status === status))
 		.filter((group) => group.length)
 		.map((group) => `<div class="hub-grid">${group.map(hubTileMarkup).join('')}</div>`)
 		.join('');
+}
+
+function popupMarkup(id, content) {
+	return `<div class="hub-popup-overlay" id="${id}Overlay">
+		<div class="hub-popup-box" role="dialog" aria-modal="true">
+			<button type="button" class="smart-match-close" id="${id}Close" aria-label="Close">✕</button>
+			${content}
+		</div>
+	</div>`;
 }
 
 function hubPopupMarkup(table) {
@@ -194,17 +277,13 @@ function hubPopupMarkup(table) {
 	// until that button is pressed, so tapping the wrong tile by mistake is
 	// a no-op (close with ✕), not something that needs undoing afterwards.
 	if (table.status === 'FREE') {
-		return `<div class="hub-popup-overlay" id="hubPopupOverlay">
-			<div class="hub-popup-box" role="dialog" aria-modal="true">
-				<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
-				<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</h3></div>
-				<div class="staff-card-actions">
-					<button type="button" class="staff-btn staff-btn-primary" data-activate-table="${table.tableId}">${escapeHtml(strings().activateTable)}</button>
-				</div>
-			</div>
-		</div>`;
+		return popupMarkup('hubPopup', `
+			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}</h3></div>
+			<div class="staff-card-actions">
+				<button type="button" class="staff-btn staff-btn-primary" data-activate-table="${table.tableId}">${escapeHtml(strings().activateTable)}</button>
+			</div>`);
 	}
-	const total = `<span class="staff-card-total">${((table.totalCents || 0) / 100).toFixed(2)} €</span>`;
+	const total = `<span class="staff-card-total">${formatMoney(table.totalCents)}</span>`;
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, true, false)).join('') || `<p class="staff-empty">${escapeHtml(strings().hubEmptyOrder)}</p>`;
 	// Only offered while the table is still genuinely empty - a wrong tile
 	// tapped by mistake shouldn't need a trip to the cashier to undo. Once
@@ -212,73 +291,216 @@ function hubPopupMarkup(table) {
 	const deactivate = !table.items.length
 		? `<button type="button" class="staff-btn" data-deactivate-table="${table.tableId}">${escapeHtml(strings().deactivateTable)}</button>`
 		: '';
-	return `<div class="hub-popup-overlay" id="hubPopupOverlay">
-		<div class="hub-popup-box" role="dialog" aria-modal="true">
-			<button type="button" class="smart-match-close" id="hubPopupClose" aria-label="Close">✕</button>
-			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${billFlagMarkup(table)}</h3>${total}</div>
-			<div class="staff-card-rows">${rows}</div>
-			<div class="staff-card-actions">
-				<button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button>
-				<button type="button" class="staff-btn staff-btn-primary" data-request-bill="${table.tableId}" ${table.billRequested ? 'disabled' : ''}>${escapeHtml(table.billRequested ? strings().billRequested : strings().requestBill)}</button>
-				${deactivate}
-			</div>
-			${addFormMarkup(table.tableId)}
+	return popupMarkup('hubPopup', `
+		<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${billFlagMarkup(table)}</h3>${total}</div>
+		<div class="staff-card-rows">${rows}</div>
+		<div class="staff-card-actions">
+			<button type="button" class="staff-btn" data-toggle-add="${table.tableId}">${escapeHtml(strings().addItem)}</button>
+			<button type="button" class="staff-btn staff-btn-primary" data-request-bill="${table.tableId}" ${table.billRequested ? 'disabled' : ''}>${escapeHtml(table.billRequested ? strings().billRequested : strings().requestBill)}</button>
+			${deactivate}
 		</div>
-	</div>`;
+		${addFormMarkup(table.tableId)}`);
 }
 
 function totalsPopupMarkup() {
 	if (!totalsOpen) return '';
 	const grandTotal = lastTables.reduce((sum, table) => sum + (table.totalCents || 0), 0);
-	return `<div class="hub-popup-overlay" id="totalsPopupOverlay">
-		<div class="hub-popup-box" role="dialog" aria-modal="true">
-			<button type="button" class="smart-match-close" id="totalsPopupClose" aria-label="Close">✕</button>
-			<h2>${escapeHtml(strings().totalsHeading)}</h2>
-			<p class="staff-card-total staff-grand-total">${(grandTotal / 100).toFixed(2)} €</p>
-		</div>
+	return popupMarkup('totalsPopup', `
+		<h2>${escapeHtml(strings().totalsHeading)}</h2>
+		<p class="staff-card-total staff-grand-total">${formatMoney(grandTotal)}</p>`);
+}
+
+// Hub only: every table that currently has an order, read-only, so staff
+// can scan all running orders at once instead of opening tile by tile.
+function openOrdersPopupMarkup() {
+	if (!openOrdersOpen) return '';
+	const tables = lastTables.filter((table) => table.status !== 'FREE' && (table.items || []).length);
+	const content = tables.length
+		? tables.map((table) => `<div class="sh-popup-section">
+			<div class="staff-card-head"><h3>${escapeHtml(strings().table)} ${escapeHtml(String(table.tableNumber))}${billFlagMarkup(table)}</h3><span class="staff-card-total">${formatMoney(table.totalCents)}</span></div>
+			<div class="staff-card-rows">${sortItems(table.items).map((item) => itemRowMarkup(item, true, false)).join('')}</div>
+		</div>`).join('')
+		: `<p class="staff-empty">${escapeHtml(strings().noOpenOrders)}</p>`;
+	return popupMarkup('openOrdersPopup', `<h2>${escapeHtml(strings().tileOpenOrders)}</h2>${content}`);
+}
+
+function historyPopupMarkup() {
+	if (!historyOpen) return '';
+	return popupMarkup('historyPopup', `<h2>${escapeHtml(strings().historyTitle)}</h2>${activityListMarkup(activityState)}`);
+}
+
+// --- Hub side column ---------------------------------------------------
+// Event types come from staff-access buildActivity(); the text is built
+// here so it follows the language switcher like everything else.
+function activityText(event) {
+	const itemList = (event.items || []).map((item) => `${item.quantity}× ${translateName(item.name)}`).join(', ');
+	switch (event.type) {
+		case 'opened': return strings().evOpened;
+		case 'order': return (event.source === 'GUEST' ? strings().evOrderGuest : strings().evOrderStaff.replace('{who}', strings().roleLabels?.[event.source === 'CASHIER' ? 'cashier' : event.source === 'BAR' ? 'bar' : 'waiter'] || event.source)).replace('{items}', itemList);
+		case 'ready': return (event.station === 'BAR' ? strings().evReadyBar : strings().evReadyKitchen).replace('{n}', event.count);
+		case 'bill': return strings().evBill;
+		case 'closed': return strings().evClosed.replace('{total}', formatMoney(event.totalCents));
+		default: return '';
+	}
+}
+const ACTIVITY_ICONS = { opened: 'open', order: 'bag', ready: 'bell', bill: 'receipt', closed: 'check' };
+
+function activityListMarkup(events) {
+	if (!events.length) return `<p class="sh-muted">${escapeHtml(strings().noActivity)}</p>`;
+	return `<ul class="sh-activity">${events.map((event) => `<li>
+		<span class="sh-activity-icon sh-ev-${event.type}">${icon(ACTIVITY_ICONS[event.type] || 'bag', 18)}</span>
+		<span class="sh-activity-body"><strong>${escapeHtml(strings().table)} ${escapeHtml(String(event.tableNumber))}</strong><span>${escapeHtml(activityText(event))}</span></span>
+		<time class="sh-activity-time">${escapeHtml(timeAgo(event.at))}</time>
+	</li>`).join('')}</ul>`;
+}
+
+// Worked out from the tables already on screen - no extra server data: open
+// (not yet dispatched) items per station, active tables, bills waiting.
+function stationStatusMarkup(tables) {
+	const openItems = (station) => tables.reduce((sum, table) => sum + (table.items || []).filter((item) => item.station === station && !item.dispatched).reduce((n, item) => n + item.quantity, 0), 0);
+	const rows = [
+		{ key: 'kitchen', value: strings().statusOpen.replace('{n}', openItems('KITCHEN')) },
+		{ key: 'bar', value: strings().statusOpen.replace('{n}', openItems('BAR')) },
+		{ key: 'hub', label: strings().roleLabels?.waiter, value: strings().statusActiveTables.replace('{n}', tables.filter((table) => table.status !== 'FREE').length) },
+		{ key: 'cashier', value: strings().statusBills.replace('{n}', tables.filter((table) => table.billRequested).length) }
+	];
+	return `<ul class="sh-status">${rows.map((row) => `<li>
+		<span class="sh-status-icon">${icon(row.key, 18)}</span>
+		<span class="sh-status-name">${escapeHtml(row.label || strings().roleLabels?.[row.key] || row.key)}</span>
+		<span class="sh-status-value">${escapeHtml(row.value)}</span>
+	</li>`).join('')}</ul>`;
+}
+
+// Donut: today's ordered items by who entered them - guests via the QR menu
+// (orange) vs staff (dark). Plain SVG circle segments, no chart library.
+function summaryMarkup(summary) {
+	if (!summary) return `<p class="sh-muted">${escapeHtml(strings().noActivity)}</p>`;
+	const guest = summary.guestItems || 0;
+	const staff = summary.staffItems || 0;
+	const total = guest + staff;
+	const circumference = 2 * Math.PI * 42;
+	const guestLength = total ? (guest / total) * circumference : 0;
+	return `<div class="sh-summary">
+		<svg class="sh-donut" viewBox="0 0 100 100" role="img" aria-label="${escapeHtml(`${strings().qrOrders}: ${guest}, ${strings().staffOrders}: ${staff}`)}">
+			<circle cx="50" cy="50" r="42" fill="none" stroke="${total ? '#262421' : '#e7e5e1'}" stroke-width="12"/>
+			${guest ? `<circle cx="50" cy="50" r="42" fill="none" stroke="#f66a09" stroke-width="12" stroke-dasharray="${guestLength} ${circumference}" transform="rotate(-90 50 50)"/>` : ''}
+			<text x="50" y="50" text-anchor="middle" class="sh-donut-number">${total}</text>
+			<text x="50" y="64" text-anchor="middle" class="sh-donut-label">${escapeHtml(strings().itemsLabel)}</text>
+		</svg>
+		<ul class="sh-legend">
+			<li><span class="sh-swatch sh-swatch-guest"></span><span>${escapeHtml(strings().qrOrders)}</span><strong>${guest}</strong></li>
+			<li><span class="sh-swatch sh-swatch-staff"></span><span>${escapeHtml(strings().staffOrders)}</span><strong>${staff}</strong></li>
+			<li class="sh-legend-total"><span>${escapeHtml(strings().orderValue)}</span><strong>${formatMoney(summary.valueCents)}</strong></li>
+		</ul>
 	</div>`;
 }
 
-// Cashier only: the end-to-end walkthrough (guest scan -> activation ->
-// order -> kitchen/bar -> bill -> close) rather than the short per-role
-// bullets in guideMarkup() below - a numbered step list, so it gets its own
-// modal popup (same as totalsPopupMarkup) instead of the small dropdown
-// panel, which has no scroll handling for a list this long.
-function workflowPopupMarkup() {
-	if (!workflowOpen) return '';
-	const steps = strings().workflow || [];
-	return `<div class="hub-popup-overlay" id="workflowPopupOverlay">
-		<div class="hub-popup-box" role="dialog" aria-modal="true">
-			<button type="button" class="smart-match-close" id="workflowPopupClose" aria-label="Close">✕</button>
-			<h2>${escapeHtml(strings().workflowTitle)}</h2>
-			<ol class="staff-workflow-list">${steps.map((step) => `<li>${escapeHtml(step)}</li>`).join('')}</ol>
-		</div>
-	</div>`;
+function hubSideMarkup(tables) {
+	return `<aside class="sh-side">
+		<section class="sh-panel">
+			<div class="sh-panel-head"><h2>${escapeHtml(strings().activityTitle)}</h2>${activityState.length > 5 ? `<button type="button" class="sh-link" data-open-history>${escapeHtml(strings().viewAll)}</button>` : ''}</div>
+			${activityListMarkup(activityState.slice(0, 5))}
+		</section>
+		<section class="sh-panel">
+			<div class="sh-panel-head"><h2>${escapeHtml(strings().statusTitle)}</h2></div>
+			${stationStatusMarkup(tables)}
+		</section>
+		<section class="sh-panel">
+			<div class="sh-panel-head"><h2>${escapeHtml(strings().summaryTitle)}</h2><span class="sh-muted">${escapeHtml(strings().today)}</span></div>
+			${summaryMarkup(summaryState)}
+		</section>
+	</aside>`;
 }
 
+function hubTilesMarkup() {
+	const tiles = [
+		{ attr: 'data-open-orders', iconName: 'orders', title: strings().tileOpenOrders, sub: strings().tileOpenOrdersSub },
+		{ attr: 'data-open-history', iconName: 'history', title: strings().historyTitle, sub: strings().tileHistorySub },
+		{ attr: 'data-open-totals', iconName: 'totals', title: strings().tileTotals, sub: strings().tileTotalsSub },
+		{ attr: 'data-show-workflow', iconName: 'help', title: strings().tileHelp, sub: strings().tileHelpSub }
+	];
+	return `<div class="sh-tiles">${tiles.map((tile) => `<button type="button" class="sh-tile" ${tile.attr}>
+		<span class="sh-tile-icon">${icon(tile.iconName, 22)}</span>
+		<span><strong>${escapeHtml(tile.title)}</strong><small>${escapeHtml(tile.sub)}</small></span>
+	</button>`).join('')}</div>`;
+}
+
+// --- Sidebar -------------------------------------------------------------
 function languageSwitcherMarkup() {
 	return `<nav class="staff-languages" aria-label="Language">${languagesState.map((language) => `<button type="button" class="staff-lang-btn ${language === currentLang ? 'is-active' : ''}" data-lang="${escapeHtml(language)}">${escapeHtml(language.toUpperCase())}</button>`).join('')}</nav>`;
 }
 
-// Small "? Guide" dropdown in the header: a few short bullets per role
-// (staff-strings.js -> guide). guideOpen lives outside render() because the
-// page re-renders on every live update and would otherwise close it.
-function guideMarkup() {
-	const points = strings().guide?.[ROLE] || [];
-	if (!points.length) return '';
-	return `<div class="staff-guide">
-		<button type="button" class="staff-guide-btn ${guideOpen ? 'is-open' : ''}" data-guide-toggle aria-expanded="${guideOpen}" aria-controls="staffGuidePanel">? ${escapeHtml(strings().guideButton)}</button>
-		<div class="staff-guide-panel" id="staffGuidePanel" ${guideOpen ? '' : 'hidden'}>
-			<h2>${escapeHtml(strings().guideTitle)}</h2>
-			<ul>${points.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}</ul>
-		</div>
+// A fold-out help section: the button stays put, the content unrolls
+// underneath it in the sidebar - no popup covering the station's view.
+function foldoutMarkup(key, title, content) {
+	const open = helpOpen[key];
+	return `<div class="sh-foldout ${open ? 'is-open' : ''}">
+		<button type="button" class="sh-foldout-btn" data-help-toggle="${key}" aria-expanded="${open}" aria-controls="shFold-${key}">
+			${icon(key === 'workflow' ? 'history' : 'help', 18)}<span>${escapeHtml(title)}</span>${icon('chevron', 16)}
+		</button>
+		<div class="sh-foldout-body" id="shFold-${key}" ${open ? '' : 'hidden'}>${content}</div>
 	</div>`;
 }
 
-function headerToolsMarkup() {
-	const totalsButton = ROLE === 'cashier' ? `<button type="button" class="staff-btn" data-open-totals>${escapeHtml(strings().totalsButton)}</button>` : '';
-	const workflowButton = ROLE === 'cashier' ? `<button type="button" class="staff-btn" data-open-workflow>${escapeHtml(strings().workflowButton)}</button>` : '';
-	return `${totalsButton}${workflowButton}${guideMarkup()}${languageSwitcherMarkup()}`;
+function guideContent() {
+	const points = strings().guide?.[ROLE] || [];
+	return `<ul class="sh-guide-list">${points.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`;
+}
+
+// The end-to-end walkthrough (guest scan -> activation -> order ->
+// kitchen/bar -> bill -> close): numbered orange steps with an icon, a
+// short bold title (workflowSteps) and the longer explanation (workflow).
+function workflowContent() {
+	const steps = strings().workflow || [];
+	const titles = strings().workflowSteps || [];
+	return `<ol class="sh-steps">${steps.map((step, index) => `<li>
+		<span class="sh-step-number">${index + 1}</span>
+		<span class="sh-step-icon">${icon(WORKFLOW_ICONS[index] || 'check', 22)}</span>
+		<span class="sh-step-text">${titles[index] ? `<strong>${escapeHtml(titles[index])}</strong>` : ''}<span>${escapeHtml(step)}</span></span>
+	</li>`).join('')}</ol>`;
+}
+
+function sidebarMarkup() {
+	const totalsButton = (ROLE === 'cashier' || isHub)
+		? `<button type="button" class="sh-nav-btn" data-open-totals>${icon('totals', 18)}<span>${escapeHtml(strings().tileTotals)}</span></button>`
+		: '';
+	return `<aside class="sh-sidebar">
+		<a class="sh-logo" href="https://smartmenusolutions.com/" target="_blank" rel="noopener">
+			<img src="assets/images/logo-mark.png" alt="">
+			<span><span class="sh-logo-smart">Smart</span><span class="sh-logo-menu">Menu</span><br>Solutions</span>
+		</a>
+		<p class="sh-eyebrow">Smart ServiceHub™</p>
+		<h1 class="sh-station">${escapeHtml(accessLabel || strings().roleLabels?.[ROLE] || ROLE)}</h1>
+		${restaurantName ? `<p class="sh-restaurant">${escapeHtml(restaurantName)}</p>` : ''}
+		<p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p>
+		<div class="sh-nav">
+			${totalsButton}
+			${foldoutMarkup('guide', strings().guideButton, guideContent())}
+			${foldoutMarkup('workflow', strings().workflowButton, workflowContent())}
+		</div>
+		<div class="sh-sidebar-foot">${languageSwitcherMarkup()}</div>
+	</aside>`;
+}
+
+function mainMarkup(tables) {
+	if (isHub) {
+		return `<div class="sh-hub">
+			<div class="sh-hub-main">
+				<section class="sh-panel sh-floor">
+					<div class="sh-panel-head"><h2>${icon('floor', 22)}${escapeHtml(strings().floorTitle)}</h2>
+						<span class="sh-legend-inline">${HUB_STATUS_ORDER.map((status) => `<span class="sh-legend-dot sh-legend-${status.toLowerCase()}">${escapeHtml(strings().hubStatus?.[status] || status)}</span>`).join('')}</span>
+					</div>
+					${hubGridMarkup(tables)}
+				</section>
+				${hubTilesMarkup()}
+			</div>
+			${hubSideMarkup(tables)}
+		</div>`;
+	}
+	return `<section class="sh-panel sh-orders">
+		<div class="sh-panel-head"><h2>${icon(ROLE === 'cashier' ? 'receipt' : 'orders', 22)}${escapeHtml(strings().ordersTitle)}</h2></div>
+		${tables.length ? cardGridMarkup(tables) : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`}
+	</section>`;
 }
 
 function render(data) {
@@ -286,6 +508,8 @@ function render(data) {
 	// An extra link the owner named, e.g. "Beach Bar" (see
 	// 0023_multiple_staff_access.sql) - shown instead of the role's name.
 	if (data.label !== undefined) accessLabel = data.label || '';
+	if (data.activity !== undefined) activityState = Array.isArray(data.activity) ? data.activity : [];
+	if (data.summary !== undefined) summaryState = data.summary || null;
 	if (data.name) {
 		restaurantName = data.name;
 		// "Küche · El Greco — Smart ServiceHub™" - pwa.js names the installed
@@ -298,22 +522,17 @@ function render(data) {
 	// languageDisplayOrder in admin.js) - a saved or default language that
 	// isn't one of the client's enabled ones falls back to that main one.
 	if (!languagesState.includes(currentLang)) currentLang = languagesState[0];
+	document.documentElement.lang = currentLang;
 	if (data.translations) translationsState = data.translations;
 	const tables = data.tables || [];
-	const body = isHub
-		? `${hubGridMarkup(tables)}${hubPopupMarkup(tables.find((table) => table.tableId === openHubTable))}`
-		: (tables.length ? cardGridMarkup(tables) : `<p class="staff-empty">${escapeHtml(strings().empty)}</p>`) + totalsPopupMarkup() + workflowPopupMarkup();
-	app.innerHTML = `
-		<header class="staff-header">
-			<div><h1>${escapeHtml(accessLabel || strings().roleLabels?.[ROLE] || ROLE)}</h1><p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p></div>
-			<div class="staff-brand">
-				${restaurantName ? `<p class="staff-brand-name">${escapeHtml(restaurantName)}</p>` : ''}
-				<a class="staff-brand-tag" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html" target="_blank" rel="noopener"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>
-			</div>
-			<div class="staff-header-tools">${headerToolsMarkup()}</div>
-		</header>
-		${body}
-	`;
+	const popups = [
+		isHub ? hubPopupMarkup(tables.find((table) => table.tableId === openHubTable)) : '',
+		totalsPopupMarkup(), openOrdersPopupMarkup(), historyPopupMarkup()
+	].join('');
+	app.innerHTML = `<div class="sh-layout ${isHub ? 'is-hub' : ''}">
+		${sidebarMarkup()}
+		<main class="sh-main">${mainMarkup(tables)}</main>
+	</div>${popups}`;
 	wireActions();
 }
 
@@ -322,7 +541,8 @@ function wireActions() {
 }
 
 async function onAppClick(event) {
-	const guideToggle = event.target.closest('[data-guide-toggle]');
+	const helpToggle = event.target.closest('[data-help-toggle]');
+	const showWorkflow = event.target.closest('[data-show-workflow]');
 	const langButton = event.target.closest('[data-lang]');
 	const dispatchItem = event.target.closest('[data-item-id]');
 	const dispatchAll = event.target.closest('[data-dispatch-all]');
@@ -334,15 +554,20 @@ async function onAppClick(event) {
 	const removeItem = event.target.closest('[data-remove-item]');
 	const requestBill = event.target.closest('[data-request-bill]');
 	const hubTile = event.target.closest('[data-hub-table]');
-	const hubPopupClose = event.target.closest('#hubPopupClose') || event.target.id === 'hubPopupOverlay' && event.target;
-	const openTotals = event.target.closest('[data-open-totals]');
-	const totalsClose = event.target.closest('#totalsPopupClose') || event.target.id === 'totalsPopupOverlay' && event.target;
-	const openWorkflow = event.target.closest('[data-open-workflow]');
-	const workflowClose = event.target.closest('#workflowPopupClose') || event.target.id === 'workflowPopupOverlay' && event.target;
+	const popupClosed = (id) => event.target.closest(`#${id}Close`) || event.target.id === `${id}Overlay`;
 
-	if (guideToggle) {
-		guideOpen = !guideOpen;
+	if (helpToggle) {
+		const key = helpToggle.dataset.helpToggle;
+		helpOpen[key] = !helpOpen[key];
 		rerender();
+		return;
+	}
+	// The hub's "So funktioniert's" tile: unroll the walkthrough in the
+	// sidebar and bring it into view (on a phone the sidebar sits on top).
+	if (showWorkflow) {
+		helpOpen.workflow = true;
+		rerender();
+		app.querySelector('#shFold-workflow')?.closest('.sh-foldout')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 		return;
 	}
 
@@ -353,13 +578,13 @@ async function onAppClick(event) {
 		return;
 	}
 
-	if (openTotals) { totalsOpen = true; rerender(); return; }
-	if (totalsClose) { totalsOpen = false; rerender(); return; }
-
-	if (openWorkflow) { workflowOpen = true; rerender(); return; }
-	if (workflowClose) { workflowOpen = false; rerender(); return; }
-
-	if (hubPopupClose) { openHubTable = null; rerender(); return; }
+	if (event.target.closest('[data-open-totals]')) { totalsOpen = true; rerender(); return; }
+	if (popupClosed('totalsPopup')) { totalsOpen = false; rerender(); return; }
+	if (event.target.closest('[data-open-orders]')) { openOrdersOpen = true; rerender(); return; }
+	if (popupClosed('openOrdersPopup')) { openOrdersOpen = false; rerender(); return; }
+	if (event.target.closest('[data-open-history]')) { historyOpen = true; rerender(); return; }
+	if (popupClosed('historyPopup')) { historyOpen = false; rerender(); return; }
+	if (popupClosed('hubPopup')) { openHubTable = null; rerender(); return; }
 
 	try {
 		if (hubTile) {
@@ -368,6 +593,7 @@ async function onAppClick(event) {
 			// this tap alone, so the wrong tile is a harmless close (✕).
 			const tableId = hubTile.dataset.hubTable;
 			openHubTable = tableId;
+			openHubTableWasFree = hubTile.dataset.hubStatus === 'FREE';
 			if (hubTile.dataset.hubStatus !== 'FREE') {
 				ackDispatchedCount[tableId] = (lastTables.find((table) => table.tableId === tableId)?.items || []).filter((item) => item.dispatched).length;
 				saveAckDispatchedCount();
@@ -375,6 +601,8 @@ async function onAppClick(event) {
 			rerender();
 		} else if (activateTable) {
 			await callStaff({ action: 'activate_table', tableId: activateTable.dataset.activateTable });
+			// The popup stays open and turns into the now-active table's order.
+			openHubTableWasFree = false;
 			await refresh();
 		} else if (dispatchItem && isTicketRole) {
 			await callStaff({ action: 'dispatch_item', itemId: dispatchItem.dataset.itemId });
@@ -422,25 +650,26 @@ function rerender() {
 	render({ tables: lastTables, menu: menuState, languages: languagesState, translations: translationsState });
 }
 
-// Close the guide on a click anywhere else, or on Escape.
-document.addEventListener('click', (event) => {
-	if (guideOpen && !event.target.closest('.staff-guide')) { guideOpen = false; rerender(); }
-});
 document.addEventListener('keydown', (event) => {
-	if (event.key === 'Escape' && guideOpen) { guideOpen = false; rerender(); }
-	if (event.key === 'Escape' && openHubTable) { openHubTable = null; rerender(); }
-	if (event.key === 'Escape' && totalsOpen) { totalsOpen = false; rerender(); }
-	if (event.key === 'Escape' && workflowOpen) { workflowOpen = false; rerender(); }
+	if (event.key !== 'Escape') return;
+	if (openHubTable || totalsOpen || openOrdersOpen || historyOpen) {
+		openHubTable = null; totalsOpen = false; openOrdersOpen = false; historyOpen = false;
+		rerender();
+	}
 });
 
 async function refresh() {
-	const response = await fetch(`${staffEndpoint()}?t=${encodeURIComponent(token)}`);
+	const response = await fetch(viewUrl());
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
-	// A table popped from the list (closed elsewhere) or is no longer open -
-	// don't leave a stale popup showing.
-	if (openHubTable && !lastTables.some((table) => table.tableId === openHubTable && table.status !== 'FREE')) openHubTable = null;
+	// A table popped from the list, or an open table's popup whose table got
+	// closed elsewhere (it's FREE now) - don't leave a stale popup showing.
+	// A FREE table's own "Aktivieren" confirm popup stays open.
+	if (openHubTable) {
+		const current = lastTables.find((table) => table.tableId === openHubTable);
+		if (!current || (current.status === 'FREE' && !openHubTableWasFree)) openHubTable = null;
+	}
 	render(data);
 }
 
@@ -466,13 +695,14 @@ async function subscribeRealtime(menuSlug) {
 	} catch { /* falls back to the polling interval below */ }
 	// Cheap safety net in case a broadcast is ever missed (network hiccup,
 	// tab was backgrounded) - staff screens need to stay correct, not just
-	// fast, so this polls regardless of whether realtime connected.
+	// fast, so this polls regardless of whether realtime connected. Also
+	// keeps the hub's "vor 3 Min." activity times current.
 	setInterval(refresh, 20000);
 }
 
 async function init() {
 	if (!token) { app.innerHTML = `<p class="staff-empty">${escapeHtml(strings().linkIncomplete)}</p>`; return; }
-	const response = await fetch(`${staffEndpoint()}?t=${encodeURIComponent(token)}`);
+	const response = await fetch(viewUrl());
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
