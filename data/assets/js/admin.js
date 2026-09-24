@@ -538,6 +538,68 @@ function onboardingTemplateHtml(client, lang) {
 	</div>`;
 }
 
+// A table's guest link - table number plus its link_secret (see
+// 0019_table_link_secret.sql), the same link its printed QR code holds.
+function tableGuestUrl(client, table) {
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	return `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}&k=${encodeURIComponent(table.link_secret)}`;
+}
+
+// "Copy for email" under the table list: every table's QR code image, name
+// and link, in the language picked for the onboarding template below, so
+// the owner can send the whole set to the venue for printing in one go.
+// The number is printed under each QR image (the on-screen overlay is a CSS
+// trick that wouldn't survive being pasted into an email).
+function tablesEmailRows(client) {
+	return [...(smartServiceTablesBySlug[client.slug] || [])]
+		.sort((a, b) => String(a.table_number).localeCompare(String(b.table_number), undefined, { numeric: true }));
+}
+
+function tablesEmailText(client, lang) {
+	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
+	const heading = (strings.tablesEmailHeading || 'Table QR codes – {name}').replace('{name}', client.name);
+	const lines = tablesEmailRows(client).map((table) => `${strings.table || 'Table'} ${table.table_number}: ${tableGuestUrl(client, table)}`);
+	return `${heading}\n\n${strings.tablesEmailHint || ''}\n\n${lines.join('\n')}`;
+}
+
+function tablesEmailHtml(client, lang) {
+	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
+	const heading = (strings.tablesEmailHeading || 'Table QR codes – {name}').replace('{name}', client.name);
+	const cells = tablesEmailRows(client).map((table) => {
+		const url = tableGuestUrl(client, table);
+		const qr = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=10&ecc=H&data=${encodeURIComponent(url)}`;
+		return `<td style="padding:0 16px 22px 0;vertical-align:top;text-align:center;width:170px">
+			<img src="${escapeAttr(qr)}" width="150" height="150" alt="${escapeAttr(`${strings.table || 'Table'} ${table.table_number}`)}" style="display:block;margin:0 auto 6px;border:0">
+			<div style="font-weight:700;font-size:15px">${escapeHtml(`${strings.table || 'Table'} ${table.table_number}`)}</div>
+			<a href="${escapeAttr(url)}" style="font-size:11px;color:#f66a09;word-break:break-all">${escapeHtml(url)}</a>
+		</td>`;
+	});
+	// Three QR codes per row - fits an email body and a printed A4 page.
+	const rows = [];
+	for (let i = 0; i < cells.length; i += 3) rows.push(`<tr>${cells.slice(i, i + 3).join('')}</tr>`);
+	return `<div style="font-family:Arial,Helvetica,sans-serif;color:#262421">
+		<p style="font-weight:700;font-size:15px;margin:0 0 8px">${escapeHtml(heading)}</p>
+		<p style="font-size:13px;color:#737373;margin:0 0 16px">${escapeHtml(strings.tablesEmailHint || '')}</p>
+		<table cellpadding="0" cellspacing="0">${rows.join('')}</table>
+	</div>`;
+}
+
+// Rich copy for email clients (QR images included), plain text as fallback.
+async function copyForEmail(html, text) {
+	try {
+		await navigator.clipboard.write([
+			new ClipboardItem({
+				'text/html': new Blob([html], { type: 'text/html' }),
+				'text/plain': new Blob([text], { type: 'text/plain' })
+			})
+		]);
+		notify(strings().onboardingCopiedRich);
+	} catch (error) {
+		await navigator.clipboard.writeText(text);
+		notify(strings().onboardingCopiedText);
+	}
+}
+
 // restaurant_access/restaurant_tables aren't in the `clients` (menus) rows
 // or subscriptionsBySlug - separate tables, own fetch, same "map keyed by
 // menu_slug then render()" shape as syncSubscriptions(). Only id/table_number
@@ -713,13 +775,15 @@ function renderSmartServiceHubExtra(client) {
 		// first place.
 		tableNumbersEl.innerHTML = tables.length
 			? tables.map((table) => {
-				const tableUrl = `${base}menu.html?client=${encodeURIComponent(client.slug)}&table=${encodeURIComponent(table.table_number)}&k=${encodeURIComponent(table.link_secret)}`;
+				const tableUrl = tableGuestUrl(client, table);
 				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&ecc=H&data=${encodeURIComponent(tableUrl)}`;
 				return `<div class="addon-board-row table-qr-row">${qrWithNumberMarkup(qrSrc, table.table_number, 44)}<span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><button type="button" class="button button-ghost addon-board-send" data-print-table-qr="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" data-print-table-number="${escapeAttr(String(table.table_number))}">${escapeHtml(strings().openQr)}</button><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
 			}).join('')
 			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
 
+	const tablesCopy = $('#tablesEmailCopy');
+	if (tablesCopy) tablesCopy.disabled = !tables.length;
 	renderOnboardingTemplate(client);
 }
 
@@ -1182,24 +1246,17 @@ if (smartServiceHubPanel) {
 		if (event.target.closest('#onboardingTemplateCopy')) {
 			const client = selectedClient();
 			if (!client) return;
-			const html = onboardingTemplateHtml(client, onboardingTemplateLang);
-			const text = onboardingTemplateText(client, onboardingTemplateLang);
-			try {
-				// text/html so a rich email client (Gmail, Outlook web, Apple
-				// Mail) pastes the actual QR code images, not just links -
-				// text/plain rides along as the fallback for anything that
-				// only accepts plain text.
-				await navigator.clipboard.write([
-					new ClipboardItem({
-						'text/html': new Blob([html], { type: 'text/html' }),
-						'text/plain': new Blob([text], { type: 'text/plain' })
-					})
-				]);
-				notify(strings().onboardingCopiedRich);
-			} catch (error) {
-				await navigator.clipboard.writeText(text);
-				notify(strings().onboardingCopiedText);
-			}
+			// text/html so a rich email client (Gmail, Outlook web, Apple
+			// Mail) pastes the actual QR code images, not just links -
+			// text/plain rides along as the fallback for anything that
+			// only accepts plain text.
+			await copyForEmail(onboardingTemplateHtml(client, onboardingTemplateLang), onboardingTemplateText(client, onboardingTemplateLang));
+			return;
+		}
+		if (event.target.closest('#tablesEmailCopy')) {
+			const client = selectedClient();
+			if (!client || !tablesEmailRows(client).length) return;
+			await copyForEmail(tablesEmailHtml(client, onboardingTemplateLang), tablesEmailText(client, onboardingTemplateLang));
 			return;
 		}
 		const button = event.target.closest('[data-staff-link], [data-table-link]');
