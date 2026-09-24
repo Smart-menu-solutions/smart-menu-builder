@@ -28,6 +28,7 @@ button{font-family:inherit}
 .sh-nav-btn,.sh-foldout-btn{display:flex;align-items:center;gap:.65rem;width:100%;padding:.7rem .85rem;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);font-weight:700;font-size:.88rem;text-align:left;cursor:pointer}
 .sh-nav-btn .sh-icon,.sh-foldout-btn .sh-icon:first-child{color:var(--orange);flex:0 0 auto}
 .sh-nav-btn:hover,.sh-foldout-btn:hover{border-color:var(--orange)}
+.sh-nav-btn.is-off .sh-icon{color:var(--muted)}
 .sh-foldout-btn span{flex:1}
 .sh-foldout-btn .sh-icon:last-child{color:var(--muted);transition:transform .2s}
 .sh-foldout.is-open .sh-foldout-btn{border-color:var(--orange);background:var(--tint)}
@@ -87,7 +88,6 @@ button{font-family:inherit}
 .hub-tile-pending:hover{background:var(--red-dark)}
 .hub-tile-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.85}
 .hub-tile-number{font-size:1.7rem;font-weight:700;line-height:1.1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hub-tile-amount{font-size:.95rem;font-weight:700}
 .hub-tile-status{display:inline-flex;align-items:center;gap:.35rem;margin-top:.25rem;background:rgba(255,255,255,.2);border-radius:999px;padding:.12rem .55rem;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .hub-tile-dot{width:7px;height:7px;border-radius:50%;background:#fff}
 .hub-bell{position:absolute;top:.45rem;right:.55rem;font-size:1rem;animation:staff-pulse 1.4s infinite}

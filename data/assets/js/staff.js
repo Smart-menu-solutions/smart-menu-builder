@@ -62,6 +62,51 @@ function saveAckDispatchedCount() {
 	try { localStorage.setItem(ACK_STORAGE_KEY, JSON.stringify(ackDispatchedCount)); } catch { /* convenience only */ }
 }
 
+// hub only: a short "ding-dong" whenever something new is ready to pick up
+// (a new 🛎️). Synthesised with Web Audio - no sound file to load. Browsers
+// only allow audio after the user has interacted with the page, so the
+// AudioContext is created/resumed on the first tap or key press; until then
+// a new bell is only visual. On by default, switchable in the sidebar.
+const SOUND_STORAGE_KEY = `smartmenu.staff.sound.${ROLE}`;
+let soundOn = (() => { try { return localStorage.getItem(SOUND_STORAGE_KEY) !== 'off'; } catch { return true; } })();
+let audioContext = null;
+function unlockAudio() {
+	try {
+		audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+		if (audioContext.state === 'suspended') audioContext.resume();
+	} catch { /* no Web Audio - bells stay visual only */ }
+}
+document.addEventListener('pointerdown', unlockAudio);
+document.addEventListener('keydown', unlockAudio);
+
+function playChime() {
+	if (!soundOn || !audioContext || audioContext.state !== 'running') return;
+	const start = audioContext.currentTime + 0.02;
+	[[1318.5, 0], [987.8, 0.3]].forEach(([frequency, delay]) => {
+		const oscillator = audioContext.createOscillator();
+		const gain = audioContext.createGain();
+		oscillator.type = 'sine';
+		oscillator.frequency.value = frequency;
+		gain.gain.setValueAtTime(0.0001, start + delay);
+		gain.gain.exponentialRampToValueAtTime(0.4, start + delay + 0.02);
+		gain.gain.exponentialRampToValueAtTime(0.0001, start + delay + 1.2);
+		oscillator.connect(gain).connect(audioContext.destination);
+		oscillator.start(start + delay);
+		oscillator.stop(start + delay + 1.25);
+	});
+}
+
+// Rings when any open table has more ready (dispatched) items than at the
+// last refresh while its bell is showing - not on the first load, so
+// opening the page doesn't ring for bells that were already there.
+let lastDispatchedByTable = null;
+function chimeForNewReadyItems(tables) {
+	if (!isHub) return;
+	const counts = new Map(tables.map((table) => [table.tableId, (table.items || []).filter((item) => item.dispatched).length]));
+	if (lastDispatchedByTable && tables.some((table) => hubTileHasBell(table) && counts.get(table.tableId) > (lastDispatchedByTable.get(table.tableId) || 0))) playChime();
+	lastDispatchedByTable = counts;
+}
+
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
 // menu.js's itemTranslation()/categoryName(), so it works even though
@@ -127,7 +172,9 @@ const ICONS = {
 	kitchen: '<path d="M6 14a4 4 0 1 1 1.5-7.7A4.5 4.5 0 0 1 16.5 6 4 4 0 1 1 18 14v6H6z"/>',
 	bar: '<path d="M5 4h14l-7 8z"/><path d="M12 12v8M8 20h8"/>',
 	hub: '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
-	cashier: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'
+	cashier: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+	sound: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16 9a4 4 0 0 1 0 6M19 6a8 8 0 0 1 0 12"/>',
+	mute: '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="m17 9 5 6M22 9l-5 6"/>'
 };
 function icon(name, size = 20) {
 	return `<svg class="sh-icon" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[name] || ''}</svg>`;
@@ -233,16 +280,19 @@ function cardGridMarkup(tables) {
 // confirm step, for an ACTIVE/PAYMENT_PENDING one that table's order, same
 // row markup as the card view. See 0017_table_hub.sql for why FREE tiles
 // carry no secret of any kind. Colors stay green/orange/red by status.
+// No amounts on the tiles: the hub tablet often stands at the entrance where
+// guests can see it - a table's total only shows in its popup.
+function hubTileHasBell(table) {
+	const dispatchedCount = (table.items || []).filter((item) => item.dispatched).length;
+	return table.status !== 'FREE' && dispatchedCount > (ackDispatchedCount[table.tableId] || 0);
+}
+
 function hubTileMarkup(table) {
 	const statusClass = table.status === 'FREE' ? 'hub-tile-free' : table.status === 'PAYMENT_PENDING' ? 'hub-tile-pending' : 'hub-tile-active';
-	const dispatchedCount = (table.items || []).filter((item) => item.dispatched).length;
-	const bell = table.status !== 'FREE' && dispatchedCount > (ackDispatchedCount[table.tableId] || 0);
-	const amount = table.status === 'FREE' ? '' : `<span class="hub-tile-amount">${formatMoney(table.totalCents)}</span>`;
 	return `<button type="button" class="hub-tile ${statusClass}" data-hub-table="${table.tableId}" data-hub-status="${table.status}">
-		${bell ? '<span class="hub-bell" aria-hidden="true">🛎️</span>' : ''}
+		${hubTileHasBell(table) ? '<span class="hub-bell" aria-hidden="true">🛎️</span>' : ''}
 		<span class="hub-tile-label">${escapeHtml(strings().table)}</span>
 		<span class="hub-tile-number">${escapeHtml(String(table.tableNumber))}</span>
-		${amount}
 		<span class="hub-tile-status"><span class="hub-tile-dot"></span>${escapeHtml(strings().hubStatus?.[table.status] || table.status)}</span>
 	</button>`;
 }
@@ -471,6 +521,9 @@ function sidebarMarkup() {
 	const totalsButton = (ROLE === 'cashier' || isHub)
 		? `<button type="button" class="sh-nav-btn" data-open-totals>${icon('totals', 18)}<span>${escapeHtml(strings().tileTotals)}</span></button>`
 		: '';
+	const soundButton = isHub
+		? `<button type="button" class="sh-nav-btn ${soundOn ? '' : 'is-off'}" data-sound-toggle aria-pressed="${soundOn}">${icon(soundOn ? 'sound' : 'mute', 18)}<span>${escapeHtml(soundOn ? strings().chimeOn : strings().chimeOff)}</span></button>`
+		: '';
 	return `<aside class="sh-sidebar">
 		<a class="sh-logo" href="https://smartmenusolutions.com/" target="_blank" rel="noopener">
 			<img src="assets/images/logo-mark.png" alt="">
@@ -482,6 +535,7 @@ function sidebarMarkup() {
 		<p class="staff-sub"><span class="staff-refresh-dot"></span>${escapeHtml(strings().live)}</p>
 		<div class="sh-nav">
 			${totalsButton}
+			${soundButton}
 			${foldoutMarkup('guide', strings().guideButton, guideContent())}
 			${foldoutMarkup('workflow', strings().workflowButton, workflowContent())}
 		</div>
@@ -578,6 +632,16 @@ async function onAppClick(event) {
 		return;
 	}
 
+	if (event.target.closest('[data-sound-toggle]')) {
+		soundOn = !soundOn;
+		try { localStorage.setItem(SOUND_STORAGE_KEY, soundOn ? 'on' : 'off'); } catch { /* convenience only */ }
+		unlockAudio();
+		rerender();
+		// Short preview when switching on, so staff hear what to listen for.
+		if (soundOn) setTimeout(playChime, 120);
+		return;
+	}
+
 	if (langButton) {
 		currentLang = langButton.dataset.lang;
 		try { localStorage.setItem(LANG_STORAGE_KEY, currentLang); } catch { /* convenience only */ }
@@ -670,6 +734,7 @@ async function refresh() {
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
+	chimeForNewReadyItems(lastTables);
 	// A table popped from the list, or an open table's popup whose table got
 	// closed elsewhere (it's FREE now) - don't leave a stale popup showing.
 	// A FREE table's own "Aktivieren" confirm popup stays open.
@@ -713,6 +778,7 @@ async function init() {
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
+	chimeForNewReadyItems(lastTables);
 	render(data);
 	if (data.menuSlug) subscribeRealtime(data.menuSlug);
 }

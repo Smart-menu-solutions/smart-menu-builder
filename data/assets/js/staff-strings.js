@@ -37,7 +37,9 @@ window.STAFF_STRINGS = {
 					"Auf eine aktive Kachel tippen zeigt die Bestellung und erlaubt, Artikel hinzuzufügen.",
 					"🛎️ auf der Kachel = etwas ist fertig und wartet zum Abholen.",
 					"Gast will zahlen, hat aber nicht über sein Handy Bescheid gegeben? Im Popup „Rechnung anfordern“ drücken – der Tisch wird rot, die Kasse sieht es sofort.",
-					"Bezahlt wird an der Kasse – dort wird der Tisch danach wieder freigegeben. Nur ein aus Versehen aktivierter, noch leerer Tisch lässt sich direkt hier über „Tisch wieder freigeben“ zurücksetzen."
+					"Bezahlt wird an der Kasse – dort wird der Tisch danach wieder freigegeben. Nur ein aus Versehen aktivierter, noch leerer Tisch lässt sich direkt hier über „Tisch wieder freigeben“ zurücksetzen.",
+					"Gast bestellt mündlich statt über den QR-Code (z. B. „Noch ein Wasser, bitte“)? Kachel antippen → „+ Artikel“ → Artikel und Menge wählen → „Hinzufügen“. Der Artikel geht automatisch an Küche oder Bar und steht auf der Rechnung des Tisches.",
+					"Bei jeder neuen 🛎️ ertönt ein Klingelton. Ein- und ausschalten unten links mit „Klingelton“. Tipp: Nach dem Öffnen der Seite einmal auf den Bildschirm tippen – erst dann erlaubt der Browser Töne."
 				],
 				kitchen: [
 					"Hier siehst du, was die Gäste bestellt haben.",
@@ -49,14 +51,17 @@ window.STAFF_STRINGS = {
 					"Hier siehst du, welche Getränke bestellt wurden.",
 					"Rot = noch zu machen. Tippe auf die Zeile, wenn es fertig ist. Dann wird sie grün.",
 					"„Alles fertig“ = alle Getränke für diesen Tisch sind fertig.",
-					"Neue Bestellungen kommen von selbst."
+					"Neue Bestellungen kommen von selbst.",
+					"Gast bestellt direkt bei dir statt über den QR-Code? Beispiel: Er sitzt an der Bar, hat seine erste Bestellung per QR-Code gemacht und sagt dann „Bitte noch ein Bier und einen Orangensaft“. Bei seinem Tisch „+ Artikel“ drücken → Getränk und Menge wählen → „Hinzufügen“. Es steht sofort auf seiner Rechnung; bestellt er Essen, geht das automatisch an die Küche.",
+					"„+ Artikel“ gibt es nur bei Tischen, die hier schon eine Karte haben. Für einen anderen Tisch den Artikel im Service Hub hinzufügen."
 				],
 				cashier: [
 					"Hier siehst du alle Tische mit Preisen und Summe.",
 					"💳 Der Gast möchte zahlen.",
 					"✕ = Position löschen (du wirst vorher gefragt).",
 					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
-					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
+					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische.",
+					"Gast bestellt beim Bezahlen noch etwas dazu (z. B. „Noch einen Espresso, bitte“)? Bei seinem Tisch „+ Artikel“ → Artikel und Menge wählen → „Hinzufügen“. Er steht sofort auf der Rechnung und geht automatisch an Küche oder Bar."
 				]
 			},
 		workflowSteps: ["Gäste scannen den QR-Code", "Tisch aktivieren", "Alle bestellen", "Automatische Verteilung", "Küche & Bar arbeiten", "Gäste sehen den Status live", "Jederzeit nachbestellen", "Rechnung anfordern", "Tisch wird rot", "Tisch schließen"],
@@ -70,6 +75,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Verlauf heute', noOpenOrders: 'Gerade keine offenen Bestellungen.',
 		tileOpenOrders: 'Offene Bestellungen', tileOpenOrdersSub: 'Alle aktiven Tische auf einen Blick', tileHistorySub: 'Alles, was heute passiert ist',
 		tileTotals: 'Gesamtübersicht', tileTotalsSub: 'Summe aller offenen Tische', tileHelp: 'So funktioniert’s', tileHelpSub: 'Der Ablauf in 10 Schritten',
+		chimeOn: 'Klingelton an', chimeOff: 'Klingelton aus',
 		privacyLink: 'Datenschutz', imprintLink: 'Impressum',
 		offline: 'Keine Internetverbindung. Die Seite lädt automatisch neu, sobald du wieder online bist.',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
@@ -107,7 +113,9 @@ window.STAFF_STRINGS = {
 					"Tap an active tile to see its order and add items.",
 					"🛎️ on a tile = something is ready and waiting to be picked up.",
 					"Guest wants to pay but didn't say so via their phone? Tap \"Request bill\" in the popup - the tile turns red and the cashier sees it right away.",
-					"Payment happens at the cashier - that's also where the table gets freed again. Only a table you activated by mistake and that's still empty can be freed right here, via \"Free this table again\"."
+					"Payment happens at the cashier - that's also where the table gets freed again. Only a table you activated by mistake and that's still empty can be freed right here, via \"Free this table again\".",
+					"Guest orders by telling you instead of using the QR code (e.g. “Another water, please”)? Tap the tile → “+ Item” → choose item and quantity → “Add”. It goes to the kitchen or bar automatically and is added to the table’s bill.",
+					"Every new 🛎️ plays a chime. Turn it on or off at the bottom left with “Chime”. Tip: tap the screen once after opening the page – only then does the browser allow sounds."
 				],
 				kitchen: [
 					"Here you see what the guests ordered.",
@@ -119,14 +127,17 @@ window.STAFF_STRINGS = {
 					"Here you see which drinks were ordered.",
 					"Red = still to make. Tap the row when it is ready. Then it turns green.",
 					"“All done” = all drinks for this table are ready.",
-					"New orders arrive by themselves."
+					"New orders arrive by themselves.",
+					"Guest orders directly from you instead of using the QR code? Example: they sit at the bar, placed their first order with the QR code and then say “One more beer and an orange juice, please”. Press “+ Item” on their table → choose drink and quantity → “Add”. It’s on their bill right away; food they order goes to the kitchen automatically.",
+					"“+ Item” is only available for tables that already have a card here. For any other table, add the item in the Service Hub."
 				],
 				cashier: [
 					"All tables with prices and the total are shown here.",
 					"💳 The guest wants to pay.",
 					"✕ = delete an item (you will be asked first).",
 					"“Close table” = the guest has paid, the table is free again.",
-					"📊 Overview = the total across every table that's currently open."
+					"📊 Overview = the total across every table that's currently open.",
+					"Guest orders something else while paying (e.g. “One more espresso, please”)? Press “+ Item” on their table → choose item and quantity → “Add”. It’s on the bill right away and goes to the kitchen or bar automatically."
 				]
 			},
 		workflowSteps: ["Guests scan the QR code", "Activate the table", "Everyone orders", "Auto distribution", "Kitchen & bar process", "Guests see live status", "Reorder anytime", "Request the bill", "Table turns red", "Close the table"],
@@ -140,6 +151,7 @@ window.STAFF_STRINGS = {
 		historyTitle: "Today's history", noOpenOrders: 'No open orders right now.',
 		tileOpenOrders: 'Open orders', tileOpenOrdersSub: 'All active tables at a glance', tileHistorySub: 'Everything that happened today',
 		tileTotals: 'Overview', tileTotalsSub: 'Total of all open tables', tileHelp: 'How it works', tileHelpSub: 'The workflow in 10 steps',
+		chimeOn: 'Chime on', chimeOff: 'Chime off',
 		privacyLink: 'Privacy', imprintLink: 'Legal notice',
 		offline: 'No internet connection. This page reloads automatically once you are back online.',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
@@ -177,7 +189,9 @@ window.STAFF_STRINGS = {
 					"Πάτα ένα ενεργό πλακίδιο για να δεις την παραγγελία και να προσθέσεις προϊόντα.",
 					"🛎️ σε πλακίδιο = κάτι είναι έτοιμο και περιμένει να το πάρεις.",
 					"Ο πελάτης θέλει να πληρώσει αλλά δεν το έκανε από το κινητό του; Πάτα «Ζήτα λογαριασμό» στο popup - το πλακίδιο γίνεται κόκκινο και το ταμείο το βλέπει αμέσως.",
-					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται το τραπέζι ξανά. Μόνο ένα τραπέζι που ενεργοποιήθηκε κατά λάθος και είναι ακόμα άδειο μπορεί να ελευθερωθεί εδώ, με «Ελευθέρωσε ξανά το τραπέζι»."
+					"Η πληρωμή γίνεται στο ταμείο - εκεί ελευθερώνεται το τραπέζι ξανά. Μόνο ένα τραπέζι που ενεργοποιήθηκε κατά λάθος και είναι ακόμα άδειο μπορεί να ελευθερωθεί εδώ, με «Ελευθέρωσε ξανά το τραπέζι».",
+					"Ο πελάτης παραγγέλνει προφορικά αντί για το QR code (π.χ. «Άλλο ένα νερό, παρακαλώ»); Πατήστε το πλακίδιο → «+ Προσθήκη» → επιλέξτε είδος και ποσότητα → «Προσθήκη». Πηγαίνει αυτόματα στην κουζίνα ή στο μπαρ και μπαίνει στον λογαριασμό του τραπεζιού.",
+					"Με κάθε νέο 🛎️ ακούγεται ένα κουδούνισμα. Ενεργοποίηση/απενεργοποίηση κάτω αριστερά με «Κουδούνισμα». Συμβουλή: μετά το άνοιγμα της σελίδας πατήστε μία φορά στην οθόνη – μόνο τότε ο browser επιτρέπει ήχους."
 				],
 				kitchen: [
 					"Εδώ βλέπεις τι παρήγγειλαν οι πελάτες.",
@@ -189,14 +203,17 @@ window.STAFF_STRINGS = {
 					"Εδώ βλέπεις ποια ποτά παραγγέλθηκαν.",
 					"Κόκκινο = ακόμα να γίνει. Πάτα τη γραμμή όταν είναι έτοιμο. Τότε γίνεται πράσινη.",
 					"«Όλα έτοιμα» = όλα τα ποτά για αυτό το τραπέζι είναι έτοιμα.",
-					"Οι νέες παραγγελίες έρχονται μόνες τους."
+					"Οι νέες παραγγελίες έρχονται μόνες τους.",
+					"Ο πελάτης παραγγέλνει απευθείας σε εσάς αντί για το QR code; Παράδειγμα: κάθεται στο μπαρ, έκανε την πρώτη του παραγγελία με το QR code και μετά λέει «Άλλη μία μπίρα και έναν χυμό πορτοκάλι, παρακαλώ». Πατήστε «+ Προσθήκη» στο τραπέζι του → επιλέξτε ποτό και ποσότητα → «Προσθήκη». Μπαίνει αμέσως στον λογαριασμό του· αν παραγγείλει φαγητό, πηγαίνει αυτόματα στην κουζίνα.",
+					"Το «+ Προσθήκη» υπάρχει μόνο για τραπέζια που έχουν ήδη κάρτα εδώ. Για άλλο τραπέζι, προσθέστε το είδος στο Service Hub."
 				],
 				cashier: [
 					"Εδώ βλέπεις όλα τα τραπέζια με τιμές και σύνολο.",
 					"💳 Ο πελάτης θέλει να πληρώσει.",
 					"✕ = διαγραφή προϊόντος (θα σε ρωτήσει πρώτα).",
 					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
-					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
+					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά.",
+					"Ο πελάτης παραγγέλνει κάτι ακόμα την ώρα που πληρώνει (π.χ. «Έναν ακόμα espresso, παρακαλώ»); Πατήστε «+ Προσθήκη» στο τραπέζι του → επιλέξτε είδος και ποσότητα → «Προσθήκη». Μπαίνει αμέσως στον λογαριασμό και πηγαίνει αυτόματα στην κουζίνα ή στο μπαρ."
 				]
 			},
 		workflowSteps: ["Οι πελάτες σκανάρουν το QR code", "Ενεργοποίηση τραπεζιού", "Όλοι παραγγέλνουν", "Αυτόματη διανομή", "Κουζίνα & μπαρ ετοιμάζουν", "Οι πελάτες βλέπουν ζωντανά την κατάσταση", "Νέα παραγγελία ανά πάσα στιγμή", "Αίτημα λογαριασμού", "Το τραπέζι γίνεται κόκκινο", "Κλείσιμο τραπεζιού"],
@@ -210,6 +227,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Ιστορικό σήμερα', noOpenOrders: 'Δεν υπάρχουν ανοιχτές παραγγελίες αυτή τη στιγμή.',
 		tileOpenOrders: 'Ανοιχτές παραγγελίες', tileOpenOrdersSub: 'Όλα τα ενεργά τραπέζια με μια ματιά', tileHistorySub: 'Όλα όσα έγιναν σήμερα',
 		tileTotals: 'Συνολική εικόνα', tileTotalsSub: 'Σύνολο όλων των ανοιχτών τραπεζιών', tileHelp: 'Πώς λειτουργεί', tileHelpSub: 'Η διαδικασία σε 10 βήματα',
+		chimeOn: 'Κουδούνισμα ενεργό', chimeOff: 'Κουδούνισμα ανενεργό',
 		privacyLink: 'Απόρρητο', imprintLink: 'Νομικές πληροφορίες',
 		offline: 'Δεν υπάρχει σύνδεση στο διαδίκτυο. Η σελίδα θα ανανεωθεί αυτόματα μόλις συνδεθείτε ξανά.',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
@@ -247,7 +265,9 @@ window.STAFF_STRINGS = {
 					"Tocca un riquadro attivo per vedere l'ordine e aggiungere articoli.",
 					"🛎️ sul riquadro = qualcosa è pronto e aspetta di essere ritirato.",
 					"L'ospite vuole pagare ma non l'ha detto dal telefono? Tocca «Richiedi conto» nel popup - il riquadro diventa rosso e la cassa lo vede subito.",
-					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo. Solo un tavolo attivato per errore e ancora vuoto può essere liberato direttamente qui, con «Libera di nuovo il tavolo»."
+					"Il pagamento avviene alla cassa - è lì che il tavolo viene liberato di nuovo. Solo un tavolo attivato per errore e ancora vuoto può essere liberato direttamente qui, con «Libera di nuovo il tavolo».",
+					"L’ospite ordina a voce invece che con il QR code (es. «Un’altra acqua, per favore»)? Tocca la tessera → «+ Articolo» → scegli articolo e quantità → «Aggiungi». Va automaticamente in cucina o al bar e viene aggiunto al conto del tavolo.",
+					"A ogni nuova 🛎️ suona un campanello. Attivalo o disattivalo in basso a sinistra con «Campanello». Consiglio: dopo aver aperto la pagina tocca una volta lo schermo – solo allora il browser permette i suoni."
 				],
 				kitchen: [
 					"Qui vedi cosa hanno ordinato gli ospiti.",
@@ -259,14 +279,17 @@ window.STAFF_STRINGS = {
 					"Qui vedi quali bevande sono state ordinate.",
 					"Rosso = ancora da fare. Tocca la riga quando è pronto. Poi diventa verde.",
 					"«Tutto pronto» = tutte le bevande di questo tavolo sono pronte.",
-					"Le nuove ordinazioni arrivano da sole."
+					"Le nuove ordinazioni arrivano da sole.",
+					"L’ospite ordina direttamente a te invece che con il QR code? Esempio: è seduto al bar, ha fatto il primo ordine con il QR code e poi dice «Ancora una birra e un succo d’arancia, per favore». Premi «+ Articolo» sul suo tavolo → scegli bevanda e quantità → «Aggiungi». È subito sul suo conto; il cibo che ordina va automaticamente in cucina.",
+					"«+ Articolo» è disponibile solo per i tavoli che hanno già una scheda qui. Per un altro tavolo aggiungi l’articolo nel Service Hub."
 				],
 				cashier: [
 					"Qui vedi tutti i tavoli con prezzi e totale.",
 					"💳 L’ospite vuole pagare.",
 					"✕ = elimina un articolo (prima ti viene chiesto).",
 					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
-					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
+					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti.",
+					"L’ospite ordina ancora qualcosa mentre paga (es. «Un altro espresso, per favore»)? Premi «+ Articolo» sul suo tavolo → scegli articolo e quantità → «Aggiungi». È subito sul conto e va automaticamente in cucina o al bar."
 				]
 			},
 		workflowSteps: ["Gli ospiti scansionano il QR code", "Attivare il tavolo", "Tutti ordinano", "Distribuzione automatica", "Cucina e bar preparano", "Gli ospiti vedono lo stato in tempo reale", "Riordinare in qualsiasi momento", "Richiedere il conto", "Il tavolo diventa rosso", "Chiudere il tavolo"],
@@ -280,6 +303,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Cronologia di oggi', noOpenOrders: 'Nessun ordine aperto al momento.',
 		tileOpenOrders: 'Ordini aperti', tileOpenOrdersSub: 'Tutti i tavoli attivi a colpo d’occhio', tileHistorySub: 'Tutto ciò che è successo oggi',
 		tileTotals: 'Panoramica', tileTotalsSub: 'Totale di tutti i tavoli aperti', tileHelp: 'Come funziona', tileHelpSub: 'La procedura in 10 passi',
+		chimeOn: 'Campanello attivo', chimeOff: 'Campanello disattivato',
 		privacyLink: 'Privacy', imprintLink: 'Note legali',
 		offline: 'Nessuna connessione a Internet. La pagina si ricarica automaticamente quando torni online.',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
@@ -317,7 +341,9 @@ window.STAFF_STRINGS = {
 					"Toca una ficha activa para ver el pedido y añadir artículos.",
 					"🛎️ en la ficha = algo está listo y espera a que lo recojas.",
 					"¿El cliente quiere pagar pero no lo dijo desde su móvil? Pulsa «Pedir la cuenta» en el popup - la ficha se pone roja y caja lo ve al instante.",
-					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo. Solo una mesa activada por error y que sigue vacía se puede liberar aquí mismo, con «Liberar la mesa de nuevo»."
+					"El pago se hace en caja - ahí es también donde se libera la mesa de nuevo. Solo una mesa activada por error y que sigue vacía se puede liberar aquí mismo, con «Liberar la mesa de nuevo».",
+					"¿El cliente pide de palabra en lugar de usar el código QR (p. ej. «Otra agua, por favor»)? Toca la ficha → «+ Artículo» → elige artículo y cantidad → «Añadir». Va automáticamente a cocina o barra y se añade a la cuenta de la mesa.",
+					"Con cada nueva 🛎️ suena un timbre. Actívalo o desactívalo abajo a la izquierda con «Timbre». Consejo: después de abrir la página toca la pantalla una vez; solo entonces el navegador permite sonidos."
 				],
 				kitchen: [
 					"Aquí ves lo que han pedido los clientes.",
@@ -329,14 +355,17 @@ window.STAFF_STRINGS = {
 					"Aquí ves qué bebidas se han pedido.",
 					"Rojo = aún por hacer. Pulsa la fila cuando esté listo. Entonces se vuelve verde.",
 					"«Todo listo» = todas las bebidas de esta mesa están listas.",
-					"Los pedidos nuevos llegan solos."
+					"Los pedidos nuevos llegan solos.",
+					"¿El cliente te pide directamente a ti en lugar de usar el código QR? Ejemplo: está sentado en la barra, hizo su primer pedido con el código QR y luego dice «Otra cerveza y un zumo de naranja, por favor». Pulsa «+ Artículo» en su mesa → elige bebida y cantidad → «Añadir». Queda al instante en su cuenta; la comida que pida va automáticamente a cocina.",
+					"«+ Artículo» solo está disponible para mesas que ya tienen una tarjeta aquí. Para otra mesa, añade el artículo en el Service Hub."
 				],
 				cashier: [
 					"Aquí ves todas las mesas con precios y total.",
 					"💳 El cliente quiere pagar.",
 					"✕ = borrar un artículo (antes te preguntará).",
 					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
-					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
+					"📊 Resumen = el total de todas las mesas abiertas ahora mismo.",
+					"¿El cliente pide algo más al pagar (p. ej. «Otro espresso, por favor»)? Pulsa «+ Artículo» en su mesa → elige artículo y cantidad → «Añadir». Queda al instante en la cuenta y va automáticamente a cocina o barra."
 				]
 			},
 		workflowSteps: ["Los clientes escanean el código QR", "Activar la mesa", "Todos piden", "Distribución automática", "Cocina y bar preparan", "Los clientes ven el estado en vivo", "Volver a pedir en cualquier momento", "Pedir la cuenta", "La mesa se pone roja", "Cerrar la mesa"],
@@ -350,6 +379,7 @@ window.STAFF_STRINGS = {
 		historyTitle: 'Historial de hoy', noOpenOrders: 'No hay pedidos abiertos ahora.',
 		tileOpenOrders: 'Pedidos abiertos', tileOpenOrdersSub: 'Todas las mesas activas de un vistazo', tileHistorySub: 'Todo lo que pasó hoy',
 		tileTotals: 'Resumen general', tileTotalsSub: 'Total de todas las mesas abiertas', tileHelp: 'Cómo funciona', tileHelpSub: 'El proceso en 10 pasos',
+		chimeOn: 'Timbre activado', chimeOff: 'Timbre desactivado',
 		privacyLink: 'Privacidad', imprintLink: 'Aviso legal',
 		offline: 'Sin conexión a Internet. La página se recargará automáticamente cuando vuelvas a estar en línea.',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
@@ -387,7 +417,9 @@ window.STAFF_STRINGS = {
 					"Touchez une tuile active pour voir la commande et ajouter des articles.",
 					"🛎️ sur une tuile = quelque chose est prêt et attend d'être récupéré.",
 					"Le client veut payer mais ne l'a pas dit via son téléphone ? Appuyez sur « Demander l'addition » dans la fenêtre - la tuile devient rouge et la caisse le voit tout de suite.",
-					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau. Seule une table activée par erreur et encore vide peut être libérée ici, via « Libérer à nouveau la table »."
+					"Le paiement se fait à la caisse - c'est aussi là que la table est libérée à nouveau. Seule une table activée par erreur et encore vide peut être libérée ici, via « Libérer à nouveau la table ».",
+					"Le client commande à l’oral au lieu d’utiliser le QR code (par ex. « Encore une eau, s’il vous plaît ») ? Touchez la tuile → « + Article » → choisissez l’article et la quantité → « Ajouter ». Il part automatiquement en cuisine ou au bar et s’ajoute à l’addition de la table.",
+					"À chaque nouvelle 🛎️, une sonnerie retentit. Activez-la ou désactivez-la en bas à gauche avec « Sonnerie ». Astuce : après avoir ouvert la page, touchez l’écran une fois – le navigateur n’autorise les sons qu’ensuite."
 				],
 				kitchen: [
 					"Vous voyez ici ce que les clients ont commandé.",
@@ -399,14 +431,17 @@ window.STAFF_STRINGS = {
 					"Vous voyez ici les boissons commandées.",
 					"Rouge = reste à faire. Appuyez sur la ligne quand c’est prêt. Elle devient verte.",
 					"« Tout est prêt » = toutes les boissons de cette table sont prêtes.",
-					"Les nouvelles commandes arrivent toutes seules."
+					"Les nouvelles commandes arrivent toutes seules.",
+					"Le client vous commande directement au lieu d’utiliser le QR code ? Exemple : il est assis au bar, a passé sa première commande avec le QR code, puis dit « Encore une bière et un jus d’orange, s’il vous plaît ». Appuyez sur « + Article » à sa table → choisissez la boisson et la quantité → « Ajouter ». C’est aussitôt sur son addition ; les plats qu’il commande partent automatiquement en cuisine.",
+					"« + Article » n’existe que pour les tables qui ont déjà une carte ici. Pour une autre table, ajoutez l’article dans le Service Hub."
 				],
 				cashier: [
 					"Vous voyez ici toutes les tables avec prix et total.",
 					"💳 Le client veut payer.",
 					"✕ = supprimer un article (une confirmation est demandée).",
 					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
-					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
+					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes.",
+					"Le client commande encore quelque chose en payant (par ex. « Encore un espresso, s’il vous plaît ») ? Appuyez sur « + Article » à sa table → choisissez l’article et la quantité → « Ajouter ». C’est aussitôt sur l’addition et part automatiquement en cuisine ou au bar."
 				]
 			},
 		workflowSteps: ["Les clients scannent le QR code", "Activer la table", "Tout le monde commande", "Distribution automatique", "Cuisine et bar préparent", "Les clients voient le statut en direct", "Recommander à tout moment", "Demander l'addition", "La table devient rouge", "Fermer la table"],
@@ -420,6 +455,7 @@ window.STAFF_STRINGS = {
 		historyTitle: "Historique d'aujourd'hui", noOpenOrders: 'Aucune commande ouverte pour le moment.',
 		tileOpenOrders: 'Commandes ouvertes', tileOpenOrdersSub: "Toutes les tables actives d'un coup d'œil", tileHistorySub: "Tout ce qui s'est passé aujourd'hui",
 		tileTotals: "Vue d'ensemble", tileTotalsSub: 'Total de toutes les tables ouvertes', tileHelp: 'Comment ça marche', tileHelpSub: 'Le déroulement en 10 étapes',
+		chimeOn: 'Sonnerie activée', chimeOff: 'Sonnerie désactivée',
 		privacyLink: 'Confidentialité', imprintLink: 'Mentions légales',
 		offline: 'Pas de connexion Internet. La page se recharge automatiquement dès que vous êtes de nouveau en ligne.',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
