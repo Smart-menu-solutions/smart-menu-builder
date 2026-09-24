@@ -62,8 +62,8 @@ function saveAckDispatchedCount() {
 	try { localStorage.setItem(ACK_STORAGE_KEY, JSON.stringify(ackDispatchedCount)); } catch { /* convenience only */ }
 }
 
-// hub only: a short "ding-dong" whenever something new is ready to pick up
-// (a new 🛎️). Synthesised with Web Audio - no sound file to load. Browsers
+// hub + cashier: a short "ding-dong" when something new needs them (hub: a
+// new 🛎️, cashier: a new bill request). Web Audio - no sound file. Browsers
 // only allow audio after the user has interacted with the page, so the
 // AudioContext is created/resumed on the first tap or key press; until then
 // a new bell is only visual. On by default, switchable in the sidebar.
@@ -105,6 +105,22 @@ function chimeForNewReadyItems(tables) {
 	const counts = new Map(tables.map((table) => [table.tableId, (table.items || []).filter((item) => item.dispatched).length]));
 	if (lastDispatchedByTable && tables.some((table) => hubTileHasBell(table) && counts.get(table.tableId) > (lastDispatchedByTable.get(table.tableId) || 0))) playChime();
 	lastDispatchedByTable = counts;
+}
+
+// cashier only: same chime when a table newly asks for the bill (a new 💳
+// card) - again not on the first load. The new card also pulses for a few
+// seconds so it's clear which one rang.
+let lastBillTables = null;
+let freshBillTables = new Set();
+function chimeForNewBills(tables) {
+	if (ROLE !== 'cashier') return;
+	const billed = new Set(tables.filter((table) => table.billRequested).map((table) => table.tableId));
+	const fresh = lastBillTables ? [...billed].filter((id) => !lastBillTables.has(id)) : [];
+	lastBillTables = billed;
+	if (!fresh.length) return;
+	playChime();
+	fresh.forEach((id) => freshBillTables.add(id));
+	setTimeout(() => { fresh.forEach((id) => freshBillTables.delete(id)); rerender(); }, 6000);
 }
 
 // item.name/product_name is a source-language snapshot (see
@@ -255,7 +271,7 @@ function cardMarkup(table) {
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	const openCount = table.items.filter((item) => !item.dispatched).length;
 	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(strings().statusOpen.replace('{n}', openCount))}</span>` : '';
-	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''}" data-table-id="${table.tableId}">
+	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''}" data-table-id="${table.tableId}">
 		<div class="staff-card-head"><h3><span class="staff-card-label">${escapeHtml(strings().table)}</span> ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}${badge}</div>
 		<div class="staff-card-rows">${rows}</div>
 		${cardActionsMarkup(table)}
@@ -520,7 +536,7 @@ function sidebarMarkup() {
 	const totalsButton = (ROLE === 'cashier' || isHub)
 		? `<button type="button" class="sh-nav-btn" data-open-totals>${icon('totals', 18)}<span>${escapeHtml(strings().tileTotals)}</span></button>`
 		: '';
-	const soundButton = isHub
+	const soundButton = (isHub || ROLE === 'cashier')
 		? `<button type="button" class="sh-nav-btn ${soundOn ? '' : 'is-off'}" data-sound-toggle aria-pressed="${soundOn}">${icon(soundOn ? 'sound' : 'mute', 18)}<span>${escapeHtml(soundOn ? strings().chimeOn : strings().chimeOff)}</span></button>`
 		: '';
 	return `<aside class="sh-sidebar">
@@ -734,6 +750,7 @@ async function refresh() {
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
 	chimeForNewReadyItems(lastTables);
+	chimeForNewBills(lastTables);
 	// A table popped from the list, or an open table's popup whose table got
 	// closed elsewhere (it's FREE now) - don't leave a stale popup showing.
 	// A FREE table's own "Aktivieren" confirm popup stays open.
@@ -778,6 +795,7 @@ async function init() {
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
 	lastTables = data.tables || [];
 	chimeForNewReadyItems(lastTables);
+	chimeForNewBills(lastTables);
 	render(data);
 	if (data.menuSlug) subscribeRealtime(data.menuSlug);
 }
