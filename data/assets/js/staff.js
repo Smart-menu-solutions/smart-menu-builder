@@ -62,8 +62,8 @@ function saveAckDispatchedCount() {
 	try { localStorage.setItem(ACK_STORAGE_KEY, JSON.stringify(ackDispatchedCount)); } catch { /* convenience only */ }
 }
 
-// hub + cashier: a short "ding-dong" when something new needs them (hub: a
-// new 🛎️, cashier: a new bill request). Web Audio - no sound file. Browsers
+// A short "ding-dong" when something new needs this station (hub: a new
+// 🛎️, cashier: a new bill request, kitchen/bar: a new order line). Web Audio - no sound file. Browsers
 // only allow audio after the user has interacted with the page, so the
 // AudioContext is created/resumed on the first tap or key press; until then
 // a new bell is only visual. On by default, switchable in the sidebar.
@@ -121,6 +121,32 @@ function chimeForNewBills(tables) {
 	playChime();
 	fresh.forEach((id) => freshBillTables.add(id));
 	setTimeout(() => { fresh.forEach((id) => freshBillTables.delete(id)); rerender(); }, 6000);
+}
+
+// kitchen/bar only: same chime when a new order line arrives for this
+// station (a guest order, a Nachbestellung, or one added by staff) - again
+// not on the first load. Tracked by item id, so ticking items off or the
+// cashier removing one never rings. The table's card pulses for a few
+// seconds so it's clear where the new order landed.
+let lastTicketItemIds = null;
+let freshOrderTables = new Set();
+function chimeForNewOrders(tables) {
+	if (!isTicketRole) return;
+	const ids = new Set();
+	const fresh = [];
+	for (const table of tables) {
+		let hasNew = false;
+		for (const item of table.items || []) {
+			ids.add(item.id);
+			if (lastTicketItemIds && !lastTicketItemIds.has(item.id)) hasNew = true;
+		}
+		if (hasNew) fresh.push(table.tableId);
+	}
+	lastTicketItemIds = ids;
+	if (!fresh.length) return;
+	playChime();
+	fresh.forEach((id) => freshOrderTables.add(id));
+	setTimeout(() => { fresh.forEach((id) => freshOrderTables.delete(id)); rerender(); }, 6000);
 }
 
 // item.name/product_name is a source-language snapshot (see
@@ -271,7 +297,7 @@ function cardMarkup(table) {
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	const openCount = table.items.filter((item) => !item.dispatched).length;
 	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(strings().statusOpen.replace('{n}', openCount))}</span>` : '';
-	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''}" data-table-id="${table.tableId}">
+	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''} ${freshOrderTables.has(table.tableId) ? 'is-fresh-order' : ''}" data-table-id="${table.tableId}">
 		<div class="staff-card-head"><h3><span class="staff-card-label">${escapeHtml(strings().table)}</span> ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}${badge}</div>
 		<div class="staff-card-rows">${rows}</div>
 		${cardActionsMarkup(table)}
@@ -536,7 +562,7 @@ function sidebarMarkup() {
 	const totalsButton = (ROLE === 'cashier' || isHub)
 		? `<button type="button" class="sh-nav-btn" data-open-totals>${icon('totals', 18)}<span>${escapeHtml(strings().tileTotals)}</span></button>`
 		: '';
-	const soundButton = (isHub || ROLE === 'cashier')
+	const soundButton = (isHub || isTicketRole || ROLE === 'cashier')
 		? `<button type="button" class="sh-nav-btn ${soundOn ? '' : 'is-off'}" data-sound-toggle aria-pressed="${soundOn}">${icon(soundOn ? 'sound' : 'mute', 18)}<span>${escapeHtml(soundOn ? strings().chimeOn : strings().chimeOff)}</span></button>`
 		: '';
 	return `<aside class="sh-sidebar">
@@ -751,6 +777,7 @@ async function refresh() {
 	lastTables = data.tables || [];
 	chimeForNewReadyItems(lastTables);
 	chimeForNewBills(lastTables);
+	chimeForNewOrders(lastTables);
 	// A table popped from the list, or an open table's popup whose table got
 	// closed elsewhere (it's FREE now) - don't leave a stale popup showing.
 	// A FREE table's own "Aktivieren" confirm popup stays open.
@@ -796,6 +823,7 @@ async function init() {
 	lastTables = data.tables || [];
 	chimeForNewReadyItems(lastTables);
 	chimeForNewBills(lastTables);
+	chimeForNewOrders(lastTables);
 	render(data);
 	if (data.menuSlug) subscribeRealtime(data.menuSlug);
 }

@@ -45,13 +45,13 @@ window.STAFF_STRINGS = {
 					"Hier siehst du, was die Gäste bestellt haben.",
 					"Rot = noch zu machen. Tippe auf die Zeile, wenn es fertig ist. Dann wird sie grün.",
 					"„Alles fertig“ = alles für diesen Tisch ist fertig.",
-					"Neue Bestellungen kommen von selbst."
+					"Neue Bestellungen kommen von selbst – mit Klingelton, und die Karte blinkt kurz orange. Ein- und ausschalten unten links mit „Klingelton“. Tipp: Nach dem Öffnen der Seite einmal auf den Bildschirm tippen – erst dann erlaubt der Browser Töne."
 				],
 				bar: [
 					"Hier siehst du, welche Getränke bestellt wurden.",
 					"Rot = noch zu machen. Tippe auf die Zeile, wenn es fertig ist. Dann wird sie grün.",
 					"„Alles fertig“ = alle Getränke für diesen Tisch sind fertig.",
-					"Neue Bestellungen kommen von selbst.",
+					"Neue Bestellungen kommen von selbst – mit Klingelton, und die Karte blinkt kurz orange. Ein- und ausschalten unten links mit „Klingelton“. Tipp: Nach dem Öffnen der Seite einmal auf den Bildschirm tippen – erst dann erlaubt der Browser Töne.",
 					"Gast bestellt direkt bei dir statt über den QR-Code? Beispiel: Er sitzt an der Bar, hat seine erste Bestellung per QR-Code gemacht und sagt dann „Bitte noch ein Bier und einen Orangensaft“. Bei seinem Tisch „+ Artikel“ drücken → Getränk und Menge wählen → „Hinzufügen“. Es steht sofort auf seiner Rechnung; bestellt er Essen, geht das automatisch an die Küche.",
 					"„+ Artikel“ gibt es nur bei Tischen, die hier schon eine Karte haben. Für einen anderen Tisch den Artikel im Service Hub hinzufügen."
 				],
@@ -122,13 +122,13 @@ window.STAFF_STRINGS = {
 					"Here you see what the guests ordered.",
 					"Red = still to make. Tap the row when it is ready. Then it turns green.",
 					"“All done” = everything for this table is ready.",
-					"New orders arrive by themselves."
+					"New orders arrive by themselves – with a chime, and the card briefly flashes orange. Turn it on or off at the bottom left with “Chime”. Tip: tap the screen once after opening the page – only then does the browser allow sounds."
 				],
 				bar: [
 					"Here you see which drinks were ordered.",
 					"Red = still to make. Tap the row when it is ready. Then it turns green.",
 					"“All done” = all drinks for this table are ready.",
-					"New orders arrive by themselves.",
+					"New orders arrive by themselves – with a chime, and the card briefly flashes orange. Turn it on or off at the bottom left with “Chime”. Tip: tap the screen once after opening the page – only then does the browser allow sounds.",
 					"Guest orders directly from you instead of using the QR code? Example: they sit at the bar, placed their first order with the QR code and then say “One more beer and an orange juice, please”. Press “+ Item” on their table → choose drink and quantity → “Add”. It’s on their bill right away; food they order goes to the kitchen automatically.",
 					"“+ Item” is only available for tables that already have a card here. For any other table, add the item in the Service Hub."
 				],
@@ -199,13 +199,13 @@ window.STAFF_STRINGS = {
 					"Εδώ βλέπεις τι παρήγγειλαν οι πελάτες.",
 					"Κόκκινο = ακόμα να γίνει. Πάτα τη γραμμή όταν είναι έτοιμο. Τότε γίνεται πράσινη.",
 					"«Όλα έτοιμα» = όλα για αυτό το τραπέζι είναι έτοιμα.",
-					"Οι νέες παραγγελίες έρχονται μόνες τους."
+					"Οι νέες παραγγελίες έρχονται μόνες τους – με κουδούνισμα, και η κάρτα αναβοσβήνει για λίγο πορτοκαλί. Ενεργοποίηση/απενεργοποίηση κάτω αριστερά με «Κουδούνισμα». Συμβουλή: μετά το άνοιγμα της σελίδας πάτησε μία φορά στην οθόνη – μόνο τότε ο browser επιτρέπει ήχους."
 				],
 				bar: [
 					"Εδώ βλέπεις ποια ποτά παραγγέλθηκαν.",
 					"Κόκκινο = ακόμα να γίνει. Πάτα τη γραμμή όταν είναι έτοιμο. Τότε γίνεται πράσινη.",
 					"«Όλα έτοιμα» = όλα τα ποτά για αυτό το τραπέζι είναι έτοιμα.",
-					"Οι νέες παραγγελίες έρχονται μόνες τους.",
+					"Οι νέες παραγγελίες έρχονται μόνες τους – με κουδούνισμα, και η κάρτα αναβοσβήνει για λίγο πορτοκαλί. Ενεργοποίηση/απενεργοποίηση κάτω αριστερά με «Κουδούνισμα». Συμβουλή: μετά το άνοιγμα της σελίδας πάτησε μία φορά στην οθόνη – μόνο τότε ο browser επιτρέπει ήχους.",
 					"Ο πελάτης παραγγέλνει απευθείας σε εσάς αντί για το QR code; Παράδειγμα: κάθεται στο μπαρ, έκανε την πρώτη του παραγγελία με το QR code και μετά λέει «Άλλη μία μπίρα και έναν χυμό πορτοκάλι, παρακαλώ». Πατήστε «+ Προσθήκη» στο τραπέζι του → επιλέξτε ποτό και ποσότητα → «Προσθήκη». Μπαίνει αμέσως στον λογαριασμό του· αν παραγγείλει φαγητό, πηγαίνει αυτόματα στην κουζίνα.",
 					"Το «+ Προσθήκη» υπάρχει μόνο για τραπέζια που έχουν ήδη κάρτα εδώ. Για άλλο τραπέζι, προσθέστε το είδος στο Service Hub."
 				],
@@ -276,13 +276,13 @@ window.STAFF_STRINGS = {
 					"Qui vedi cosa hanno ordinato gli ospiti.",
 					"Rosso = ancora da fare. Tocca la riga quando è pronto. Poi diventa verde.",
 					"«Tutto pronto» = tutto per questo tavolo è pronto.",
-					"Le nuove ordinazioni arrivano da sole."
+					"Le nuove ordinazioni arrivano da sole – con un campanello, e la scheda lampeggia brevemente in arancione. Attivalo o disattivalo in basso a sinistra con «Campanello». Suggerimento: dopo aver aperto la pagina tocca una volta lo schermo – solo allora il browser consente i suoni."
 				],
 				bar: [
 					"Qui vedi quali bevande sono state ordinate.",
 					"Rosso = ancora da fare. Tocca la riga quando è pronto. Poi diventa verde.",
 					"«Tutto pronto» = tutte le bevande di questo tavolo sono pronte.",
-					"Le nuove ordinazioni arrivano da sole.",
+					"Le nuove ordinazioni arrivano da sole – con un campanello, e la scheda lampeggia brevemente in arancione. Attivalo o disattivalo in basso a sinistra con «Campanello». Suggerimento: dopo aver aperto la pagina tocca una volta lo schermo – solo allora il browser consente i suoni.",
 					"L’ospite ordina direttamente a te invece che con il QR code? Esempio: è seduto al bar, ha fatto il primo ordine con il QR code e poi dice «Ancora una birra e un succo d’arancia, per favore». Premi «+ Articolo» sul suo tavolo → scegli bevanda e quantità → «Aggiungi». È subito sul suo conto; il cibo che ordina va automaticamente in cucina.",
 					"«+ Articolo» è disponibile solo per i tavoli che hanno già una scheda qui. Per un altro tavolo aggiungi l’articolo nel Service Hub."
 				],
@@ -353,13 +353,13 @@ window.STAFF_STRINGS = {
 					"Aquí ves lo que han pedido los clientes.",
 					"Rojo = aún por hacer. Pulsa la fila cuando esté listo. Entonces se vuelve verde.",
 					"«Todo listo» = todo lo de esta mesa está listo.",
-					"Los pedidos nuevos llegan solos."
+					"Los pedidos nuevos llegan solos – con un timbre, y la tarjeta parpadea brevemente en naranja. Actívalo o desactívalo abajo a la izquierda con «Timbre». Consejo: después de abrir la página, toca la pantalla una vez – solo entonces el navegador permite sonidos."
 				],
 				bar: [
 					"Aquí ves qué bebidas se han pedido.",
 					"Rojo = aún por hacer. Pulsa la fila cuando esté listo. Entonces se vuelve verde.",
 					"«Todo listo» = todas las bebidas de esta mesa están listas.",
-					"Los pedidos nuevos llegan solos.",
+					"Los pedidos nuevos llegan solos – con un timbre, y la tarjeta parpadea brevemente en naranja. Actívalo o desactívalo abajo a la izquierda con «Timbre». Consejo: después de abrir la página, toca la pantalla una vez – solo entonces el navegador permite sonidos.",
 					"¿El cliente te pide directamente a ti en lugar de usar el código QR? Ejemplo: está sentado en la barra, hizo su primer pedido con el código QR y luego dice «Otra cerveza y un zumo de naranja, por favor». Pulsa «+ Artículo» en su mesa → elige bebida y cantidad → «Añadir». Queda al instante en su cuenta; la comida que pida va automáticamente a cocina.",
 					"«+ Artículo» solo está disponible para mesas que ya tienen una tarjeta aquí. Para otra mesa, añade el artículo en el Service Hub."
 				],
@@ -430,13 +430,13 @@ window.STAFF_STRINGS = {
 					"Vous voyez ici ce que les clients ont commandé.",
 					"Rouge = reste à faire. Appuyez sur la ligne quand c’est prêt. Elle devient verte.",
 					"« Tout est prêt » = tout est prêt pour cette table.",
-					"Les nouvelles commandes arrivent toutes seules."
+					"Les nouvelles commandes arrivent toutes seules – avec une sonnerie, et la carte clignote brièvement en orange. Activez-la ou désactivez-la en bas à gauche avec « Sonnerie ». Astuce : après avoir ouvert la page, touchez l’écran une fois – le navigateur n’autorise les sons qu’ensuite."
 				],
 				bar: [
 					"Vous voyez ici les boissons commandées.",
 					"Rouge = reste à faire. Appuyez sur la ligne quand c’est prêt. Elle devient verte.",
 					"« Tout est prêt » = toutes les boissons de cette table sont prêtes.",
-					"Les nouvelles commandes arrivent toutes seules.",
+					"Les nouvelles commandes arrivent toutes seules – avec une sonnerie, et la carte clignote brièvement en orange. Activez-la ou désactivez-la en bas à gauche avec « Sonnerie ». Astuce : après avoir ouvert la page, touchez l’écran une fois – le navigateur n’autorise les sons qu’ensuite.",
 					"Le client vous commande directement au lieu d’utiliser le QR code ? Exemple : il est assis au bar, a passé sa première commande avec le QR code, puis dit « Encore une bière et un jus d’orange, s’il vous plaît ». Appuyez sur « + Article » à sa table → choisissez la boisson et la quantité → « Ajouter ». C’est aussitôt sur son addition ; les plats qu’il commande partent automatiquement en cuisine.",
 					"« + Article » n’existe que pour les tables qui ont déjà une carte ici. Pour une autre table, ajoutez l’article dans le Service Hub."
 				],
