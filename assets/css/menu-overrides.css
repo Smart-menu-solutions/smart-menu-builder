@@ -4,6 +4,9 @@
 .category-nav-row{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:.6rem;padding:.8rem 1.5rem;background:#fff7ef;border-bottom:1px solid var(--line)}
 .category-nav{display:flex;gap:.6rem;overflow-x:auto;scrollbar-width:thin}.category-nav a{flex:0 0 auto;color:var(--ink);padding:.45rem .8rem;border:1px solid var(--line);border-radius:6px;background:#fff;text-decoration:none;font-size:.88rem;font-weight:700;white-space:nowrap}.category-nav a:hover{border-color:var(--orange);color:var(--orange)}
 .category-nav-row .cart-button{flex:0 0 auto}
+/* Same shape and height as the category chips next to it (1px border), with cart icon, count and a localized 'Bestellen' label. */
+.category-nav-row .cart-button{display:inline-flex;align-items:center;gap:.35rem;border:1px solid var(--orange);line-height:inherit}
+.category-nav-row .cart-button:hover{border-color:var(--orange-dark)}
 body{background:#fff7ef}.menu-container{background:#fff7ef}
 .category-image{width:100%;max-height:220px;object-fit:cover;border-radius:14px;margin:0 0 1rem}
 .item{display:flex;gap:1rem;align-items:flex-start}

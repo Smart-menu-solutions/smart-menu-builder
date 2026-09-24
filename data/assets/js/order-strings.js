@@ -9,6 +9,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Rechnung anfordern', billRequested: '💳 Rechnung angefragt',
 		notActiveYet: 'Dieser Tisch ist noch nicht aktiv. Bitte das Personal um Aktivierung bitten.',
 		cartTitle: 'Warenkorb', cartEmpty: 'Noch leer.', notesPlaceholder: 'Anmerkung (optional)',
+		orderButton: 'Bestellen',
 		sendOrder: 'Bestellung senden', sending: 'Wird gesendet…', added: '✓ Hinzugefügt', addToCart: '+ Warenkorb',
 		orderFailed: 'Bestellung konnte nicht gesendet werden.', total: 'Gesamt'
 	},
@@ -17,6 +18,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Request bill', billRequested: '💳 Bill requested',
 		notActiveYet: 'This table is not active yet. Please ask staff to activate it.',
 		cartTitle: 'Cart', cartEmpty: 'Still empty.', notesPlaceholder: 'Note (optional)',
+		orderButton: 'Order',
 		sendOrder: 'Send order', sending: 'Sending…', added: '✓ Added', addToCart: '+ Cart',
 		orderFailed: 'Could not send the order.', total: 'Total'
 	},
@@ -25,6 +27,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Ζήτα λογαριασμό', billRequested: '💳 Ζητήθηκε λογαριασμός',
 		notActiveYet: 'Αυτό το τραπέζι δεν είναι ακόμα ενεργό. Ζήτα από το προσωπικό να το ενεργοποιήσει.',
 		cartTitle: 'Καλάθι', cartEmpty: 'Ακόμα άδειο.', notesPlaceholder: 'Σημείωση (προαιρετικό)',
+		orderButton: 'Παραγγελία',
 		sendOrder: 'Αποστολή παραγγελίας', sending: 'Αποστολή…', added: '✓ Προστέθηκε', addToCart: '+ Καλάθι',
 		orderFailed: 'Η παραγγελία δεν στάλθηκε.', total: 'Σύνολο'
 	},
@@ -33,6 +36,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Richiedi conto', billRequested: '💳 Conto richiesto',
 		notActiveYet: 'Questo tavolo non è ancora attivo. Chiedi al personale di attivarlo.',
 		cartTitle: 'Carrello', cartEmpty: 'Ancora vuoto.', notesPlaceholder: 'Nota (opzionale)',
+		orderButton: 'Ordina',
 		sendOrder: 'Invia ordine', sending: 'Invio…', added: '✓ Aggiunto', addToCart: '+ Carrello',
 		orderFailed: "Impossibile inviare l'ordine.", total: 'Totale'
 	},
@@ -41,6 +45,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Pedir la cuenta', billRequested: '💳 Cuenta solicitada',
 		notActiveYet: 'Esta mesa aún no está activa. Pide al personal que la active.',
 		cartTitle: 'Carrito', cartEmpty: 'Todavía vacío.', notesPlaceholder: 'Nota (opcional)',
+		orderButton: 'Pedir',
 		sendOrder: 'Enviar pedido', sending: 'Enviando…', added: '✓ Añadido', addToCart: '+ Carrito',
 		orderFailed: 'No se pudo enviar el pedido.', total: 'Total'
 	},
@@ -49,6 +54,7 @@ window.ORDER_STRINGS = {
 		requestBill: '💳 Demander l’addition', billRequested: '💳 Addition demandée',
 		notActiveYet: "Cette table n'est pas encore active. Demandez au personnel de l'activer.",
 		cartTitle: 'Panier', cartEmpty: 'Encore vide.', notesPlaceholder: 'Remarque (optionnel)',
+		orderButton: 'Commander',
 		sendOrder: 'Envoyer la commande', sending: 'Envoi…', added: '✓ Ajouté', addToCart: '+ Panier',
 		orderFailed: "La commande n'a pas pu être envoyée.", total: 'Total'
 	}

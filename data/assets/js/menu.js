@@ -462,7 +462,7 @@ function orderStrings() {
 }
 
 function cartButtonMarkup() {
-	return `<button type="button" class="cart-button" id="cartButton">🛒 <span id="cartCount">${cartCount()}</span></button>`;
+	return `<button type="button" class="cart-button" id="cartButton"><span aria-hidden="true">🛒</span> <span id="cartCount">${cartCount()}</span> <span class="cart-button-label">${escapeHtml(orderStrings().orderButton || '')}</span></button>`;
 }
 
 function cartPopupMarkup() {
