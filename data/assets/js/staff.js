@@ -15,6 +15,7 @@ const isTicketRole = ROLE === 'kitchen' || ROLE === 'bar';
 const isHub = ROLE === 'waiter';
 const canAddItems = ROLE === 'bar' || ROLE === 'waiter' || ROLE === 'cashier';
 const LANG_STORAGE_KEY = `smartmenu.staff.lang.${ROLE}`;
+const [ROLE_TITLE, PRODUCT_TITLE = 'Smart ServiceHub™'] = document.title.split(' — ');
 
 let menuState = null;
 let restaurantName = '';
@@ -281,7 +282,13 @@ function headerToolsMarkup() {
 
 function render(data) {
 	menuState = data.menu || menuState;
-	if (data.name) restaurantName = data.name;
+	if (data.name) {
+		restaurantName = data.name;
+		// "Küche · El Greco — Smart ServiceHub™" - pwa.js names the installed
+		// staff app after the part before " — ".
+		const title = `${ROLE_TITLE} · ${restaurantName} — ${PRODUCT_TITLE}`;
+		if (document.title !== title) document.title = title;
+	}
 	if (data.languages?.length) languagesState = data.languages;
 	// The client's language order puts the main language first (see
 	// languageDisplayOrder in admin.js) - a saved or default language that
@@ -469,4 +476,9 @@ async function init() {
 	if (data.menuSlug) subscribeRealtime(data.menuSlug);
 }
 
-init();
+// No connection (e.g. the installed app opened offline from its cached
+// shell): say so instead of "Laden…" forever, and start over once back online.
+init().catch(() => {
+	app.innerHTML = `<p class="staff-empty">${escapeHtml(strings().offline || strings().linkInvalid)}</p>`;
+	window.addEventListener('online', () => location.reload(), { once: true });
+});

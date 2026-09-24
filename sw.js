@@ -1,5 +1,6 @@
-/* Service worker for the installable guest menu (menu.html) and the admin
-   workspace (admin.html/login.html). Registered by data/assets/js/pwa.js.
+/* Service worker for the installable guest menu (menu.html), the admin
+   workspace (admin.html/login.html) and the staff screens (kitchen/waiter/
+   bar/cashier.html). Registered by data/assets/js/pwa.js.
 
    Everything is network-first: while online, pages, scripts and menu data
    always come fresh from the network, exactly as without a service worker -
@@ -18,7 +19,10 @@ const DATA = `sms-data-${VERSION}`;
 const IMAGES = `sms-images-${VERSION}`;
 const KNOWN_CACHES = [PAGES, ASSETS, DATA, IMAGES];
 
-const PWA_PAGES = ['menu.html', 'admin.html', 'login.html'];
+// The staff pages only get their shell cached (cache key is the bare path,
+// so the ?t= link secret never lands in the cache) - their tables and orders
+// come from the staff-access Edge Function, which is never cached.
+const PWA_PAGES = ['menu.html', 'admin.html', 'login.html', 'kitchen.html', 'waiter.html', 'bar.html', 'cashier.html'];
 const SUPABASE_HOST = 'qlzugnwsufbgznoawvic.supabase.co';
 const CDN_HOSTS = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 // Slow restaurant wifi: after this long, fall back to the cached copy (if

@@ -1,0 +1,13 @@
+{
+  "name": "Smart ServiceHub",
+  "short_name": "ServiceHub",
+  "description": "Kitchen, bar, waiter and cashier screens by Smart Menu Solutions",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#262421",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

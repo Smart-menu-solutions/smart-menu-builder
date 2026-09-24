@@ -59,6 +59,7 @@ window.STAFF_STRINGS = {
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische."
 				]
 			},
+		offline: 'Keine Internetverbindung. Die Seite lädt automatisch neu, sobald du wieder online bist.',
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge'
 	},
@@ -115,6 +116,7 @@ window.STAFF_STRINGS = {
 					"📊 Overview = the total across every table that's currently open."
 				]
 			},
+		offline: 'No internet connection. This page reloads automatically once you are back online.',
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access'
 	},
@@ -171,6 +173,7 @@ window.STAFF_STRINGS = {
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά."
 				]
 			},
+		offline: 'Δεν υπάρχει σύνδεση στο διαδίκτυο. Η σελίδα θα ανανεωθεί αυτόματα μόλις συνδεθείτε ξανά.',
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού'
 	},
@@ -227,6 +230,7 @@ window.STAFF_STRINGS = {
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti."
 				]
 			},
+		offline: 'Nessuna connessione a Internet. La pagina si ricarica automaticamente quando torni online.',
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale'
 	},
@@ -283,6 +287,7 @@ window.STAFF_STRINGS = {
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo."
 				]
 			},
+		offline: 'Sin conexión a Internet. La página se recargará automáticamente cuando vuelvas a estar en línea.',
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal'
 	},
@@ -339,6 +344,7 @@ window.STAFF_STRINGS = {
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes."
 				]
 			},
+		offline: 'Pas de connexion Internet. La page se recharge automatiquement dès que vous êtes de nouveau en ligne.',
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'
 	}

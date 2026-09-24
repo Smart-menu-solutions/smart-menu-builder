@@ -1,6 +1,6 @@
 /* Registers sw.js (offline menu + installable app) and shows a small
    "new version" banner when an update is waiting. Loaded by menu.html,
-   admin.html and login.html. */
+   admin.html, login.html and the staff pages (kitchen/waiter/bar/cashier). */
 (function () {
 	if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
@@ -58,9 +58,15 @@
 	// home-screen icon added at a table doesn't reopen that table's order
 	// session days later. The app is named after the restaurant once menu.js
 	// has set the page title ("El Greco — Digital menu").
-	async function personalizeMenuManifest() {
-		const link = document.querySelector('link[rel="manifest"][data-per-restaurant]');
-		const client = new URLSearchParams(location.search).get('client');
+	// The staff pages (data-per-staff-link) work the same way, keyed on their
+	// ?t= link instead: the installed kitchen/bar/... app has to reopen with
+	// that link, a bare kitchen.html would only say "link incomplete". Named
+	// "Küche · El Greco" once staff.js has set the title.
+	async function personalizeManifest() {
+		const perMenu = document.querySelector('link[rel="manifest"][data-per-restaurant]');
+		const link = perMenu || document.querySelector('link[rel="manifest"][data-per-staff-link]');
+		const key = perMenu ? 'client' : 't';
+		const client = new URLSearchParams(location.search).get(key);
 		if (!link || !client) return;
 		// Captured once: after apply() runs, link.href is the data: URL itself.
 		const manifestUrl = link.href;
@@ -72,18 +78,21 @@
 		}
 		const absolute = (path) => new URL(path, manifestUrl).href;
 		const start = new URL(location.pathname, location.href);
-		start.searchParams.set('client', client);
+		start.searchParams.set(key, client);
 		const lang = new URLSearchParams(location.search).get('lang');
-		if (lang) start.searchParams.set('lang', lang);
+		if (lang && perMenu) start.searchParams.set('lang', lang);
 		const apply = () => {
 			const name = document.title.split(' — ')[0].trim();
+			// Staff: "Küche · El Greco" is too long for a home-screen label, "Küche" isn't.
+			const shortName = (perMenu ? name : name.split(' · ')[0]).slice(0, 12);
 			const manifest = {
 				...base,
-				id: start.pathname + '?client=' + encodeURIComponent(client),
+				// The staff id leaves the secret out - it only needs to tell apps apart.
+				id: start.pathname + (perMenu ? '?client=' + encodeURIComponent(client) : ''),
 				start_url: start.href,
 				scope: absolute('./'),
 				icons: base.icons.map((icon) => ({ ...icon, src: absolute(icon.src) })),
-				...(name && name !== document.title ? { name, short_name: name.slice(0, 12) } : {})
+				...(name && name !== document.title ? { name, short_name: shortName } : {})
 			};
 			link.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifest));
 		};
@@ -91,7 +100,7 @@
 		const title = document.querySelector('title');
 		if (title) new MutationObserver(apply).observe(title, { childList: true });
 	}
-	personalizeMenuManifest();
+	personalizeManifest();
 
 	window.addEventListener('load', async () => {
 		let registration;
