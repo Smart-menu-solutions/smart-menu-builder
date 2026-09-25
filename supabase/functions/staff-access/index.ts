@@ -30,11 +30,14 @@ function json(data: unknown, status = 200) {
 }
 
 type OrderItemRow = {
-	id: string; product_name: string; unit_price_cents: number; quantity: number; notes: string | null;
+	id: string; product_id: string; product_name: string; unit_price_cents: number; quantity: number; notes: string | null;
 	station: 'KITCHEN' | 'BAR'; source: string; round_number: number; dispatched_at: string | null;
 };
 type OrderGroupRow = { id: string; table_id: string; bill_requested_at: string | null; order_items: OrderItemRow[] };
-type MenuItem = { id?: string; name: string; price: string };
+// posNumber: the dish's article number in the restaurant's own till (optional,
+// set in the admin). Only the cashier gets it, so staff can key the bill into
+// their certified till quickly - see cashier.html's "For the till" block.
+type MenuItem = { id?: string; name: string; price: string; posNumber?: string };
 type MenuCategory = { name: string; courseType?: string; items?: MenuItem[] };
 
 function findProduct(categories: MenuCategory[], productId: string): { name: string; priceCents: number; station: 'KITCHEN' | 'BAR' } | null {
@@ -77,19 +80,33 @@ async function tableBelongsTo(tableId: string, menuSlug: string) {
 	return !!data;
 }
 
-function itemView(item: OrderItemRow, withPrice: boolean) {
+function itemView(item: OrderItemRow, withPrice: boolean, posNumbers?: Map<string, string>) {
+	const posNumber = posNumbers?.get(item.product_id);
 	return {
 		id: item.id, name: item.product_name, quantity: item.quantity, notes: item.notes,
 		station: item.station, roundNumber: item.round_number, dispatched: !!item.dispatched_at,
-		...(withPrice ? { unitPriceCents: item.unit_price_cents } : {})
+		...(withPrice ? { unitPriceCents: item.unit_price_cents } : {}),
+		...(posNumber ? { posNumber } : {})
 	};
 }
 
-async function buildView(menuSlug: string, role: string) {
+function posNumberMap(categories: MenuCategory[]): Map<string, string> {
+	const map = new Map<string, string>();
+	for (const category of categories || []) {
+		for (const item of category.items || []) {
+			const posNumber = String(item.posNumber || '').trim();
+			if (item.id && posNumber) map.set(item.id, posNumber);
+		}
+	}
+	return map;
+}
+
+async function buildView(menuSlug: string, role: string, categories: MenuCategory[] = []) {
 	const [{ data: tables }, { data: groups }] = await Promise.all([
 		supabase.from('restaurant_tables').select('id, table_number, status').eq('menu_slug', menuSlug).order('table_number'),
-		supabase.from('order_groups').select('id, table_id, bill_requested_at, order_items(id, product_name, unit_price_cents, quantity, notes, station, source, round_number, dispatched_at)').eq('menu_slug', menuSlug).eq('status', 'OPEN')
+		supabase.from('order_groups').select('id, table_id, bill_requested_at, order_items(id, product_id, product_name, unit_price_cents, quantity, notes, station, source, round_number, dispatched_at)').eq('menu_slug', menuSlug).eq('status', 'OPEN')
 	]);
+	const posNumbers = role === 'cashier' ? posNumberMap(categories) : undefined;
 	const openGroups = (groups || []) as OrderGroupRow[];
 	const groupByTable = new Map(openGroups.map((group) => [group.table_id, group]));
 
@@ -117,7 +134,7 @@ async function buildView(menuSlug: string, role: string) {
 			return {
 				tableId: table.id, tableNumber: table.table_number, status: table.status,
 				billRequested: !!group?.bill_requested_at,
-				items: items.map((item) => itemView(item, true)),
+				items: items.map((item) => itemView(item, true, posNumbers)),
 				totalCents: items.reduce((sum, item) => sum + item.unit_price_cents * item.quantity, 0),
 				hasReadyItem: items.some((item) => item.dispatched_at)
 			};
@@ -201,7 +218,7 @@ Deno.serve(async (request) => {
 		if (!TOKEN_PATTERN.test(token)) return json({ error: 'Invalid or missing link.' }, 400);
 		const access = await resolveAccess(token);
 		if (!access) return json({ error: 'This link is no longer valid.' }, 404);
-		const view = await buildView(access.menuSlug, access.role);
+		const view = await buildView(access.menuSlug, access.role, access.menu.categories as MenuCategory[]);
 		// Only waiter/bar/cashier can add_item, so only they need the menu to
 		// pick products from - kitchen/bar's own ticket view never needs it.
 		// languages/translations are small, so every role gets them: the UI

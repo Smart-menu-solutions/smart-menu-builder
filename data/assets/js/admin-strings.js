@@ -115,7 +115,7 @@ window.ADMIN_STRINGS = {
 		favorite: 'Favorit',
 		sectionNameAria: 'Name des Bereichs', moveSectionUp: 'Bereich nach oben', moveSectionDown: 'Bereich nach unten', removeSection: 'Bereich entfernen',
 		dishName: 'Name des Gerichts', dishDescription: 'Beschreibung', dishDescriptionAria: 'Beschreibung des Gerichts',
-		price: 'Preis', removeDish: 'Gericht entfernen', addDish: '＋ Gericht hinzufügen',
+		price: 'Preis', posNumber: 'Kassen-Nr.', posNumberHint: 'Kassen-Nr. (optional): Artikelnummer dieses Gerichts in der Kasse des Restaurants. Erscheint nur an der Kasse im ServiceHub, nicht für Gäste.', removeDish: 'Gericht entfernen', addDish: '＋ Gericht hinzufügen',
 
 		customerNameRequired: 'Der Kundenname ist erforderlich', urlSlugRequired: 'Das URL-Kürzel ist erforderlich',
 		slugInUse: 'Dieses URL-Kürzel wird bereits verwendet',
@@ -261,7 +261,7 @@ window.ADMIN_STRINGS = {
 		favorite: 'Favorite',
 		sectionNameAria: 'Section name', moveSectionUp: 'Move section up', moveSectionDown: 'Move section down', removeSection: 'Remove section',
 		dishName: 'Dish name', dishDescription: 'Description', dishDescriptionAria: 'Dish description',
-		price: 'Price', removeDish: 'Remove dish', addDish: '＋ Add dish',
+		price: 'Price', posNumber: 'Till no.', posNumberHint: 'Till no. (optional): the article number of this dish in the restaurant\'s own till. Shown only on the ServiceHub cashier screen, never to guests.', removeDish: 'Remove dish', addDish: '＋ Add dish',
 
 		customerNameRequired: 'Customer name is required', urlSlugRequired: 'URL slug is required',
 		slugInUse: 'This URL slug is already in use',

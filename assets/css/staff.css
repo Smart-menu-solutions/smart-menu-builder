@@ -156,6 +156,19 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .staff-item-name{flex:1}
 .staff-item-name em{color:var(--muted);font-style:normal;font-size:.85em}
 .staff-item-price{font-weight:700;font-size:.85rem;color:var(--muted)}
+/* cashier: till article number per line + the "For the till" block (staff.js posSummaryMarkup) */
+.staff-item-pos{flex:0 0 auto;min-width:2.4rem;text-align:center;font-weight:800;font-size:.8rem;color:var(--orange-dark);background:var(--tint);border-radius:6px;padding:.1rem .35rem;font-variant-numeric:tabular-nums}
+.staff-pos{margin-top:.8rem;padding:.7rem .8rem;border:1px dashed var(--orange);border-radius:12px;background:#fffaf5}
+.staff-pos-title{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--orange-dark);margin-bottom:.45rem}
+.staff-pos-chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.45rem}
+.staff-pos-chip{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:.15rem .5rem;font-size:.9rem;font-variant-numeric:tabular-nums}
+.staff-pos-chip b{color:var(--ink)}
+.staff-pos-line{display:flex;justify-content:space-between;gap:.6rem;font-size:.85rem;padding:.12rem 0}
+.staff-pos-line em{color:var(--muted);font-style:normal;font-size:.78rem}
+.staff-pos-line span:last-child{white-space:nowrap;font-variant-numeric:tabular-nums}
+.staff-pos-sub{color:var(--muted);border-top:1px solid var(--line);margin-top:.25rem;padding-top:.3rem}
+.staff-pos-sub + .staff-pos-sub{border-top:0;margin-top:0;padding-top:.12rem}
+.staff-pos-total{font-weight:800;color:var(--ink)}
 .staff-item-remove{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;width:1.7rem;height:1.7rem;line-height:1;font-size:.8rem;font-weight:700;cursor:pointer;flex-shrink:0}
 .staff-item-remove:hover{background:var(--tint)}
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}

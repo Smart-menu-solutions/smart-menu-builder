@@ -181,3 +181,8 @@
 .access-role-hint{font-size:11px;color:var(--muted)}
 .access-add{flex-wrap:wrap}
 .access-add select{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);font:inherit}
+
+/* Till number column (only for restaurants with Smart ServiceHub, see
+   admin.js hasPosField) - a fifth, narrow field after the price. */
+.item-row.has-pos{grid-template-columns:1.2fr 1.5fr 64px 72px 27px}
+@media(max-width:720px){.item-row.has-pos{grid-template-columns:minmax(0,1fr) 65px 72px 27px}}

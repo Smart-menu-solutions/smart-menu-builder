@@ -243,9 +243,11 @@ function sortItems(items) {
 
 function itemRowMarkup(item, withPrice, clickable) {
 	const priceMarkup = withPrice ? `<span class="staff-item-price">${formatMoney(item.unitPriceCents)}</span>` : '';
+	// cashier only: the dish's article number in the restaurant's own till
+	const posMarkup = item.posNumber ? `<span class="staff-item-pos">${escapeHtml(item.posNumber)}</span>` : '';
 	return `<div class="staff-item-row ${item.dispatched ? 'is-done' : ''} ${clickable ? 'is-clickable' : ''}" ${clickable ? `data-item-id="${item.id}"` : ''}>
 		<span class="status-dot ${item.dispatched ? 'dot-green' : 'dot-red'}"></span>
-		<span class="staff-item-name">${item.quantity}× ${escapeHtml(translateName(item.name))}${item.notes ? ` <em>(${escapeHtml(item.notes)})</em>` : ''}</span>
+		${posMarkup}<span class="staff-item-name">${item.quantity}× ${escapeHtml(translateName(item.name))}${item.notes ? ` <em>(${escapeHtml(item.notes)})</em>` : ''}</span>
 		${priceMarkup}
 		${ROLE === 'cashier' ? `<button type="button" class="staff-item-remove" data-remove-item="${item.id}" data-remove-label="${escapeHtml(`${item.quantity}× ${translateName(item.name)}`)}" title="${escapeHtml(strings().removeItem)}" aria-label="${escapeHtml(strings().removeItem)}">✕</button>` : ''}
 	</div>`;
@@ -290,6 +292,44 @@ function billFlagMarkup(table) {
 	return `<button type="button" class="staff-bill-flag" data-close-table="${table.tableId}" title="${escapeHtml(strings().billFlagHint)}">💳</button>`;
 }
 
+// Cashier only: the bill as it has to be keyed into the restaurant's own
+// (certified) till, which issues the actual receipt - the ServiceHub itself
+// never does. Dishes with a till number (set per dish in the admin) are
+// summed up per number across all rounds ("105 × 3"); dishes without one are
+// listed by name with their amount. Below that the food / drinks subtotals
+// (kitchen vs. bar station), so even a till without article numbers only
+// needs two amounts keyed in, each under its own tax group.
+function posSummaryMarkup(table) {
+	if (ROLE !== 'cashier' || !table.items.length) return '';
+	const numbered = new Map();
+	const unnumbered = new Map();
+	let foodCents = 0;
+	let drinkCents = 0;
+	for (const item of table.items) {
+		const lineCents = item.unitPriceCents * item.quantity;
+		if (item.station === 'BAR') drinkCents += lineCents; else foodCents += lineCents;
+		if (item.posNumber) {
+			numbered.set(item.posNumber, (numbered.get(item.posNumber) || 0) + item.quantity);
+		} else {
+			const name = translateName(item.name);
+			const entry = unnumbered.get(name) || { quantity: 0, cents: 0 };
+			entry.quantity += item.quantity;
+			entry.cents += lineCents;
+			unnumbered.set(name, entry);
+		}
+	}
+	const numberedMarkup = [...numbered].map(([posNumber, quantity]) => `<span class="staff-pos-chip"><b>${escapeHtml(posNumber)}</b> × ${quantity}</span>`).join('');
+	const unnumberedMarkup = [...unnumbered].map(([name, entry]) => `<div class="staff-pos-line"><span>${entry.quantity}× ${escapeHtml(name)} <em>(${escapeHtml(strings().posNoNumber)})</em></span><span>${formatMoney(entry.cents)}</span></div>`).join('');
+	return `<div class="staff-pos">
+		<div class="staff-pos-title">${escapeHtml(strings().posTitle)}</div>
+		${numberedMarkup ? `<div class="staff-pos-chips">${numberedMarkup}</div>` : ''}
+		${unnumberedMarkup}
+		<div class="staff-pos-line staff-pos-sub"><span>${escapeHtml(strings().posFood)}</span><span>${formatMoney(foodCents)}</span></div>
+		<div class="staff-pos-line staff-pos-sub"><span>${escapeHtml(strings().posDrinks)}</span><span>${formatMoney(drinkCents)}</span></div>
+		<div class="staff-pos-line staff-pos-total"><span>${escapeHtml(strings().posTotal)}</span><span>${formatMoney(foodCents + drinkCents)}</span></div>
+	</div>`;
+}
+
 function cardMarkup(table) {
 	const withPrice = ROLE === 'cashier';
 	const bill = billFlagMarkup(table);
@@ -300,6 +340,7 @@ function cardMarkup(table) {
 	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''} ${freshOrderTables.has(table.tableId) ? 'is-fresh-order' : ''}" data-table-id="${table.tableId}">
 		<div class="staff-card-head"><h3><span class="staff-card-label">${escapeHtml(strings().table)}</span> ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}${badge}</div>
 		<div class="staff-card-rows">${rows}</div>
+		${posSummaryMarkup(table)}
 		${cardActionsMarkup(table)}
 	</div>`;
 }
