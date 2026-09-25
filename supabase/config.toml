@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.contact-form]
 verify_jwt = false
+
+[functions.order-upload]
+verify_jwt = false

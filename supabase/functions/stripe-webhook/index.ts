@@ -89,14 +89,14 @@ function toBase64(bytes: Uint8Array): string {
 	return btoa(binary);
 }
 
-// Downloads a file the customer already uploaded (menu PDF, photo ZIP) so it
-// can ride along as a real email attachment instead of just a storage path
-// staff would otherwise have to look up manually. create-checkout-session /
-// renewal already checked the file's content before checkout, but this is the
-// one place an uploaded file actually reaches a person, so it's checked again
-// here: only a pending/ object whose first bytes really are a PDF / ZIP is
-// attached, and always under a fixed name (menu.pdf / photos.zip) - never the
-// uploader-chosen file name, which could have been "invoice.exe".
+// Only for checkouts started with the old upload-first order form (their
+// metadata still carries pdfPath under pending/): downloads that file so it
+// rides along as an email attachment. New orders upload after payment and
+// order-upload emails the files itself. Checked again here because this is
+// where a file reaches a person: only a pending/ object whose first bytes
+// really are a PDF / ZIP is attached, and always under a fixed name
+// (menu.pdf / photos.zip) - never the uploader-chosen file name, which could
+// have been "invoice.exe".
 const ATTACHMENT_PATH = /^pending\/\d{13}-[a-z0-9]{1,8}-[A-Za-z0-9._-]{1,200}$/;
 const ATTACHMENT_TYPES = {
 	pdf: { magic: [0x25, 0x50, 0x44, 0x46, 0x2d], filename: 'menu.pdf' },
@@ -160,7 +160,13 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 // single address verified on the Resend account — real customer inboxes
 // will silently fail (logged as a Resend API error in notifications_log,
 // provider_message_id stays null) until that domain verification is done.
-async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string, lang: string) {
+// The customer's personal link to upload.html, where the menu PDF (and the
+// photo ZIP) are uploaded after payment - see order-upload.
+function uploadUrl(uploadToken: string | undefined, lang: string): string | null {
+	return uploadToken ? `${SITE_ORIGIN}/${lang === 'en' ? '' : 'de/'}upload.html?token=${uploadToken}` : null;
+}
+
+async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string, lang: string, uploadLink: string | null) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping customer confirmation: no valid email on file', subscriptionId);
 		await supabase.from('notifications_log').insert({
@@ -179,18 +185,26 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 	const intro = isEn
 		? (kind === 'renewal' ? 'thank you for renewing your subscription.' : 'thank you for your order.')
 		: (kind === 'renewal' ? 'vielen Dank für die Verlängerung Ihres Abos.' : 'vielen Dank für Ihre Bestellung.');
+	const uploadParagraphEn = !uploadLink ? '' : kind === 'renewal'
+		? `<p>If your menu has changed, you can upload the new version here: <a href="${uploadLink}">Upload menu</a></p>`
+		: `<p>If you haven't uploaded your menu (PDF) yet, you can do it here at any time: <a href="${uploadLink}">Upload menu</a></p>`;
+	const uploadParagraphDe = !uploadLink ? '' : kind === 'renewal'
+		? `<p>Falls sich Ihre Speisekarte geändert hat, können Sie hier die neue Version hochladen: <a href="${uploadLink}">Speisekarte hochladen</a></p>`
+		: `<p>Falls Sie Ihre Speisekarte (PDF) noch nicht hochgeladen haben, können Sie das hier jederzeit nachholen: <a href="${uploadLink}">Speisekarte hochladen</a></p>`;
 	const html = isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
-		<p>${intro} We've received your details and menu and will get back to you shortly with the next steps.</p>
+		<p>${intro} We've received your order and will get back to you shortly with the next steps.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
+		${uploadParagraphEn}
 		<p>If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
 		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
 	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
-		<p>${intro} Wir haben Ihre Angaben und Ihr Menü erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
+		<p>${intro} Wir haben Ihre Bestellung erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
+		${uploadParagraphDe}
 		<p>Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
@@ -288,7 +302,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	const metadata = session.metadata ?? {};
 	const type = metadata.type === 'renewal' ? 'renewal' : 'initial';
 	const plan = metadata.plan || 'start';
-	const pdfPath = metadata.pdfPath || '';
+	// Files are uploaded after payment now (upload.html + order-upload), to
+	// this fixed path. metadata.pdfPath only exists on checkouts started with
+	// the old upload-first form - those still get their file attached here.
+	const legacyPdfPath = metadata.pdfPath || '';
+	const pdfPath = legacyPdfPath || `orders/${session.id}/menu.pdf`;
 	const email = metadata.email || session.customer_details?.email || '';
 	// Defaults to 'de' to match subscriptions.lang's column default - see
 	// create-checkout-session/renewal for where this is actually set.
@@ -320,19 +338,20 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		}).eq('id', subscriptionId);
 		// Paying via the renewal link is how a deactivated menu comes back online.
 		await supabase.from('menus').update({ is_published: true }).eq('slug', existing.menu_slug);
-		await supabase.from('orders').insert({
+		const { data: renewalOrder } = await supabase.from('orders').insert({
 			subscription_id: subscriptionId,
 			type: 'renewal',
 			pdf_path: pdfPath,
 			stripe_checkout_session_id: session.id
-		});
+		}).select('upload_token').single();
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
-		const renewalAttachment = await fetchAttachment(pdfPath, 'pdf');
+		const renewalAttachment = legacyPdfPath ? await fetchAttachment(legacyPdfPath, 'pdf') : null;
 		await Promise.all([
 			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
-				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
+				'Subscription-ID': subscriptionId, Plan: plan, Email: email,
+				Speisekarte: legacyPdfPath ? 'im Anhang' : 'optional – der Kunde kann nach der Zahlung eine neue hochladen (eigene E-Mail)'
 			}, renewalAttachment ? [renewalAttachment] : undefined),
-			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token, lang)
+			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token, lang, uploadUrl(renewalOrder?.upload_token, lang))
 		]);
 		return;
 	}
@@ -385,17 +404,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		return;
 	}
 
-	await supabase.from('orders').insert({
+	const { data: order } = await supabase.from('orders').insert({
 		subscription_id: subscription.id,
 		type: 'initial',
 		pdf_path: pdfPath,
 		stripe_checkout_session_id: session.id
-	});
+	}).select('upload_token').single();
 
-	const orderAttachments = (await Promise.all([
-		fetchAttachment(pdfPath, 'pdf'),
-		fetchAttachment(metadata.photoZipPath || '', 'zip')
-	])).filter((attachment): attachment is EmailAttachment => attachment !== null);
+	const orderAttachments = legacyPdfPath
+		? (await Promise.all([
+			fetchAttachment(legacyPdfPath, 'pdf'),
+			fetchAttachment(metadata.photoZipPath || '', 'zip')
+		])).filter((attachment): attachment is EmailAttachment => attachment !== null)
+		: [];
 
 	await Promise.all([
 		sendNotification(subscription.id, 'Neue Bestellung eingegangen', {
@@ -408,11 +429,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Smart FoodMatch™': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart WeeklyReport™': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart ServiceHub™': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein',
-			...(metadata.photoZipPath ? { 'Foto-ZIP': metadata.photoZipPath } : {}),
 			'Menü-Slug': slug,
-			'PDF-Pfad': pdfPath
+			Dateien: legacyPdfPath ? 'im Anhang' : 'ausstehend – der Kunde lädt sie nach der Zahlung hoch, dann kommt eine eigene E-Mail'
 		}, orderAttachments),
-		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang)
+		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang, uploadUrl(order?.upload_token, lang))
 	]);
 }
 
@@ -447,7 +467,7 @@ async function handleInvoiceSucceeded(invoice: Stripe.Invoice) {
 		sendNotification(subscription.id, 'Automatische Verlängerung erfolgreich', {
 			'Subscription-ID': subscription.id, Plan: subscription.plan
 		}),
-		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan, subscription.addon_token, subscription.lang)
+		sendCustomerConfirmation(subscription.id, 'renewal', subscription.customers?.email ?? '', subscription.customers?.contact_name ?? '', subscription.plan, subscription.addon_token, subscription.lang, null)
 	]);
 }
 
