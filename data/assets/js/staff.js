@@ -337,10 +337,13 @@ function cardMarkup(table) {
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	const openCount = table.items.filter((item) => !item.dispatched).length;
 	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(strings().statusOpen.replace('{n}', openCount))}</span>` : '';
-	return `<div class="staff-card ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''} ${freshOrderTables.has(table.tableId) ? 'is-fresh-order' : ''}" data-table-id="${table.tableId}">
+	// cashier: order lines on the left, "For the till" next to them
+	const till = posSummaryMarkup(table);
+	return `<div class="staff-card ${till ? 'is-till' : ''} ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''} ${freshOrderTables.has(table.tableId) ? 'is-fresh-order' : ''}" data-table-id="${table.tableId}">
 		<div class="staff-card-head"><h3><span class="staff-card-label">${escapeHtml(strings().table)}</span> ${escapeHtml(String(table.tableNumber))}${bill}</h3>${total}${badge}</div>
-		<div class="staff-card-rows">${rows}</div>
-		${posSummaryMarkup(table)}
+		${till
+			? `<div class="staff-card-split"><div class="staff-card-rows">${rows}</div>${till}</div>`
+			: `<div class="staff-card-rows">${rows}</div>`}
 		${cardActionsMarkup(table)}
 	</div>`;
 }
@@ -354,7 +357,7 @@ function cardGridMarkup(tables) {
 	if (ROLE !== 'cashier') return `<div class="staff-grid">${tables.map(cardMarkup).join('')}</div>`;
 	return [tables.filter((table) => table.billRequested), tables.filter((table) => !table.billRequested)]
 		.filter((group) => group.length)
-		.map((group) => `<div class="staff-grid">${group.map(cardMarkup).join('')}</div>`)
+		.map((group) => `<div class="staff-grid staff-grid--till">${group.map(cardMarkup).join('')}</div>`)
 		.join('');
 }
 

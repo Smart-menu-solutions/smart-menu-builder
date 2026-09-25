@@ -169,6 +169,12 @@ button.staff-bill-flag:hover{background:var(--orange);color:#fff}
 .staff-pos-sub{color:var(--muted);border-top:1px solid var(--line);margin-top:.25rem;padding-top:.3rem}
 .staff-pos-sub + .staff-pos-sub{border-top:0;margin-top:0;padding-top:.12rem}
 .staff-pos-total{font-weight:800;color:var(--ink)}
+/* cashier: wide cards - order lines left, "For the till" right, buttons centred below */
+.staff-grid--till{grid-template-columns:repeat(auto-fill,minmax(min(100%,560px),1fr))}
+.staff-card-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1rem;align-items:start}
+.staff-card-split .staff-pos{margin-top:0}
+.staff-card.is-till .staff-card-actions{justify-content:center}
+@media(max-width:700px){.staff-card-split{grid-template-columns:1fr}.staff-card-split .staff-pos{margin-top:.2rem}}
 .staff-item-remove{background:#fff;border:1px solid var(--orange);color:var(--orange);border-radius:999px;width:1.7rem;height:1.7rem;line-height:1;font-size:.8rem;font-weight:700;cursor:pointer;flex-shrink:0}
 .staff-item-remove:hover{background:var(--tint)}
 .status-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
