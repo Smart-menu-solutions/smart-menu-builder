@@ -321,7 +321,7 @@ function posSummaryMarkup(table) {
 	const numberedMarkup = [...numbered].map(([posNumber, quantity]) => `<span class="staff-pos-chip"><b>${escapeHtml(posNumber)}</b> × ${quantity}</span>`).join('');
 	const unnumberedMarkup = [...unnumbered].map(([name, entry]) => `<div class="staff-pos-line"><span>${entry.quantity}× ${escapeHtml(name)} <em>(${escapeHtml(strings().posNoNumber)})</em></span><span>${formatMoney(entry.cents)}</span></div>`).join('');
 	return `<div class="staff-pos">
-		<div class="staff-pos-title">Smart QuickPay™ · ${escapeHtml(strings().posTitle)}</div>
+		<div class="staff-pos-title">${escapeHtml(strings().posTitle)}</div>
 		${numberedMarkup ? `<div class="staff-pos-chips">${numberedMarkup}</div>` : ''}
 		${unnumberedMarkup}
 		<div class="staff-pos-line staff-pos-sub"><span>${escapeHtml(strings().posFood)}</span><span>${formatMoney(foodCents)}</span></div>
