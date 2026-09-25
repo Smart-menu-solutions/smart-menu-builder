@@ -521,12 +521,11 @@ function languageSwitcherMarkup() {
 	return `<nav class="staff-languages" aria-label="Language">${languagesState.map((language) => `<button type="button" class="staff-lang-btn ${language === currentLang ? 'is-active' : ''}" data-lang="${escapeHtml(language)}">${escapeHtml(language.toUpperCase())}</button>`).join('')}</nav>`;
 }
 
-// Privacy policy - German has its own legal pages, every other language
-// links the English ones. The imprint link (strings().imprintLink) is hidden
-// until its business details are complete.
+// Privacy policy + imprint - German has its own legal pages, every other
+// language links the English ones.
 function legalLinksMarkup() {
 	const base = `https://smartmenusolutions.com/${currentLang === 'de' ? 'de/' : ''}`;
-	return `<nav class="sh-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(strings().privacyLink)}</a></nav>`;
+	return `<nav class="sh-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(strings().privacyLink)}</a> · <a href="${base}imprint.html" target="_blank" rel="noopener">${escapeHtml(strings().imprintLink)}</a></nav>`;
 }
 
 // A fold-out help section: the button stays put, the content unrolls
