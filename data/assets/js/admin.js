@@ -169,7 +169,15 @@ async function saveClients() {
 	if (error) throw new Error(strings().couldNotSaveMenus.replace('{error}', error.message));
 	if (data?.length) {
 		const savedBySlug = new Map(data.map((row) => [row.slug, normalizeClient({ ...row, id: row.id })]));
-		clients = clients.map((client) => savedBySlug.get(client.slug) || client);
+		// Merge into the existing client objects instead of swapping in new
+		// ones: the editor's buttons (remove/move section, add/remove dish)
+		// hold the client object from the last render(), and this save
+		// finishes after that render. With fresh objects here, those buttons
+		// kept editing an orphaned copy - e.g. "×" on a section did nothing.
+		clients = clients.map((client) => {
+			const saved = savedBySlug.get(client.slug);
+			return saved ? Object.assign(client, saved) : client;
+		});
 		selectedId = clients.find((client) => client.slug === selectedSlug)?.id || selectedId;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 	}
