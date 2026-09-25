@@ -43,17 +43,18 @@ function loadHeaderFonts() {
 	document.head.appendChild(link);
 }
 
-// Privacy policy + imprint in the menu's current language, so guests can
-// see who processes their data (see the Privacy Policy's guest section).
+// Privacy policy in the menu's current language, so guests can see who
+// processes their data (see the Privacy Policy's guest section).
 // Only German has its own legal pages; every other language gets English.
+// The imprint link is hidden until its business details are complete.
 const LEGAL_LINK_TEXT = {
-	de: ['Datenschutz', 'Impressum'], en: ['Privacy', 'Legal notice'], el: ['Απόρρητο', 'Νομικές πληροφορίες'],
-	it: ['Privacy', 'Note legali'], es: ['Privacidad', 'Aviso legal'], fr: ['Confidentialité', 'Mentions légales']
+	de: 'Datenschutz', en: 'Privacy', el: 'Απόρρητο',
+	it: 'Privacy', es: 'Privacidad', fr: 'Confidentialité'
 };
 function legalLinksMarkup() {
-	const [privacy, imprint] = LEGAL_LINK_TEXT[requestedLanguage] || LEGAL_LINK_TEXT.en;
+	const privacy = LEGAL_LINK_TEXT[requestedLanguage] || LEGAL_LINK_TEXT.en;
 	const base = `https://smartmenusolutions.com/${requestedLanguage === 'de' ? 'de/' : ''}`;
-	return `<nav class="menu-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(privacy)}</a> · <a href="${base}imprint.html" target="_blank" rel="noopener">${escapeHtml(imprint)}</a></nav>`;
+	return `<nav class="menu-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(privacy)}</a></nav>`;
 }
 
 function logoMarkup(client) {
