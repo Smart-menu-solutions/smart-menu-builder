@@ -91,15 +91,36 @@ function toBase64(bytes: Uint8Array): string {
 
 // Downloads a file the customer already uploaded (menu PDF, photo ZIP) so it
 // can ride along as a real email attachment instead of just a storage path
-// staff would otherwise have to look up manually.
-async function fetchAttachment(path: string): Promise<EmailAttachment | null> {
+// staff would otherwise have to look up manually. create-checkout-session /
+// renewal already checked the file's content before checkout, but this is the
+// one place an uploaded file actually reaches a person, so it's checked again
+// here: only a pending/ object whose first bytes really are a PDF / ZIP is
+// attached, and always under a fixed name (menu.pdf / photos.zip) - never the
+// uploader-chosen file name, which could have been "invoice.exe".
+const ATTACHMENT_PATH = /^pending\/\d{13}-[a-z0-9]{1,8}-[A-Za-z0-9._-]{1,200}$/;
+const ATTACHMENT_TYPES = {
+	pdf: { magic: [0x25, 0x50, 0x44, 0x46, 0x2d], filename: 'menu.pdf' },
+	zip: { magic: [0x50, 0x4b, 0x03, 0x04], filename: 'photos.zip' }
+};
+
+async function fetchAttachment(path: string, kind: keyof typeof ATTACHMENT_TYPES): Promise<EmailAttachment | null> {
 	if (!path) return null;
+	if (!ATTACHMENT_PATH.test(path)) {
+		console.error('Refusing to attach unexpected storage path', path);
+		return null;
+	}
 	const { data, error } = await supabase.storage.from('menu-pdfs').download(path);
 	if (error || !data) {
 		console.error('Failed to download attachment', path, error);
 		return null;
 	}
-	return { filename: path.split('/').pop() || 'file', content: toBase64(new Uint8Array(await data.arrayBuffer())) };
+	const bytes = new Uint8Array(await data.arrayBuffer());
+	const { magic, filename } = ATTACHMENT_TYPES[kind];
+	if (!magic.every((byte, i) => bytes[i] === byte)) {
+		console.error('Refusing to attach file whose content is not a', kind, path);
+		return null;
+	}
+	return { filename, content: toBase64(bytes) };
 }
 
 async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string, attachments?: EmailAttachment[]) {
@@ -306,7 +327,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			stripe_checkout_session_id: session.id
 		});
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
-		const renewalAttachment = await fetchAttachment(pdfPath);
+		const renewalAttachment = await fetchAttachment(pdfPath, 'pdf');
 		await Promise.all([
 			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email, 'PDF-Pfad': pdfPath
@@ -372,8 +393,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	});
 
 	const orderAttachments = (await Promise.all([
-		fetchAttachment(pdfPath),
-		fetchAttachment(metadata.photoZipPath || '')
+		fetchAttachment(pdfPath, 'pdf'),
+		fetchAttachment(metadata.photoZipPath || '', 'zip')
 	])).filter((attachment): attachment is EmailAttachment => attachment !== null);
 
 	await Promise.all([
