@@ -393,7 +393,7 @@ function renderMenu(client, ordering) {
 			${ordering ? cartButtonMarkup() : ''}
 		</div>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
-		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smart-menu-solutions.github.io/smart-menu-solutions/index.html"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>${legalLinksMarkup()}</footer>
+		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smartmenusolutions.com/${requestedLanguage === 'de' ? 'de/' : ''}"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>${legalLinksMarkup()}</footer>
 		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}
 		${ordering ? cartPopupMarkup() : ''}`;
 	const smartMatchRecoLog = new Set();
