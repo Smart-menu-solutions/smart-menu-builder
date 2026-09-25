@@ -63,7 +63,8 @@ window.STAFF_STRINGS = {
 					"„Tisch schließen“ = der Gast hat bezahlt, der Tisch ist wieder frei.",
 					"📊 Gesamtübersicht = Summe über alle gerade offenen Tische.",
 					"Gast bestellt beim Bezahlen noch etwas dazu (z. B. „Noch einen Espresso, bitte“)? Bei seinem Tisch „+ Artikel“ → Artikel und Menge wählen → „Hinzufügen“. Er steht sofort auf der Rechnung und geht automatisch an Küche oder Bar.",
-					"Fordert ein Tisch die Rechnung an (💳), ertönt ein Klingelton und die Karte blinkt kurz rot. Ein- und ausschalten unten links mit „Klingelton“. Tipp: Nach dem Öffnen der Seite einmal auf den Bildschirm tippen – erst dann erlaubt der Browser Töne."
+					"Fordert ein Tisch die Rechnung an (💳), ertönt ein Klingelton und die Karte blinkt kurz rot. Ein- und ausschalten unten links mit „Klingelton“. Tipp: Nach dem Öffnen der Seite einmal auf den Bildschirm tippen – erst dann erlaubt der Browser Töne.",
+					"Smart QuickPay™: Rechts neben der Bestellung steht „Für die Kasse“. Die Kassen-Nummern (z. B. 105 × 2) tippst du einfach in eure Kasse, die Kasse erstellt die Rechnung. Gerichte ohne Nummer stehen mit Betrag darunter, dazu die Summen für Speisen und Getränke. Die Nummern trägt der Admin bei jedem Gericht im Feld „Kassen-Nr.“ ein."
 				]
 			},
 		workflowSteps: ["Gäste scannen den QR-Code", "Tisch aktivieren", "Alle bestellen", "Automatische Verteilung", "Küche & Bar arbeiten", "Gäste sehen den Status live", "Jederzeit nachbestellen", "Rechnung anfordern", "Tisch wird rot", "Tisch schließen"],
@@ -141,7 +142,8 @@ window.STAFF_STRINGS = {
 					"“Close table” = the guest has paid, the table is free again.",
 					"📊 Overview = the total across every table that's currently open.",
 					"Guest orders something else while paying (e.g. “One more espresso, please”)? Press “+ Item” on their table → choose item and quantity → “Add”. It’s on the bill right away and goes to the kitchen or bar automatically.",
-					"When a table asks for the bill (💳), a chime plays and the card briefly flashes red. Turn it on or off at the bottom left with “Chime”. Tip: tap the screen once after opening the page – only then does the browser allow sounds."
+					"When a table asks for the bill (💳), a chime plays and the card briefly flashes red. Turn it on or off at the bottom left with “Chime”. Tip: tap the screen once after opening the page – only then does the browser allow sounds.",
+					"Smart QuickPay™: next to the order you see “For the till”. Key the till numbers (e.g. 105 × 2) into your own till, which issues the receipt. Dishes without a number are listed with their amount, plus the food and drink subtotals. The numbers are set per dish in the admin (“Till no.” field)."
 				]
 			},
 		workflowSteps: ["Guests scan the QR code", "Activate the table", "Everyone orders", "Auto distribution", "Kitchen & bar process", "Guests see live status", "Reorder anytime", "Request the bill", "Table turns red", "Close the table"],
@@ -219,7 +221,8 @@ window.STAFF_STRINGS = {
 					"«Κλείσιμο τραπεζιού» = ο πελάτης πλήρωσε, το τραπέζι είναι ξανά ελεύθερο.",
 					"📊 Σύνολο = το άθροισμα όλων των τραπεζιών που είναι αυτή τη στιγμή ανοιχτά.",
 					"Ο πελάτης παραγγέλνει κάτι ακόμα την ώρα που πληρώνει (π.χ. «Έναν ακόμα espresso, παρακαλώ»); Πατήστε «+ Προσθήκη» στο τραπέζι του → επιλέξτε είδος και ποσότητα → «Προσθήκη». Μπαίνει αμέσως στον λογαριασμό και πηγαίνει αυτόματα στην κουζίνα ή στο μπαρ.",
-					"Όταν ένα τραπέζι ζητήσει λογαριασμό (💳), ακούγεται ένα κουδούνισμα και η κάρτα αναβοσβήνει για λίγο κόκκινη. Ενεργοποίηση/απενεργοποίηση κάτω αριστερά με «Κουδούνισμα». Συμβουλή: μετά το άνοιγμα της σελίδας πατήστε μία φορά στην οθόνη – μόνο τότε ο browser επιτρέπει ήχους."
+					"Όταν ένα τραπέζι ζητήσει λογαριασμό (💳), ακούγεται ένα κουδούνισμα και η κάρτα αναβοσβήνει για λίγο κόκκινη. Ενεργοποίηση/απενεργοποίηση κάτω αριστερά με «Κουδούνισμα». Συμβουλή: μετά το άνοιγμα της σελίδας πατήστε μία φορά στην οθόνη – μόνο τότε ο browser επιτρέπει ήχους.",
+					"Smart QuickPay™: Δίπλα στην παραγγελία εμφανίζεται «Για το ταμείο». Πληκτρολόγησε τους κωδικούς (π.χ. 105 × 2) στο δικό σας ταμείο, που εκδίδει την απόδειξη. Τα πιάτα χωρίς κωδικό εμφανίζονται με το ποσό τους, μαζί με τα σύνολα για φαγητά και ποτά. Οι κωδικοί ορίζονται ανά πιάτο στο admin (πεδίο «Κωδικός ταμείου»)."
 				]
 			},
 		workflowSteps: ["Οι πελάτες σκανάρουν το QR code", "Ενεργοποίηση τραπεζιού", "Όλοι παραγγέλνουν", "Αυτόματη διανομή", "Κουζίνα & μπαρ ετοιμάζουν", "Οι πελάτες βλέπουν ζωντανά την κατάσταση", "Νέα παραγγελία ανά πάσα στιγμή", "Αίτημα λογαριασμού", "Το τραπέζι γίνεται κόκκινο", "Κλείσιμο τραπεζιού"],
@@ -297,7 +300,8 @@ window.STAFF_STRINGS = {
 					"«Chiudi tavolo» = l’ospite ha pagato, il tavolo torna libero.",
 					"📊 Riepilogo = il totale di tutti i tavoli attualmente aperti.",
 					"L’ospite ordina ancora qualcosa mentre paga (es. «Un altro espresso, per favore»)? Premi «+ Articolo» sul suo tavolo → scegli articolo e quantità → «Aggiungi». È subito sul conto e va automaticamente in cucina o al bar.",
-					"Quando un tavolo chiede il conto (💳), suona un campanello e la scheda lampeggia brevemente di rosso. Attivalo o disattivalo in basso a sinistra con «Campanello». Consiglio: dopo aver aperto la pagina tocca una volta lo schermo – solo allora il browser permette i suoni."
+					"Quando un tavolo chiede il conto (💳), suona un campanello e la scheda lampeggia brevemente di rosso. Attivalo o disattivalo in basso a sinistra con «Campanello». Consiglio: dopo aver aperto la pagina tocca una volta lo schermo – solo allora il browser permette i suoni.",
+					"Smart QuickPay™: accanto all’ordine trovi «Per la cassa». Digita i numeri (es. 105 × 2) nella vostra cassa, che emette lo scontrino. I piatti senza numero sono elencati con l’importo, insieme ai totali di cibo e bevande. I numeri si inseriscono per ogni piatto nell’admin (campo «N. cassa»)."
 				]
 			},
 		workflowSteps: ["Gli ospiti scansionano il QR code", "Attivare il tavolo", "Tutti ordinano", "Distribuzione automatica", "Cucina e bar preparano", "Gli ospiti vedono lo stato in tempo reale", "Riordinare in qualsiasi momento", "Richiedere il conto", "Il tavolo diventa rosso", "Chiudere il tavolo"],
@@ -375,7 +379,8 @@ window.STAFF_STRINGS = {
 					"«Cerrar mesa» = el cliente ha pagado, la mesa queda libre.",
 					"📊 Resumen = el total de todas las mesas abiertas ahora mismo.",
 					"¿El cliente pide algo más al pagar (p. ej. «Otro espresso, por favor»)? Pulsa «+ Artículo» en su mesa → elige artículo y cantidad → «Añadir». Queda al instante en la cuenta y va automáticamente a cocina o barra.",
-					"Cuando una mesa pide la cuenta (💳), suena un timbre y la tarjeta parpadea en rojo unos segundos. Actívalo o desactívalo abajo a la izquierda con «Timbre». Consejo: después de abrir la página toca la pantalla una vez; solo entonces el navegador permite sonidos."
+					"Cuando una mesa pide la cuenta (💳), suena un timbre y la tarjeta parpadea en rojo unos segundos. Actívalo o desactívalo abajo a la izquierda con «Timbre». Consejo: después de abrir la página toca la pantalla una vez; solo entonces el navegador permite sonidos.",
+					"Smart QuickPay™: junto al pedido aparece «Para la caja». Teclea los números (p. ej. 105 × 2) en vuestra caja, que emite el ticket. Los platos sin número aparecen con su importe, junto con los subtotales de comida y bebidas. Los números se asignan a cada plato en el admin (campo «N.º de caja»)."
 				]
 			},
 		workflowSteps: ["Los clientes escanean el código QR", "Activar la mesa", "Todos piden", "Distribución automática", "Cocina y bar preparan", "Los clientes ven el estado en vivo", "Volver a pedir en cualquier momento", "Pedir la cuenta", "La mesa se pone roja", "Cerrar la mesa"],
@@ -453,7 +458,8 @@ window.STAFF_STRINGS = {
 					"« Fermer la table » = le client a payé, la table est de nouveau libre.",
 					"📊 Vue d'ensemble = le total de toutes les tables actuellement ouvertes.",
 					"Le client commande encore quelque chose en payant (par ex. « Encore un espresso, s’il vous plaît ») ? Appuyez sur « + Article » à sa table → choisissez l’article et la quantité → « Ajouter ». C’est aussitôt sur l’addition et part automatiquement en cuisine ou au bar.",
-					"Quand une table demande l’addition (💳), une sonnerie retentit et la carte clignote brièvement en rouge. Activez-la ou désactivez-la en bas à gauche avec « Sonnerie ». Astuce : après avoir ouvert la page, touchez l’écran une fois – le navigateur n’autorise les sons qu’ensuite."
+					"Quand une table demande l’addition (💳), une sonnerie retentit et la carte clignote brièvement en rouge. Activez-la ou désactivez-la en bas à gauche avec « Sonnerie ». Astuce : après avoir ouvert la page, touchez l’écran une fois – le navigateur n’autorise les sons qu’ensuite.",
+					"Smart QuickPay™ : à côté de la commande figure « Pour la caisse ». Saisissez les numéros (ex. 105 × 2) dans votre caisse, qui édite le ticket. Les plats sans numéro sont listés avec leur montant, avec les sous-totaux plats et boissons. Les numéros se renseignent par plat dans l’admin (champ « N° de caisse »)."
 				]
 			},
 		workflowSteps: ["Les clients scannent le QR code", "Activer la table", "Tout le monde commande", "Distribution automatique", "Cuisine et bar préparent", "Les clients voient le statut en direct", "Recommander à tout moment", "Demander l'addition", "La table devient rouge", "Fermer la table"],

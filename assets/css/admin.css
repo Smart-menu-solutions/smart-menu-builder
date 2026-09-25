@@ -76,6 +76,7 @@
 .addon-board-view+.addon-board-send{margin-left:10px}
 .addon-extra{display:grid;gap:16px;margin-top:4px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:#faf9f7}
 .addon-extra-block{display:grid;gap:8px}
+.addon-quickpay-info{margin:0;font-size:13px;line-height:1.45;color:var(--ink)}
 .addon-extra-heading{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin:0}
 .addon-extra-block .addon-board-row{padding:8px 12px;background:var(--paper)}
 .addon-extra-add{display:flex;gap:8px;align-items:center}

@@ -423,7 +423,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Smart DishPhoto™': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart FoodMatch™': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
 			'Smart WeeklyReport™': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
-			'Smart ServiceHub™': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein',
+			'Smart ServiceHub™': metadata.smartServiceHubAddon === 'true' ? 'Ja (inkl. Smart QuickPay™)' : 'Nein',
 			'Menü-Slug': slug,
 			Dateien: legacyPdfPath ? 'im Anhang' : 'ausstehend – der Kunde lädt sie nach der Zahlung hoch, dann kommt eine eigene E-Mail'
 		}, orderAttachments),

@@ -116,7 +116,7 @@ Deno.serve(async (request) => {
 					currency: 'eur',
 					unit_amount: SMARTSERVICE_HUB_ADDON_CENTS,
 					recurring: { interval: 'year' },
-					product_data: { name: 'Smart ServiceHub™ add-on' }
+					product_data: { name: 'Smart ServiceHub™ add-on (incl. Smart QuickPay™)' }
 				},
 				quantity: 1
 			});

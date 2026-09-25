@@ -44,6 +44,7 @@ window.ADMIN_STRINGS = {
 		renameAccess: 'Umbenennen', renameAccessPrompt: 'Name für diesen Zugang (leer lassen = Standardname):',
 		removeAccess: 'Zugang löschen', removeAccessConfirm: 'Zugang „{name}“ wirklich löschen? Sein Link funktioniert danach nicht mehr.',
 		couldNotSaveAccess: 'Zugang konnte nicht gespeichert werden: {error}', accessAdded: 'Zugang hinzugefügt', accessSaved: 'Name gespeichert', accessRemoved: 'Zugang „{name}“ gelöscht',
+		quickPayHeading: 'Smart QuickPay™ (kostenlos inklusive)', quickPayInfo: 'Tragen Sie im Tab „Menü & Fotos“ bei jedem Gericht die Kassen-Nr. aus der Kasse des Restaurants ein. Die Kasse im ServiceHub zeigt diese Nummern dann zum Eintippen an (z. B. 105 × 2), die Rechnung erstellt weiterhin die eigene Kasse. Ohne Nummer werden Betrag und die Summen für Speisen und Getränke angezeigt.',
 		staffLinks: 'Personal-Links', tables: 'Tische', tableNumberPlaceholder: 'Tischnummer, z. B. 12', addTable: '＋ Tisch hinzufügen',
 		onboardingTemplate: 'Onboarding-Vorlage', copyForEmail: 'Für E-Mail kopieren',
 
@@ -115,7 +116,7 @@ window.ADMIN_STRINGS = {
 		favorite: 'Favorit',
 		sectionNameAria: 'Name des Bereichs', moveSectionUp: 'Bereich nach oben', moveSectionDown: 'Bereich nach unten', removeSection: 'Bereich entfernen',
 		dishName: 'Name des Gerichts', dishDescription: 'Beschreibung', dishDescriptionAria: 'Beschreibung des Gerichts',
-		price: 'Preis', posNumber: 'Kassen-Nr.', posNumberHint: 'Kassen-Nr. (optional): Artikelnummer dieses Gerichts in der Kasse des Restaurants. Erscheint nur an der Kasse im ServiceHub, nicht für Gäste.', removeDish: 'Gericht entfernen', addDish: '＋ Gericht hinzufügen',
+		price: 'Preis', posNumber: 'Kassen-Nr.', posNumberHint: 'Kassen-Nr. für Smart QuickPay™ (optional): Artikelnummer dieses Gerichts in der Kasse des Restaurants. Erscheint nur an der Kasse im ServiceHub, nicht für Gäste.', removeDish: 'Gericht entfernen', addDish: '＋ Gericht hinzufügen',
 
 		customerNameRequired: 'Der Kundenname ist erforderlich', urlSlugRequired: 'Das URL-Kürzel ist erforderlich',
 		slugInUse: 'Dieses URL-Kürzel wird bereits verwendet',
@@ -192,6 +193,7 @@ window.ADMIN_STRINGS = {
 		renameAccess: 'Rename', renameAccessPrompt: 'Name for this access (leave empty = default name):',
 		removeAccess: 'Delete access', removeAccessConfirm: 'Really delete access "{name}"? Its link will stop working.',
 		couldNotSaveAccess: 'Could not save access: {error}', accessAdded: 'Access added', accessSaved: 'Name saved', accessRemoved: 'Access "{name}" deleted',
+		quickPayHeading: 'Smart QuickPay™ (free, included)', quickPayInfo: 'In the Menu & Photos tab, enter each dish\'s till no. from the restaurant\'s own till. The ServiceHub cashier screen then lists these numbers to key in (e.g. 105 × 2); the receipt still comes from their own till. Without a number, the amount plus the food and drink subtotals are shown.',
 		staffLinks: 'Staff links', tables: 'Tables', tableNumberPlaceholder: 'Table number, e.g. 12', addTable: '＋ Add table',
 		onboardingTemplate: 'Onboarding template', copyForEmail: 'Copy for email',
 
@@ -261,7 +263,7 @@ window.ADMIN_STRINGS = {
 		favorite: 'Favorite',
 		sectionNameAria: 'Section name', moveSectionUp: 'Move section up', moveSectionDown: 'Move section down', removeSection: 'Remove section',
 		dishName: 'Dish name', dishDescription: 'Description', dishDescriptionAria: 'Dish description',
-		price: 'Price', posNumber: 'Till no.', posNumberHint: 'Till no. (optional): the article number of this dish in the restaurant\'s own till. Shown only on the ServiceHub cashier screen, never to guests.', removeDish: 'Remove dish', addDish: '＋ Add dish',
+		price: 'Price', posNumber: 'Till no.', posNumberHint: 'Till no. for Smart QuickPay™ (optional): the article number of this dish in the restaurant\'s own till. Shown only on the ServiceHub cashier screen, never to guests.', removeDish: 'Remove dish', addDish: '＋ Add dish',
 
 		customerNameRequired: 'Customer name is required', urlSlugRequired: 'URL slug is required',
 		slugInUse: 'This URL slug is already in use',
