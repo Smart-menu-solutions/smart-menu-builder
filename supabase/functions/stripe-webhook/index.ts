@@ -17,11 +17,7 @@ const supabase = createClient(
 const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
 // Every system notification (order, renewal, expiry, deactivation) goes to
-// this single address, not to the customer. Using "smartmenusolutions"
-// (with "n") for now because Resend's sandbox sender can only deliver to the
-// address verified on the Resend account until a custom domain is verified —
-// switch back to "smartmenusolutios" (no "n") once that's set up, if still
-// wanted.
+// this single address, not to the customer.
 const NOTIFICATION_EMAIL = Deno.env.get('NOTIFICATION_EMAIL') ?? 'smartmenusolutions@outlook.com';
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onboarding@resend.dev>';
@@ -155,11 +151,10 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 	await sendEmail(NOTIFICATION_EMAIL, subscriptionId, subject, subject, html, attachments);
 }
 
-// Customer-facing confirmation. NOTE: until a custom domain is verified on
-// Resend, the onboarding@resend.dev sandbox sender can only deliver to the
-// single address verified on the Resend account — real customer inboxes
-// will silently fail (logged as a Resend API error in notifications_log,
-// provider_message_id stays null) until that domain verification is done.
+// Customer-facing confirmation. Sent from RESEND_FROM_EMAIL on the verified
+// smartmenusolutions.com domain (verified in Resend since 2026-09-14), so it
+// reaches any customer address; a failed send is still logged in
+// notifications_log with provider_message_id null.
 // The customer's personal link to upload.html, where the menu PDF (and the
 // photo ZIP) are uploaded after payment - see order-upload.
 function uploadUrl(uploadToken: string | undefined, lang: string): string | null {
