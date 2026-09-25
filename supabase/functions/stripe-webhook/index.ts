@@ -41,7 +41,7 @@ const EMAIL_SIGNATURE = `
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
 <tr><td style="padding:0;font-size:15px;font-weight:bold;color:#262421;line-height:1.4;">George Tsiafitsas</td></tr>
 <tr><td style="padding:0 0 10px 0;font-size:13px;color:#737373;line-height:1.4;">CEO&nbsp;&middot;&nbsp;<span style="color:#F66A09;font-weight:bold;">Smart</span><span style="color:#262421;font-weight:bold;">&nbsp;Menu Solutions</span></td></tr>
-<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="mailto:smartmenusolutions@outlook.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-email.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions@outlook.com</span></a></td></tr>
+<tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="mailto:info@smartmenusolutions.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-email.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">info@smartmenusolutions.com</span></a></td></tr>
 <tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://smartmenusolutions.com" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-website.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">smartmenusolutions.com</span></a></td></tr>
 <tr><td style="padding:9px 0 3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://instagram.com/smartmenusolutions/" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-instagram.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
 <tr><td style="padding:3px 0;font-size:12.5px;color:#737373;line-height:1;"><a href="https://www.tiktok.com/@smartmenusolutions" style="text-decoration:none;color:#737373;"><img src="https://smartmenusolutions.com/assets/images/signature/icon-tiktok.png" width="16" height="16" alt="" style="display:inline-block;vertical-align:middle;border:0;width:16px;height:16px;margin-right:7px;"><span style="vertical-align:middle;">@smartmenusolutions</span></a></td></tr>
@@ -192,7 +192,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
 		${uploadParagraphEn}
 		<p>If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
-		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
 	` : `
@@ -201,7 +201,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
 		${uploadParagraphDe}
 		<p>Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
-		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
 	`;
@@ -224,7 +224,7 @@ async function sendPaymentFailedEmail(subscriptionId: string, to: string, contac
 		<p>unfortunately, the automatic payment for renewing your subscription could not be processed.</p>
 		<p>Your menu will stay online for another 7 days so you have time to sort this out. Please renew your subscription via the link below to avoid any interruption:</p>
 		<p><a href="${renewalUrl}">Renew now</a></p>
-		<p>If you have any questions, reach us anytime at <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
 	` : `
@@ -232,7 +232,7 @@ async function sendPaymentFailedEmail(subscriptionId: string, to: string, contac
 		<p>leider konnte die automatische Zahlung für die Verlängerung Ihres Abos nicht durchgeführt werden.</p>
 		<p>Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden:</p>
 		<p><a href="${renewalUrl}">Jetzt verlängern</a></p>
-		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:smartmenusolutions@outlook.com">smartmenusolutions@outlook.com</a>.</p>
+		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
 	`;

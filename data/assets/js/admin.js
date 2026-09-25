@@ -1409,7 +1409,7 @@ Plan: [Smart Start/Pro/Premium]
 
 Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
-Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
 
 Mit freundlichen Grüßen
 [+ HTML-Signatur]`
@@ -1434,7 +1434,7 @@ So geht es weiter:
 
 Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
-Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
 
 Wir wünschen Ihnen viel Erfolg mit Ihrer neuen digitalen Speisekarte und freuen uns über Ihr Vertrauen.
 
@@ -1452,7 +1452,7 @@ Plan: [Smart Start/Pro/Premium]
 
 Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: [Zusatzmodule verwalten →]
 
-Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
 
 Mit freundlichen Grüßen
 [+ HTML-Signatur]`
@@ -1466,7 +1466,7 @@ leider konnte die automatische Zahlung für die Verlängerung Ihres Abos nicht d
 
 Ihr Menü bleibt noch 7 Tage online, damit Sie das in Ruhe klären können. Bitte verlängern Sie Ihr Abo über folgenden Link, um eine Unterbrechung zu vermeiden: [Jetzt verlängern →]
 
-Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
 
 Mit freundlichen Grüßen
 [+ HTML-Signatur]`
@@ -1480,7 +1480,7 @@ da die Zahlung für Ihre Verlängerung ausblieb, wurde Ihr Abo nun deaktiviert u
 
 Sie können Ihr Abo jederzeit über folgenden Link reaktivieren: [Abo reaktivieren →]
 
-Bei Fragen erreichen Sie uns jederzeit unter smartmenusolutions@outlook.com.
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
 
 Mit freundlichen Grüßen
 [+ HTML-Signatur]`
@@ -1513,7 +1513,7 @@ Plan: [Smart Start/Pro/Premium]
 
 If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
-If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
 Best regards
 [+ HTML signature]`
@@ -1535,7 +1535,7 @@ You can send us changes to your menu, such as new dishes or changed prices, simp
 
 If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
-If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
 We wish you every success with your new digital menu and thank you for your trust.
 
@@ -1552,7 +1552,7 @@ Plan: [Smart Start/Pro/Premium]
 
 If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
 
-If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
 Best regards
 [+ HTML signature]`
@@ -1565,7 +1565,7 @@ unfortunately, the automatic payment for renewing your subscription could not be
 
 Your menu will stay online for another 7 days so you have time to sort this out. Please renew your subscription via the link below to avoid any interruption: [Renew now →]
 
-If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
 Best regards
 [+ HTML signature]`
@@ -1578,7 +1578,7 @@ since the payment for your renewal didn't go through, your subscription has now 
 
 You can reactivate your subscription anytime via the link below: [Reactivate subscription →]
 
-If you have any questions, reach us anytime at smartmenusolutions@outlook.com.
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
 Best regards
 [+ HTML signature]`
