@@ -14,6 +14,7 @@ const supabase = createClient(
 );
 
 const SITE_ORIGIN = 'https://smartmenusolutions.com';
+const GOOGLE_REVIEW_URL = 'https://g.page/r/CeQGeIap64TYEBM/review';
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onboarding@resend.dev>';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -120,6 +121,7 @@ function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, tota
 		<p><strong>Top dishes</strong></p>
 		<ul>${listItems(topDishes)}</ul>
 		<p><a href="${statsUrl}">View full stats</a></p>
+		<p>Happy with Smart Menu Solutions? We'd be grateful for a <a href="${GOOGLE_REVIEW_URL}">review on Google</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
 	` : `
@@ -131,6 +133,7 @@ function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, tota
 		<p><strong>Meistgesehene Gerichte</strong></p>
 		<ul>${listItems(topDishes)}</ul>
 		<p><a href="${statsUrl}">Vollständige Statistik ansehen</a></p>
+		<p>Sind Sie zufrieden mit Smart Menu Solutions? Über eine <a href="${GOOGLE_REVIEW_URL}">Bewertung auf Google</a> freuen wir uns sehr.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
 	`;
