@@ -1,10 +1,8 @@
 // Smart Food Match quiz UI copy - a standalone string catalog, separate
 // from translation-fallbacks.js (which only covers per-dish name/
-// description translations for specific seeded clients). There is no
-// generic UI-chrome translation mechanism in this codebase today (see
-// menu.js's buildContactLinks(), whose "Call"/"WhatsApp"/"Directions"
-// labels are hardcoded English) - this file is the first one, scoped to
-// just this feature's static text.
+// description translations for specific seeded clients). The menu's other
+// fixed labels (hero buttons, footer) live in menu.js's MENU_UI_TEXT; this
+// file is scoped to just this feature's static text.
 //
 // All six languages (matching admin.js's LANGUAGE_CATALOG: en/de/el/it/es/fr)
 // are translated below. menu.js still falls back to German for any language

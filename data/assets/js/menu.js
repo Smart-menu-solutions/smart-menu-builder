@@ -56,6 +56,20 @@ function legalLinksMarkup() {
 	return `<nav class="menu-legal"><a href="${base}privacy-policy.html" target="_blank" rel="noopener">${escapeHtml(privacy)}</a> · <a href="${base}imprint.html" target="_blank" rel="noopener">${escapeHtml(imprint)}</a></nav>`;
 }
 
+// Fixed hero/footer labels in the menu's current language; English for any
+// language not listed here.
+const MENU_UI_TEXT = {
+	de: { back: 'Zurück zum Menü', call: 'Anrufen', directions: 'Route', madeBy: 'Digitale Speisekarte von' },
+	en: { back: 'Back to menu', call: 'Call', directions: 'Directions', madeBy: 'Digital menu by' },
+	el: { back: 'Επιστροφή στο μενού', call: 'Κλήση', directions: 'Οδηγίες', madeBy: 'Ψηφιακό μενού από' },
+	it: { back: 'Torna al menu', call: 'Chiama', directions: 'Indicazioni', madeBy: 'Menu digitale di' },
+	es: { back: 'Volver al menú', call: 'Llamar', directions: 'Cómo llegar', madeBy: 'Menú digital de' },
+	fr: { back: 'Retour au menu', call: 'Appeler', directions: 'Itinéraire', madeBy: 'Menu numérique par' }
+};
+function menuUiText() {
+	return MENU_UI_TEXT[requestedLanguage] || MENU_UI_TEXT.en;
+}
+
 function logoMarkup(client) {
 	const source = client.logo_url || client.logoUrl || client.logo;
 	if (!source || !/^https?:\/\//i.test(source)) return '';
@@ -107,9 +121,10 @@ function itemTranslation(client, item) {
 }
 
 function buildContactLinks(client) {
-	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">Call</a>` : '';
+	const text = menuUiText();
+	const phone = client.phone ? `<a href="tel:${encodeURIComponent(client.phone)}">${escapeHtml(text.call)}</a>` : '';
 	const whatsapp = client.whatsapp ? `<a href="https://wa.me/${client.whatsapp.replace(/\D/g, '')}" target="_blank" rel="noopener">WhatsApp</a>` : '';
-	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">Directions</a>` : '';
+	const map = client.address ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(client.address)}" target="_blank" rel="noopener">${escapeHtml(text.directions)}</a>` : '';
 	return `${phone}${whatsapp}${map}`;
 }
 
@@ -381,7 +396,7 @@ function renderMenu(client, ordering) {
 	const headerTextAttr = headerTextStyle ? ` style="${headerTextStyle}"` : '';
 	const smartMatchStrings = client.smart_food_match_enabled && canRunSmartMatch(client) ? smartFoodMatchStrings() : null;
 	app.innerHTML = `
-		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="${pageUrl(client, requestedLanguage, 'menu-top')}">← Back to menu</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
+		<header class="menu-hero" id="menu-top"${heroBackground}><a class="menu-back" href="${pageUrl(client, requestedLanguage, 'menu-top')}">← ${escapeHtml(menuUiText().back)}</a>${logoMarkup(client)}<h1${headerTextAttr}>${escapeHtml(client.name)}</h1>
 			${client.address ? `<p${headerTextAttr}>${escapeHtml(client.address)}</p>` : ''}
 			<nav class="actions" aria-label="Contact">${buildContactLinks(client)}</nav>
 			<nav class="menu-languages" aria-label="Menu languages">${languageMarkup(client)}</nav>
@@ -393,7 +408,7 @@ function renderMenu(client, ordering) {
 			${ordering ? cartButtonMarkup() : ''}
 		</div>
 		<div class="menu-container">${categories || '<p class="message">Menu coming soon.</p>'}</div>
-		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smartmenusolutions.com/${requestedLanguage === 'de' ? 'de/' : ''}"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>Digital menu by Smart Menu Solutions</span></a>${legalLinksMarkup()}</footer>
+		<footer class="menu-footer"><p>${escapeHtml(client.name)}</p><a class="footer-brand" href="https://smartmenusolutions.com/${requestedLanguage === 'de' ? 'de/' : ''}"><img src="assets/images/logo-white.png" alt="Smart Menu Solutions logo"><span>${escapeHtml(menuUiText().madeBy)} Smart Menu Solutions</span></a>${legalLinksMarkup()}</footer>
 		${smartMatchStrings ? smartFoodMatchModalMarkup(smartMatchStrings) : ''}
 		${ordering ? cartPopupMarkup() : ''}`;
 	const smartMatchRecoLog = new Set();
