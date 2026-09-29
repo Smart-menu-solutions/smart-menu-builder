@@ -88,41 +88,35 @@ const CITIES = {
 };
 const OTHER_CITY = '__other';
 
-// Three-stage outreach sequence: first message -> (7 days) -> reminder ->
-// (7 days) -> final message. See leadTab()/nextAction() for the stage
-// machine, and the module doc comment - sending is always a manual click,
-// only the "is this due yet" timing is automatic.
+// Two-stage outreach sequence: first message -> (7 days) -> final message.
+// (There used to be a reminder in between; leads still at msgStage 2 from
+// that time just get the final message next.) See leadTab()/nextAction()
+// for the stage machine, and the module doc comment - sending is always a
+// manual click, only the "is this due yet" timing is automatic.
 const FOLLOWUP_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+// {name} = the lead's business name, {site} = SITE_URL - see fillTemplate().
+// We set up and update the customer's menu for them, so never word these as
+// if the customer edits it themselves.
 const MESSAGE_TEMPLATES = {
-	de: 'Hallo 👋\nKurze Frage: Nutzt ihr aktuell noch gedruckte Speisekarten?\nWir haben eine Lösung, mit der ihr eure Speisekarte per QR-Code jederzeit aktualisieren könnt, ganz ohne Neudruck.\nUnd mit Smart ServiceHub™ bestellen eure Gäste direkt am Tisch per QR-Code, während Küche, Bar und Kasse live mitsehen.\nSchaut gerne mal rein: {site}',
-	en: 'Hi 👋\nQuick question: are you still using printed menus?\nWe have a solution that lets you update your menu via QR code anytime, no reprinting needed.\nAnd with Smart ServiceHub™ your guests can order right from the table via QR code, while kitchen, bar and cashier see everything live.\nFeel free to take a look: {site}',
-	el: 'Γεια σου 👋\nΜια γρήγορη ερώτηση: χρησιμοποιείτε ακόμα έντυπα μενού;\nΈχουμε μια λύση που σας επιτρέπει να ενημερώνετε το μενού σας μέσω QR code όποτε θέλετε, χωρίς νέα εκτύπωση.\nΚαι με το Smart ServiceHub™ οι πελάτες σας παραγγέλνουν απευθείας από το τραπέζι μέσω QR code, ενώ κουζίνα, μπαρ και ταμείο βλέπουν τα πάντα ζωντανά.\nΡίξτε μια ματιά: {site}',
-	it: 'Ciao 👋\nUna domanda veloce: usate ancora menu cartacei?\nAbbiamo una soluzione che vi permette di aggiornare il menu tramite codice QR in qualsiasi momento, senza dover ristampare.\nE con Smart ServiceHub™ i vostri ospiti ordinano direttamente dal tavolo tramite codice QR, mentre cucina, bar e cassa vedono tutto in tempo reale.\nDate un\'occhiata: {site}',
-	es: 'Hola 👋\nUna pregunta rápida: ¿seguís usando cartas en papel?\nTenemos una solución que os permite actualizar vuestra carta mediante código QR en cualquier momento, sin reimprimir.\nY con Smart ServiceHub™ vuestros clientes piden directamente desde la mesa mediante código QR, mientras cocina, bar y caja lo ven todo en directo.\nEchad un vistazo: {site}',
-	fr: 'Bonjour 👋\nPetite question : utilisez-vous encore des cartes papier ?\nNous avons une solution qui vous permet de mettre à jour votre carte via un QR code à tout moment, sans réimpression.\nEt avec Smart ServiceHub™, vos clients commandent directement depuis la table via un QR code, pendant que la cuisine, le bar et la caisse voient tout en direct.\nN\'hésitez pas à jeter un œil : {site}',
-	pt: 'Olá 👋\nUma pergunta rápida: ainda usam menus em papel?\nTemos uma solução que vos permite atualizar o menu através de um código QR a qualquer momento, sem reimpressão.\nE com o Smart ServiceHub™ os vossos clientes pedem diretamente da mesa através de um código QR, enquanto a cozinha, o bar e a caixa veem tudo em direto.\nDeem uma vista de olhos: {site}'
-};
-
-const REMINDER_TEMPLATES = {
-	de: 'Hallo 👋\nIch wollte nur kurz nachhaken, falls meine letzte Nachricht untergegangen ist.\nMit unserem QR-Menü könnt ihr Änderungen an der Speisekarte jederzeit in wenigen Sekunden vornehmen.\nNeu dazu: Smart ServiceHub™, damit eure Gäste am Tisch per QR-Code bestellen und Küche, Bar und Kasse in Echtzeit synchron bleiben.\nHier findet ihr alle Infos: {site}',
-	en: 'Hi 👋\nJust wanted to quickly follow up in case my last message got buried.\nWith our QR menu you can make changes to your menu anytime in just seconds.\nNew: Smart ServiceHub™, so your guests can order at the table via QR code while kitchen, bar and cashier stay in sync in real time.\nHere\'s all the info: {site}',
-	el: 'Γεια σου 👋\nΉθελα απλώς να επανέλθω σύντομα, μήπως το προηγούμενο μήνυμά μου πέρασε απαρατήρητο.\nΜε το ψηφιακό μας μενού QR μπορείτε να κάνετε αλλαγές στο μενού σας όποτε θέλετε, μέσα σε λίγα δευτερόλεπτα.\nΝέο: Smart ServiceHub™, ώστε οι πελάτες σας να παραγγέλνουν από το τραπέζι μέσω QR code, ενώ κουζίνα, μπαρ και ταμείο μένουν συγχρονισμένα σε πραγματικό χρόνο.\nΕδώ θα βρείτε όλες τις πληροφορίες: {site}',
-	it: 'Ciao 👋\nVolevo solo fare un piccolo follow-up, nel caso il mio ultimo messaggio fosse passato inosservato.\nCon il nostro menu QR potete modificare il menu in qualsiasi momento, in pochi secondi.\nNovità: Smart ServiceHub™, così i vostri ospiti ordinano dal tavolo tramite codice QR e cucina, bar e cassa restano sincronizzati in tempo reale.\nQui trovate tutte le informazioni: {site}',
-	es: 'Hola 👋\nSolo quería hacer un seguimiento rápido, por si mi último mensaje pasó desapercibido.\nCon nuestro menú QR podéis hacer cambios en la carta en cualquier momento, en cuestión de segundos.\nNovedad: Smart ServiceHub™, para que vuestros clientes pidan desde la mesa mediante código QR y cocina, bar y caja se mantengan sincronizados en tiempo real.\nAquí tenéis toda la información: {site}',
-	fr: 'Bonjour 👋\nJe voulais juste faire un petit rappel, au cas où mon dernier message serait passé inaperçu.\nAvec notre menu QR, vous pouvez modifier votre carte à tout moment, en quelques secondes.\nNouveau : Smart ServiceHub™, pour que vos clients commandent à table via un QR code et que la cuisine, le bar et la caisse restent synchronisés en temps réel.\nVoici toutes les infos : {site}',
-	pt: 'Olá 👋\nSó queria fazer um pequeno seguimento, caso a minha última mensagem tenha passado despercebida.\nCom o nosso menu QR podem fazer alterações ao menu a qualquer momento, em poucos segundos.\nNovo: Smart ServiceHub™, para que os vossos clientes peçam à mesa através de um código QR e a cozinha, o bar e a caixa fiquem sincronizados em tempo real.\nAqui têm todas as informações: {site}'
+	de: 'Hallo {name} 👋\nKurze Frage: Wie oft müsst ihr eure Speisekarte neu drucken, wenn sich Preise oder Gerichte ändern?\nMit unserer digitalen QR-Speisekarte fällt das weg: Ihr schickt uns die Änderung, wir aktualisieren eure Karte, ohne Neudruck. Ab 119 € im Jahr, ohne Einrichtungsgebühr.\nAuf Wunsch bestellen eure Gäste auch direkt am Tisch (Smart ServiceHub™).\nHier könnt ihr euch alles ansehen: {site}\nViele Grüße, George – Smart Menu Solutions',
+	en: 'Hi {name} 👋\nQuick question: how often do you have to reprint your menu when prices or dishes change?\nWith our digital QR menu that\'s no longer needed: you send us the change, we update your menu, no reprinting. From €119 a year, no setup fee.\nIf you like, your guests can also order right from the table (Smart ServiceHub™).\nHave a look at everything here: {site}\nBest regards, George – Smart Menu Solutions',
+	el: 'Γεια σας {name} 👋\nΜια γρήγορη ερώτηση: Πόσο συχνά χρειάζεται να ξανατυπώνετε το μενού σας όταν αλλάζουν τιμές ή πιάτα;\nΜε το ψηφιακό μας μενού QR αυτό δεν χρειάζεται πια: μας στέλνετε την αλλαγή και εμείς ενημερώνουμε το μενού σας, χωρίς νέα εκτύπωση. Από 119 € τον χρόνο, χωρίς κόστος εγκατάστασης.\nΑν θέλετε, οι πελάτες σας μπορούν επίσης να παραγγέλνουν απευθείας από το τραπέζι (Smart ServiceHub™).\nΔείτε τα όλα εδώ: {site}\nΦιλικά, George – Smart Menu Solutions',
+	it: 'Ciao {name} 👋\nUna domanda veloce: quante volte dovete ristampare il menu quando cambiano prezzi o piatti?\nCon il nostro menu digitale QR non serve più: ci inviate la modifica e noi aggiorniamo il vostro menu, senza ristampare. Da 119 € all\'anno, senza costi di attivazione.\nSe volete, i vostri ospiti possono anche ordinare direttamente dal tavolo (Smart ServiceHub™).\nTrovate tutto qui: {site}\nUn saluto, George – Smart Menu Solutions',
+	es: 'Hola {name} 👋\nUna pregunta rápida: ¿cada cuánto tenéis que reimprimir la carta cuando cambian precios o platos?\nCon nuestra carta digital QR eso ya no hace falta: nos enviáis el cambio y nosotros actualizamos vuestra carta, sin reimprimir. Desde 119 € al año, sin coste de alta.\nSi queréis, vuestros clientes también pueden pedir directamente desde la mesa (Smart ServiceHub™).\nAquí lo tenéis todo: {site}\nUn saludo, George – Smart Menu Solutions',
+	fr: 'Bonjour {name} 👋\nPetite question : à quelle fréquence devez-vous réimprimer votre carte quand les prix ou les plats changent ?\nAvec notre carte numérique QR, ce n\'est plus nécessaire : vous nous envoyez la modification et nous mettons votre carte à jour, sans réimpression. À partir de 119 € par an, sans frais d\'installation.\nSi vous le souhaitez, vos clients peuvent aussi commander directement depuis la table (Smart ServiceHub™).\nTout est ici : {site}\nBien cordialement, George – Smart Menu Solutions',
+	pt: 'Olá {name} 👋\nUma pergunta rápida: com que frequência têm de reimprimir o menu quando os preços ou os pratos mudam?\nCom o nosso menu digital QR isso deixa de ser preciso: enviam-nos a alteração e nós atualizamos o vosso menu, sem reimpressão. Desde 119 € por ano, sem taxa de instalação.\nSe quiserem, os vossos clientes também podem pedir diretamente da mesa (Smart ServiceHub™).\nVejam tudo aqui: {site}\nCumprimentos, George – Smart Menu Solutions'
 };
 
 const FINAL_TEMPLATES = {
-	de: 'Hallo 👋\nDas ist meine letzte Nachricht, versprochen 😊\nFalls ihr irgendwann auf eine digitale Speisekarte umsteigen möchtet (auf Wunsch mit Bestellung am Tisch über Smart ServiceHub™), könnt ihr euch hier alles ansehen: {site}\nVielen Dank und weiterhin viel Erfolg! 🍀',
-	en: 'Hi 👋\nThis is my last message, promise 😊\nIf you ever decide to switch to a digital menu (optionally with ordering at the table via Smart ServiceHub™), you can check everything out here: {site}\nThank you and all the best! 🍀',
-	el: 'Γεια σου 👋\nΑυτό είναι το τελευταίο μου μήνυμα, το υπόσχομαι 😊\nΑν κάποια στιγμή θελήσετε να περάσετε σε ψηφιακό μενού (προαιρετικά με παραγγελία από το τραπέζι μέσω Smart ServiceHub™), μπορείτε να δείτε τα πάντα εδώ: {site}\nΕυχαριστώ πολύ και καλή επιτυχία! 🍀',
-	it: 'Ciao 👋\nQuesto è il mio ultimo messaggio, promesso 😊\nSe in futuro vorrete passare a un menu digitale (anche con ordinazione al tavolo tramite Smart ServiceHub™), potete dare un\'occhiata qui: {site}\nGrazie mille e buon lavoro! 🍀',
-	es: 'Hola 👋\nEste es mi último mensaje, lo prometo 😊\nSi en algún momento queréis pasaros a una carta digital (también con pedidos en la mesa mediante Smart ServiceHub™), podéis ver todo aquí: {site}\n¡Muchas gracias y mucho éxito! 🍀',
-	fr: 'Bonjour 👋\nC\'est mon dernier message, promis 😊\nSi un jour vous souhaitez passer à une carte numérique (aussi avec commande à table via Smart ServiceHub™), vous pouvez tout voir ici : {site}\nMerci beaucoup et bonne continuation ! 🍀',
-	pt: 'Olá 👋\nEsta é a minha última mensagem, prometido 😊\nSe um dia quiserem mudar para um menu digital (também com pedidos à mesa através do Smart ServiceHub™), podem ver tudo aqui: {site}\nMuito obrigado e muito sucesso! 🍀'
+	de: 'Hallo {name} 👋\nIch melde mich ein letztes Mal, versprochen 😊\nWenn ihr irgendwann auf eine digitale Speisekarte umsteigen möchtet, findet ihr hier alles: {site}\nViel Erfolg weiterhin! 🍀\nGeorge – Smart Menu Solutions',
+	en: 'Hi {name} 👋\nI\'m getting in touch one last time, promise 😊\nIf you ever want to switch to a digital menu, you\'ll find everything here: {site}\nAll the best! 🍀\nGeorge – Smart Menu Solutions',
+	el: 'Γεια σας {name} 👋\nΣας γράφω για τελευταία φορά, το υπόσχομαι 😊\nΑν κάποια στιγμή θελήσετε να περάσετε σε ψηφιακό μενού, θα βρείτε τα πάντα εδώ: {site}\nΚαλή συνέχεια! 🍀\nGeorge – Smart Menu Solutions',
+	it: 'Ciao {name} 👋\nVi scrivo un\'ultima volta, promesso 😊\nSe in futuro vorrete passare a un menu digitale, trovate tutto qui: {site}\nBuon lavoro! 🍀\nGeorge – Smart Menu Solutions',
+	es: 'Hola {name} 👋\nOs escribo por última vez, lo prometo 😊\nSi algún día queréis pasaros a una carta digital, aquí lo tenéis todo: {site}\n¡Mucho éxito! 🍀\nGeorge – Smart Menu Solutions',
+	fr: 'Bonjour {name} 👋\nJe vous écris une dernière fois, promis 😊\nSi un jour vous souhaitez passer à une carte numérique, vous trouverez tout ici : {site}\nBonne continuation ! 🍀\nGeorge – Smart Menu Solutions',
+	pt: 'Olá {name} 👋\nEscrevo-vos uma última vez, prometido 😊\nSe um dia quiserem mudar para um menu digital, encontram tudo aqui: {site}\nMuito sucesso! 🍀\nGeorge – Smart Menu Solutions'
 };
 
 // Email needs a subject line, unlike WhatsApp - one per template stage/
@@ -135,15 +129,6 @@ const MESSAGE_SUBJECTS = {
 	es: '¿Carta digital en lugar de reimprimir?',
 	fr: 'Une carte numérique plutôt qu\'une réimpression ?',
 	pt: 'Menu digital em vez de reimpressão?'
-};
-const REMINDER_SUBJECTS = {
-	de: 'Kurze Erinnerung: digitale Speisekarte',
-	en: 'Quick reminder: digital menu',
-	el: 'Σύντομη υπενθύμιση: ψηφιακό μενού',
-	it: 'Piccolo promemoria: menu digitale',
-	es: 'Recordatorio rápido: carta digital',
-	fr: 'Petit rappel : carte numérique',
-	pt: 'Lembrete rápido: menu digital'
 };
 const FINAL_SUBJECTS = {
 	de: 'Letzte Nachricht: digitale Speisekarte',
@@ -185,14 +170,14 @@ const FILTERS = {
 let leads = [];
 let currentCountry = COUNTRIES[0];
 let currentFilter = 'all';
-// 'all', 'sequence', 'reminder', 'final', or `list:<name>` - one tab per
+// 'all', 'sequence', 'final', or `list:<name>` - one tab per
 // search ("Germany - Hamburg", "Cyprus - Limassol", ...) showing that
 // search's not-yet-contacted leads. See listTabKey().
 let currentStageTab = 'all';
 
-// msgStage: 0 = never contacted, 1 = first message sent, 2 = reminder
-// sent, 3 = final message sent (done, hidden from every tab). msgSentAt is
-// when that last message went out - daysUntilDue() counts FOLLOWUP_DAYS
+// msgStage: 0 = never contacted, 1 = first message sent, 2 = reminder sent
+// (old sequence only, treated like 1), 3 = final message sent (done, hidden
+// from every tab). msgSentAt is when that last message went out - daysUntilDue() counts FOLLOWUP_DAYS
 // forward from it to decide when the next one becomes sendable.
 function daysUntilDue(lead) {
 	if (!lead.msgSentAt) return 0;
@@ -200,9 +185,9 @@ function daysUntilDue(lead) {
 	return Math.max(0, Math.ceil(FOLLOWUP_DAYS - elapsedDays));
 }
 
-// Which of the four tabs a lead currently belongs in. A lead moves itself
+// Which stage tab a lead currently belongs in. A lead moves itself
 // between "waiting" tabs and "action needed" tabs purely by elapsed time -
-// no click needed to advance from Sequence into Reminder, for example.
+// no click needed to advance from Sequence into Final, for example.
 // A manually-stopped lead (already a customer, asked not to be contacted,
 // ...) is treated the same as "done" - hidden from every tab, no more
 // follow-ups computed for it - since there's no reliable automatic way to
@@ -213,9 +198,7 @@ function leadTab(lead) {
 	const stage = lead.msgStage || 0;
 	if (stage === 0) return 'new';
 	if (stage === 3) return 'done';
-	const due = daysUntilDue(lead) <= 0;
-	if (stage === 1) return due ? 'reminder' : 'sequence';
-	return due ? 'final' : 'reminder';
+	return daysUntilDue(lead) <= 0 ? 'final' : 'sequence';
 }
 
 // The message (if any) a click on this lead's WhatsApp button should send
@@ -226,9 +209,17 @@ function nextAction(lead) {
 	const stage = lead.msgStage || 0;
 	if (stage === 0) return { label: 'Send message', templates: MESSAGE_TEMPLATES, subjects: MESSAGE_SUBJECTS, nextStage: 1 };
 	if (daysUntilDue(lead) > 0) return null;
-	if (stage === 1) return { label: 'Send reminder', templates: REMINDER_TEMPLATES, subjects: REMINDER_SUBJECTS, nextStage: 2 };
-	if (stage === 2) return { label: 'Send final', templates: FINAL_TEMPLATES, subjects: FINAL_SUBJECTS, nextStage: 3 };
+	if (stage === 1 || stage === 2) return { label: 'Send final', templates: FINAL_TEMPLATES, subjects: FINAL_SUBJECTS, nextStage: 3 };
 	return null;
+}
+
+// The ready-to-send text for this lead in its language. Without a name the
+// greeting is just "Hallo 👋" etc.
+function fillTemplate(action, lead) {
+	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
+	const name = String(lead.name || '').trim();
+	// Function replacers, so a "$" in a business name is inserted literally.
+	return template.replace(name ? '{name}' : ' {name}', () => name).replace('{site}', () => SITE_URL);
 }
 
 // Every lead belongs to the list (= the country/city search) it was found
@@ -273,7 +264,7 @@ function visibleLeads() {
 // `lists` maps each list name to how many of its leads are still "new", in
 // the order the lists were first searched.
 function stageTabCounts() {
-	const counts = { all: 0, new: 0, sequence: 0, reminder: 0, final: 0, done: 0, lists: new Map() };
+	const counts = { all: 0, new: 0, sequence: 0, final: 0, done: 0, lists: new Map() };
 	leads.forEach((lead) => {
 		const tab = leadTab(lead);
 		counts[tab] = (counts[tab] || 0) + 1;
@@ -961,8 +952,7 @@ function openWhatsapp(lead) {
 	// sending to it would still advance the sequence stage, permanently
 	// marking a contact as messaged even though nothing was ever delivered.
 	if (!lead.whatsapp) { notify('No confirmed WhatsApp number for this lead yet'); return; }
-	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
-	const message = template.replace('{site}', SITE_URL);
+	const message = fillTemplate(action, lead);
 	const digits = String(lead.whatsapp).replace(/[^\d]/g, '');
 	// Shown before opening the chat tab, not after - a dialog fired once
 	// that tab has taken focus gets silently suppressed (see askIfSent()).
@@ -979,9 +969,8 @@ function openEmail(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
 	if (!lead.email) { notify('No email for this lead yet'); return; }
-	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const subject = action.subjects[lead.lang] || action.subjects[currentCountry.lang] || action.subjects.en;
-	const message = template.replace('{site}', SITE_URL);
+	const message = fillTemplate(action, lead);
 	// Shown before opening the mail app, not after - see askIfSent().
 	prompt(`About to open your mail app, pre-filled with this message.\nSubject: ${subject}\nIf nothing opens, select all the text below and copy it (Ctrl/Cmd+C):`, message);
 	window.open(`mailto:${lead.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`, '_blank');
@@ -997,8 +986,7 @@ function openInstagram(lead) {
 	const action = nextAction(lead);
 	if (!action) { notify('Not due yet'); return; }
 	if (!lead.instagram) { notify('No Instagram handle for this lead yet'); return; }
-	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
-	const message = template.replace('{site}', SITE_URL);
+	const message = fillTemplate(action, lead);
 	// Best-effort, not awaited - the prompt() below (shown before opening
 	// the profile tab, see askIfSent()) shows the same text regardless, so
 	// this doesn't need to block on it.
@@ -1097,7 +1085,7 @@ function addManualContact(event) {
 }
 
 // Removes one list: its leads that haven't been messaged yet. Leads already
-// in Sequence/Reminder/Final stay (with their progress) - deleting those
+// in Sequence/Final stay (with their progress) - deleting those
 // would silently drop follow-ups that are still due - so the tab only
 // disappears once nothing is left in it.
 function deleteList(listName) {
@@ -1135,7 +1123,7 @@ function clearLeads() {
 }
 
 // File-name part for an export: the list being viewed ("germany-hamburg"),
-// or just the tab name for All/Sequence/Reminder/Final.
+// or just the tab name for All/Sequence/Final.
 function exportSlug() {
 	const name = currentStageTab.startsWith('list:') ? currentStageTab.slice(5) : currentStageTab;
 	return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'export';
@@ -1205,7 +1193,7 @@ function escapeHtml(value) {
 }
 
 // Builds the tab row (and its copy in the sidebar): All, one tab per list,
-// then the three follow-up stages. Regenerated on every render since the
+// then the two follow-up stages. Regenerated on every render since the
 // set of lists changes with each search.
 function updateStageTabs() {
 	const counts = stageTabCounts();
@@ -1214,7 +1202,7 @@ function updateStageTabs() {
 	if (currentStageTab.startsWith('list:') && !counts.lists.get(currentStageTab.slice(5))) currentStageTab = 'all';
 	const tabs = [{ key: 'all', label: 'All', count: counts.all }]
 		.concat(Array.from(counts.lists).filter(([, count]) => count > 0).map(([name, count]) => ({ key: listTabKey(name), label: name, count })))
-		.concat(['sequence', 'reminder', 'final'].map((stage) => ({ key: stage, label: stage[0].toUpperCase() + stage.slice(1), count: counts[stage] })));
+		.concat(['sequence', 'final'].map((stage) => ({ key: stage, label: stage[0].toUpperCase() + stage.slice(1), count: counts[stage] })));
 	// A list tab gets a small × to delete that list (see deleteList()).
 	const html = tabs.map((tab) => {
 		const close = tab.key.startsWith('list:') ? `<span class="leads-stage-tab-close" role="button" aria-label="Delete list" title="Delete this list" data-delete-list="${escapeHtml(tab.label)}">×</span>` : '';
