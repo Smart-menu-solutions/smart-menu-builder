@@ -44,7 +44,7 @@
 .logo-label{display:block;margin-top:14px}
 .logo-preview{width:64px;height:64px;border-radius:50%;background:#fff}
 .logo-preview img{object-fit:cover}
-.publish-control{grid-column:1/-1;margin:0 0 16px;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--alt)}
+.publish-control{grid-column:1/-1;margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--alt)}
 .publish-toggle{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
 .publish-toggle input{width:18px;height:18px;margin:0;flex:0 0 auto;accent-color:var(--orange)}
 .publish-control small{display:block;color:var(--muted);margin-top:4px}

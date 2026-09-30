@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=publish-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=publish-3">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -97,10 +97,6 @@
                     <div class="language-panel"><strong data-i18n="menuLanguages">Menu languages</strong><p class="language-hint" data-i18n="menuLanguagesHint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language"><span data-i18n="sourceLanguage">Source language</span><select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu" data-i18n="automaticallyTranslate">Automatically translate</button><span id="translationStatus"></span></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="addons" hidden>
-                    <div class="publish-control">
-                        <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
-                        <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
-                    </div>
                     <p class="language-hint" data-i18n="addonsIntro">Green means the client already has it. Tick "Gratis" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
                     <div class="addon-board">
                         <div class="addon-board-row">
@@ -123,6 +119,10 @@
                             <span class="addon-board-status" id="addonStatusSmartServiceHub"></span>
                             <span class="addon-board-main"><span class="addon-board-name">Smart ServiceHub™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeSmartServiceHub"> <span data-i18n="gratis">Gratis</span></label><small class="addon-board-hint" id="smartServiceHubHint"></small></span>
                             <button type="button" class="button button-ghost addon-board-send" id="addonSendSmartServiceHub" data-i18n="sendLink">Send link</button>
+                        </div>
+                        <div class="publish-control">
+                            <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
+                            <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
                         </div>
                         <div class="addon-extra" id="smartServiceHubExtra" hidden>
                             <div class="addon-extra-block">
