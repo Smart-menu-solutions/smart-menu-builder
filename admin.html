@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=publish-3">
+<link rel="stylesheet" href="assets/css/admin.css?v=publish-4">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -120,9 +120,9 @@
                             <span class="addon-board-main"><span class="addon-board-name">Smart ServiceHub™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeSmartServiceHub"> <span data-i18n="gratis">Gratis</span></label><small class="addon-board-hint" id="smartServiceHubHint"></small></span>
                             <button type="button" class="button button-ghost addon-board-send" id="addonSendSmartServiceHub" data-i18n="sendLink">Send link</button>
                         </div>
-                        <div class="publish-control">
-                            <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
-                            <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
+                        <div class="addon-board-row">
+                            <span class="addon-board-status" id="publishStatus"></span>
+                            <span class="addon-board-main"><span class="addon-board-name" data-i18n="menuOnlineTitle">Menu online</span><label class="addon-board-free"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnlineCheck">Visible to guests</span></label><span class="addon-board-hint" data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</span></span>
                         </div>
                         <div class="addon-extra" id="smartServiceHubExtra" hidden>
                             <div class="addon-extra-block">
@@ -205,8 +205,8 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=chime-3"></script>
-<script src="data/assets/js/admin-strings.js?v=logo-1"></script>
-<script src="data/assets/js/admin.js?v=logo-1"></script>
+<script src="data/assets/js/admin-strings.js?v=publish-4"></script>
+<script src="data/assets/js/admin.js?v=publish-4"></script>
 <script src="data/assets/js/pwa.js?v=4" defer></script>
 </body>
 </html>

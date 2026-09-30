@@ -58,7 +58,10 @@ Deno.serve(async (request) => {
 			if (!firstName || !lastName || !EMAIL_PATTERN.test(email)) {
 				return json({ error: 'Missing or invalid order details.' }, 400);
 			}
-			const metadata = { type: 'initial', plan, firstName, lastName, companyName, phone, email, lang };
+			// Every add-on comes with the pass to try it out - stripe-webhook
+			// switches them on from these flags (and off again on upgrade), and
+			// order-upload offers the photo upload because photoAddon is set.
+			const metadata = { type: 'initial', plan, firstName, lastName, companyName, phone, email, lang, photoAddon: 'true', smartFoodMatchAddon: 'true', analyticsReportsAddon: 'true', smartServiceHubAddon: 'true' };
 			const session = await stripe.checkout.sessions.create({
 				mode: 'payment',
 				customer_email: email,

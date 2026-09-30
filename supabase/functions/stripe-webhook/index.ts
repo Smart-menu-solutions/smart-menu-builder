@@ -222,8 +222,8 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>thank you for your Discovery Pass! Here's how it works:</p>
 		<ol>
-			<li>${uploadLink ? `Upload your menu (PDF): <a href="${uploadLink}">Upload menu</a>` : 'Send us your menu (PDF).'}</li>
-			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code.</li>
+			<li>${uploadLink ? `Upload your menu (PDF, and dish photos if you like): <a href="${uploadLink}">Upload menu</a>` : 'Send us your menu (PDF).'}</li>
+			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code. All add-ons are included for you to try: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ and Smart ServiceHub™ (ordering at the table).</li>
 			<li><strong>Your 7 days only start once you have received your QR code</strong>, not with the payment. On day 6 you get your report: how many guests opened your menu and which dishes they looked at most.</li>
 		</ol>
 		<p>If you want to continue afterwards, the €2.99 is credited towards your plan.</p>
@@ -234,8 +234,8 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
 		<p>vielen Dank für Ihren Discovery Pass! So geht es weiter:</p>
 		<ol>
-			<li>${uploadLink ? `Laden Sie Ihre Speisekarte hoch (PDF): <a href="${uploadLink}">Speisekarte hochladen</a>` : 'Schicken Sie uns Ihre Speisekarte (PDF).'}</li>
-			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code.</li>
+			<li>${uploadLink ? `Laden Sie Ihre Speisekarte hoch (PDF, gern auch Fotos Ihrer Gerichte): <a href="${uploadLink}">Speisekarte hochladen</a>` : 'Schicken Sie uns Ihre Speisekarte (PDF).'}</li>
+			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code. Alle Zusatzmodule sind zum Testen dabei: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ und Smart ServiceHub™ (Bestellen am Tisch).</li>
 			<li><strong>Ihre 7 Tage beginnen erst, wenn Sie Ihren QR-Code erhalten haben</strong>, nicht schon mit der Bezahlung. Am 6. Tag bekommen Sie Ihren Bericht: wie viele Gäste Ihre Speisekarte geöffnet haben und welche Gerichte am meisten angesehen wurden.</li>
 		</ol>
 		<p>Wenn Sie danach weitermachen möchten, werden die 2,99 € auf Ihren Tarif angerechnet.</p>
@@ -372,10 +372,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
 		// Paying via the renewal link is how a deactivated menu comes back online.
-		// Coming from the Discovery Pass, its free stats end with it - the
-		// WeeklyReport is a paid add-on on the real plans.
+		// Coming from the Discovery Pass, the add-ons it let the customer try
+		// end with it - on the real plans they're paid (addons.html).
 		const fromDiscovery = existing.plan === 'discovery';
-		await supabase.from('menus').update(fromDiscovery ? { is_published: true, analytics_reports_enabled: false } : { is_published: true }).eq('slug', existing.menu_slug);
+		await supabase.from('menus').update(fromDiscovery
+			? { is_published: true, analytics_reports_enabled: false, photo_addon_enabled: false, smart_food_match_enabled: false, smartservice_hub_enabled: false }
+			: { is_published: true }).eq('slug', existing.menu_slug);
 		const { data: renewalOrder } = await supabase.from('orders').insert({
 			subscription_id: subscriptionId,
 			type: 'renewal',

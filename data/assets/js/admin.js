@@ -957,7 +957,7 @@ function render() {
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : `<span class="header-bg-empty">${escapeHtml(strings().noCustomBackground)}</span>`;
 	if ($('#logoPreview')) $('#logoPreview').innerHTML = client.logo_url ? `<img src="${escapeAttr(client.logo_url)}" alt="">` : `<span class="header-bg-empty">${escapeHtml(strings().noLogo)}</span>`;
-	if ($('#isPublished')) $('#isPublished').checked = client.is_published !== false;
+	if ($('#isPublished')) $('#isPublished').checked = client.is_published !== false; if ($('#publishStatus')) $('#publishStatus').classList.toggle('active', client.is_published !== false);
 	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
 	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
 	// The three add-on flags are set automatically by stripe-webhook on
