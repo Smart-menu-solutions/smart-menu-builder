@@ -140,6 +140,9 @@ window.ADMIN_STRINGS = {
 		couldNotDeletePhoto: 'Foto konnte nicht gelöscht werden: {error}', photoDeleted: 'Foto gelöscht',
 		noPhotosInLibrary: 'Noch keine Fotos in Ihrer Bibliothek — laden Sie zuerst unter „Aktivität“ eines hoch.',
 		headerBackgroundUpdated: 'Kopfbild aktualisiert', headerBackgroundUploaded: 'Kopfbild hochgeladen',
+		logoLabel: 'Logo', noLogo: 'Kein Logo', logoUpdated: 'Logo aktualisiert', logoUploaded: 'Logo hochgeladen', logoRemoved: 'Logo entfernt',
+		menuOnline: 'Speisekarte online (für Gäste sichtbar)', menuOnlineHint: 'Erst einschalten, wenn die Karte fertig ist und der Kunde seinen QR-Code bekommt. Beim Discovery Pass starten damit die 7 Tage.',
+		menuNowOnline: 'Speisekarte ist jetzt online', menuNowOffline: 'Speisekarte ist jetzt offline',
 		photoUploaded: 'Foto hochgeladen', photosUploaded: 'Fotos hochgeladen',
 
 		templateStoreSaveFailed: 'Die Vorlagen-Änderungen konnten in diesem Browser nicht gespeichert werden',
@@ -286,6 +289,9 @@ window.ADMIN_STRINGS = {
 		couldNotDeletePhoto: 'Could not delete photo: {error}', photoDeleted: 'Photo deleted',
 		noPhotosInLibrary: 'No photos in your library yet — upload one under Activity first.',
 		headerBackgroundUpdated: 'Header background updated', headerBackgroundUploaded: 'Header background uploaded',
+		logoLabel: 'Logo', noLogo: 'No logo', logoUpdated: 'Logo updated', logoUploaded: 'Logo uploaded', logoRemoved: 'Logo removed',
+		menuOnline: 'Menu online (visible to guests)', menuOnlineHint: 'Only switch on once the menu is ready and the customer gets their QR code. For a Discovery Pass this starts the 7 days.',
+		menuNowOnline: 'Menu is now online', menuNowOffline: 'Menu is now offline',
 		photoUploaded: 'Photo uploaded', photosUploaded: 'Photos uploaded',
 
 		templateStoreSaveFailed: 'Could not save the template changes in this browser',

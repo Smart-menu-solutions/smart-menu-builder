@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=till-no-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=logo-1">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -61,6 +61,10 @@
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
                     <div class="form-grid"><label><span data-i18n="customerName">Customer name</span><input id="businessName" required data-i18n-placeholder="customerNamePlaceholder" placeholder="e.g. Café Ole"></label><label><span data-i18n="urlSlug">URL slug</span><input id="slug" required data-i18n-placeholder="urlSlugPlaceholder" placeholder="cafe-ole"></label><label><span data-i18n="phone">Phone</span><input id="phone" data-i18n-placeholder="phonePlaceholder" placeholder="+30 210 555 0123"></label><label><span data-i18n="whatsapp">WhatsApp</span><input id="whatsapp" data-i18n-placeholder="whatsappPlaceholder" placeholder="+30 210 555 0123"></label><label class="wide"><span data-i18n="address">Address</span><input id="address" data-i18n-placeholder="addressPlaceholder" placeholder="Street, city"></label><label><span data-i18n="currency">Currency</span><select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
+                    <div class="publish-control">
+                        <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
+                        <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
+                    </div>
                     <div class="header-bg-control">
                         <span class="header-bg-label" data-i18n="menuHeaderStyle">Menu header style</span>
                         <div class="header-bg-row">
@@ -70,6 +74,16 @@
                                 <label class="button button-ghost" for="uploadHeaderBg" data-i18n="uploadNew">Upload new</label>
                                 <input id="uploadHeaderBg" type="file" accept="image/*" hidden>
                                 <button type="button" class="button button-ghost" id="removeHeaderBg" data-i18n="removeButton">Remove</button>
+                            </div>
+                        </div>
+                        <span class="header-bg-label logo-label" data-i18n="logoLabel">Logo</span>
+                        <div class="header-bg-row">
+                            <div class="header-bg-preview logo-preview" id="logoPreview"></div>
+                            <div class="header-bg-actions">
+                                <button type="button" class="button button-ghost" id="pickLogo" data-i18n="chooseFromPictures">Choose from Pictures</button>
+                                <label class="button button-ghost" for="uploadLogo" data-i18n="uploadNew">Upload new</label>
+                                <input id="uploadLogo" type="file" accept="image/*" hidden>
+                                <button type="button" class="button button-ghost" id="removeLogo" data-i18n="removeButton">Remove</button>
                             </div>
                         </div>
                         <div class="header-style-row">
@@ -191,8 +205,8 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=chime-3"></script>
-<script src="data/assets/js/admin-strings.js?v=till-no-1"></script>
-<script src="data/assets/js/admin.js?v=discovery-1"></script>
+<script src="data/assets/js/admin-strings.js?v=logo-1"></script>
+<script src="data/assets/js/admin.js?v=logo-1"></script>
 <script src="data/assets/js/pwa.js?v=4" defer></script>
 </body>
 </html>

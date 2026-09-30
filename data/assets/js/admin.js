@@ -160,10 +160,17 @@ async function saveClients() {
 		languages: client.languages || ['en', 'de', 'el'],
 		translations: client.translations || {},
 		header_background_url: client.header_background_url || null,
+		logo_url: client.logo_url || null,
 		header_font: client.header_font || null,
 		header_text_color: client.header_text_color || null,
 		smart_food_match_enabled: !!client.smart_food_match_enabled,
-		categories: client.categories || [],		is_published: true,		updated_at: new Date().toISOString()
+		categories: client.categories || [],
+		// Kept as it is, never forced on: check-subscriptions takes expired /
+		// ended menus offline and new orders start as drafts, so saving any menu
+		// here must not bring those back online. Switched with #isPublished;
+		// clients created in the builder (no flag yet) count as online.
+		is_published: client.is_published !== false,
+		updated_at: new Date().toISOString()
 	}));
 	const { data, error } = await supabaseClient.from('menus').upsert(rows, { onConflict: 'slug' }).select();
 	if (error) throw new Error(strings().couldNotSaveMenus.replace('{error}', error.message));
@@ -949,6 +956,8 @@ function render() {
 	document.querySelectorAll('[data-client]').forEach((row) => row.addEventListener('click', () => { selectedId = row.dataset.client; render(); }));
 	$('#editorTitle').textContent = client.name; $('#businessName').value = client.name; $('#slug').value = client.slug; $('#slug').dataset.manual = client.slugManual === false ? 'false' : 'true'; $('#phone').value = client.phone || ''; $('#whatsapp').value = client.whatsapp || ''; $('#address').value = client.address || ''; $('#currency').value = client.currency || '€';
 	if ($('#headerBgPreview')) $('#headerBgPreview').innerHTML = client.header_background_url ? `<img src="${escapeAttr(client.header_background_url)}" alt="">` : `<span class="header-bg-empty">${escapeHtml(strings().noCustomBackground)}</span>`;
+	if ($('#logoPreview')) $('#logoPreview').innerHTML = client.logo_url ? `<img src="${escapeAttr(client.logo_url)}" alt="">` : `<span class="header-bg-empty">${escapeHtml(strings().noLogo)}</span>`;
+	if ($('#isPublished')) $('#isPublished').checked = client.is_published !== false;
 	if ($('#headerFont')) $('#headerFont').value = client.header_font || '';
 	if ($('#headerTextColor')) $('#headerTextColor').value = client.header_text_color || '#ffffff';
 	// The three add-on flags are set automatically by stripe-webhook on
@@ -1243,7 +1252,9 @@ async function listLibraryPhotos() {
 	const files = (data || []).filter((file) => file.id && file.name !== '.emptyFolderPlaceholder');
 	return { files: files.map((file) => ({ name: file.name, url: supabaseClient.storage.from('menu-images').getPublicUrl(`library/${file.name}`).data.publicUrl })) };
 }
-async function openHeaderBgPicker() {
+// field: which menus column the picked library photo goes into - the header
+// background or the logo, both use the same picker.
+async function openHeaderBgPicker(field = 'header_background_url') {
 	const modal = $('#photoPickerModal');
 	const grid = $('#photoPickerGrid');
 	modal.hidden = false;
@@ -1253,13 +1264,35 @@ async function openHeaderBgPicker() {
 	if (!files.length) { grid.innerHTML = `<p class="client-empty">${escapeHtml(strings().noPhotosInLibrary)}</p>`; return; }
 	grid.innerHTML = files.map((file) => `<div class="photo-library-item photo-pick-item" data-pick-photo="${escapeAttr(file.url)}"><img src="${escapeAttr(file.url)}" alt="" loading="lazy"></div>`).join('');
 	document.querySelectorAll('[data-pick-photo]').forEach((item) => item.addEventListener('click', async () => {
-		selectedClient().header_background_url = item.dataset.pickPhoto;
+		selectedClient()[field] = item.dataset.pickPhoto;
 		modal.hidden = true;
-		try { await saveClients(); notify(strings().headerBackgroundUpdated); } catch (error) { notify(error.message); }
+		try { await saveClients(); notify(field === 'logo_url' ? strings().logoUpdated : strings().headerBackgroundUpdated); } catch (error) { notify(error.message); }
 		render();
 	}));
 }
-if ($('#pickHeaderBg')) $('#pickHeaderBg').addEventListener('click', openHeaderBgPicker);
+if ($('#pickHeaderBg')) $('#pickHeaderBg').addEventListener('click', () => openHeaderBgPicker('header_background_url'));
+if ($('#pickLogo')) $('#pickLogo').addEventListener('click', () => openHeaderBgPicker('logo_url'));
+if ($('#uploadLogo')) $('#uploadLogo').addEventListener('change', async () => {
+	const input = $('#uploadLogo');
+	const file = input.files[0];
+	if (!file) return;
+	try {
+		const url = await uploadImage(file, `library/${Date.now()}`);
+		selectedClient().logo_url = url;
+		await saveClients();
+		notify(strings().logoUploaded);
+		render();
+	} catch (error) { notify(error.message); } finally { input.value = ''; }
+});
+if ($('#removeLogo')) $('#removeLogo').addEventListener('click', () => {
+	selectedClient().logo_url = '';
+	saveClients().then(() => { notify(strings().logoRemoved); render(); }).catch((error) => notify(error.message));
+});
+if ($('#isPublished')) $('#isPublished').addEventListener('change', () => {
+	const online = $('#isPublished').checked;
+	selectedClient().is_published = online;
+	saveClients().then(() => { notify(online ? strings().menuNowOnline : strings().menuNowOffline); render(); }).catch((error) => notify(error.message));
+});
 if ($('#closePhotoPicker')) $('#closePhotoPicker').addEventListener('click', () => { $('#photoPickerModal').hidden = true; });
 if ($('#photoPickerModal')) $('#photoPickerModal').addEventListener('click', (event) => { if (event.target.id === 'photoPickerModal') $('#photoPickerModal').hidden = true; });
 if ($('#uploadHeaderBg')) $('#uploadHeaderBg').addEventListener('change', async () => {
