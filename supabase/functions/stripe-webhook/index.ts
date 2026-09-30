@@ -224,7 +224,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		<ol>
 			<li>${uploadLink ? `Upload your menu (PDF): <a href="${uploadLink}">Upload menu</a>` : 'Send us your menu (PDF).'}</li>
 			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code.</li>
-			<li>Your 7 days start as soon as your menu is live. On day 6 you get your report: how many guests opened your menu and which dishes they looked at most.</li>
+			<li><strong>Your 7 days only start once you have received your QR code</strong>, not with the payment. On day 6 you get your report: how many guests opened your menu and which dishes they looked at most.</li>
 		</ol>
 		<p>If you want to continue afterwards, the €2.99 is credited towards your plan.</p>
 		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
@@ -236,7 +236,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		<ol>
 			<li>${uploadLink ? `Laden Sie Ihre Speisekarte hoch (PDF): <a href="${uploadLink}">Speisekarte hochladen</a>` : 'Schicken Sie uns Ihre Speisekarte (PDF).'}</li>
 			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code.</li>
-			<li>Ihre 7 Tage beginnen, sobald Ihre Karte online ist. Am 6. Tag bekommen Sie Ihren Bericht: wie viele Gäste Ihre Speisekarte geöffnet haben und welche Gerichte am meisten angesehen wurden.</li>
+			<li><strong>Ihre 7 Tage beginnen erst, wenn Sie Ihren QR-Code erhalten haben</strong>, nicht schon mit der Bezahlung. Am 6. Tag bekommen Sie Ihren Bericht: wie viele Gäste Ihre Speisekarte geöffnet haben und welche Gerichte am meisten angesehen wurden.</li>
 		</ol>
 		<p>Wenn Sie danach weitermachen möchten, werden die 2,99 € auf Ihren Tarif angerechnet.</p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
