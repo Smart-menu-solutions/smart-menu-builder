@@ -1107,6 +1107,20 @@ ${removable.length} lead${removable.length === 1 ? '' : 's'} not messaged yet wi
 	notify(`Deleted ${removable.length} lead${removable.length === 1 ? '' : 's'} from "${listName}"`);
 }
 
+// Removes one not-yet-messaged lead - the single-row version of
+// deleteList(), with the same rules: only offered while the lead is still
+// "new" (a messaged one would lose its due follow-up), and a new search of
+// the same city brings it back. Stop is the way to hide one for good.
+function deleteLead(lead) {
+	if (!lead || leadTab(lead) !== 'new') return;
+	if (!confirm(`Delete ${lead.name} from "${leadListName(lead)}"?
+A new search of the same city can bring it back - use Stop to hide it for good.`)) return;
+	leads = leads.filter((item) => item.id !== lead.id);
+	saveLeads();
+	render();
+	notify(`Deleted ${lead.name}`);
+}
+
 function clearLeads() {
 	if (!leads.length) return;
 	if (!confirm(`Clear all ${leads.length} leads in every list? This can't be undone - outreach progress will be lost too.`)) return;
@@ -1264,6 +1278,9 @@ function render() {
 		const resetButton = ((lead.msgStage || 0) > 0 || lead.stopped)
 			? `<button class="button button-ghost" type="button" data-reset="${lead.id}" title="Undo an accidental stage advance - back to New">Reset</button>`
 			: '';
+		const deleteButton = leadTab(lead) === 'new'
+			? `<button class="button button-ghost" type="button" data-delete="${lead.id}" title="Remove just this lead from its list">Delete</button>`
+			: '';
 		return `
 		<tr>
 			<td><input type="checkbox" data-select="${lead.id}" ${lead.selected ? 'checked' : ''}></td>
@@ -1274,7 +1291,7 @@ function render() {
 			<td>${escapeHtml(lead.email) || '<span class="leads-empty">-</span>'}</td>
 			<td>${escapeHtml(lead.whatsapp) || '<span class="leads-empty">-</span>'}</td>
 			<td>${lead.instagram ? `<a href="https://instagram.com/${encodeURIComponent(lead.instagram)}" target="_blank" rel="noopener">@${escapeHtml(lead.instagram)}</a>` : '<span class="leads-empty">-</span>'}</td>
-			<td class="leads-actions-cell">${enrichButton}${actionButton}<div class="leads-actions-secondary">${sentButton}${resetButton}${stopButton}</div></td>
+			<td class="leads-actions-cell">${enrichButton}${actionButton}<div class="leads-actions-secondary">${sentButton}${resetButton}${deleteButton}${stopButton}</div></td>
 		</tr>
 	`;
 	}).join('');
@@ -1332,6 +1349,8 @@ function wireEvents() {
 		const stopId = event.target.dataset.stop;
 		const resetId = event.target.dataset.reset;
 		const sentId = event.target.dataset.sent;
+		const deleteId = event.target.dataset.delete;
+		if (deleteId) deleteLead(leads.find((lead) => lead.id === deleteId));
 		if (sentId) markSent(leads.find((lead) => lead.id === sentId));
 		if (enrichId) enrichLead(leads.find((lead) => lead.id === enrichId));
 		if (whatsappId) openWhatsapp(leads.find((lead) => lead.id === whatsappId));
