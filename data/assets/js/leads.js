@@ -42,7 +42,9 @@ const ENRICH_CONCURRENCY = 3;
 const SITE_URL = 'https://smartmenusolutions.com/';
 // The €2.99 Smart Discovery order page - German leads get the German page,
 // every other language the English one (the site only exists in EN + DE).
-const DISCOVERY_URL = { de: 'https://smartmenusolutions.com/de/discovery.html', other: 'https://smartmenusolutions.com/discovery.html' };
+// ?ref=lead: a fresh URL for Instagram/WhatsApp, whose link previews were
+// cached with the logo before the pages had an og:image.
+const DISCOVERY_URL = { de: 'https://smartmenusolutions.com/de/discovery.html?ref=lead', other: 'https://smartmenusolutions.com/discovery.html?ref=lead' };
 
 // ISO 3166-1 alpha-2 code, display name, which message template to use, and
 // the international calling code (used to fix up locally-formatted numbers
