@@ -13,11 +13,16 @@ const supabase = createClient(
 
 const SITE_ORIGIN = 'https://smartmenusolutions.com';
 
-const PLAN_PRICING: Record<string, { amountCents: number; label: string }> = {
-	start: { amountCents: 11900, label: 'Smart Start' },
-	pro: { amountCents: 12900, label: 'Smart Pro' },
-	premium: { amountCents: 16900, label: 'Smart Premium' }
+const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAddOnCents: number }> = {
+	start: { amountCents: 11900, label: 'Smart Start', photoAddOnCents: 1000 },
+	pro: { amountCents: 12900, label: 'Smart Pro', photoAddOnCents: 3000 },
+	premium: { amountCents: 16900, label: 'Smart Premium', photoAddOnCents: 9000 }
 };
+// Same add-on prices as create-checkout-session - only sold here when a
+// Smart Discovery customer upgrades (a normal renewal keeps its add-ons).
+const SFM_ADDON_CENTS = 500;
+const ANALYTICS_ADDON_CENTS = 500;
+const HUB_ADDON_CENTS = 8900;
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
@@ -93,22 +98,40 @@ async function handleCreateCheckout(request: Request) {
 			.maybeSingle();
 		if (error || !subscription) return json({ error: 'This renewal link is no longer valid.' }, 404);
 
-		// Upgrading from the Discovery Pass: its €2.99 comes off the first year.
-		const discounts = subscription.plan === 'discovery' ? [{ coupon: await discoveryCreditCoupon() }] : undefined;
+		// Upgrading from Smart Discovery: its €2.99 comes off the first year and
+		// the customer picks which of the add-ons they tried to keep - same line
+		// items as a first order in create-checkout-session.
+		const fromDiscovery = subscription.plan === 'discovery';
+		const discounts = fromDiscovery ? [{ coupon: await discoveryCreditCoupon() }] : undefined;
+		const addons = {
+			photoAddon: fromDiscovery && Boolean(body.photoAddon),
+			smartFoodMatchAddon: fromDiscovery && Boolean(body.smartFoodMatchAddon),
+			analyticsReportsAddon: fromDiscovery && Boolean(body.analyticsReportsAddon),
+			smartServiceHubAddon: fromDiscovery && Boolean(body.smartServiceHubAddon)
+		};
+		const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
+			price_data: {
+				currency: 'eur',
+				unit_amount: pricing.amountCents,
+				recurring: { interval: 'year' },
+				product_data: { name: `Smart Menu Solutions – ${pricing.label}${fromDiscovery ? '' : ' (Renewal)'}` }
+			},
+			quantity: 1
+		}];
+		const yearly = (cents: number, name: string) => lineItems.push({ price_data: { currency: 'eur', unit_amount: cents, recurring: { interval: 'year' }, product_data: { name } }, quantity: 1 });
+		if (addons.photoAddon) lineItems.push({ price_data: { currency: 'eur', unit_amount: pricing.photoAddOnCents, product_data: { name: 'Smart DishPhoto™ (one-time)' } }, quantity: 1 });
+		if (addons.smartFoodMatchAddon) yearly(SFM_ADDON_CENTS, 'Smart FoodMatch™ add-on');
+		if (addons.analyticsReportsAddon) yearly(ANALYTICS_ADDON_CENTS, 'Smart WeeklyReport™ add-on');
+		if (addons.smartServiceHubAddon) yearly(HUB_ADDON_CENTS, 'Smart ServiceHub™ add-on');
+		const addonMetadata = fromDiscovery
+			? { fromDiscovery: 'true', photoAddon: String(addons.photoAddon), smartFoodMatchAddon: String(addons.smartFoodMatchAddon), analyticsReportsAddon: String(addons.analyticsReportsAddon), smartServiceHubAddon: String(addons.smartServiceHubAddon) }
+			: {};
 
 		const session = await stripe.checkout.sessions.create({
 			mode: 'subscription',
 			customer_email: email,
 			...(discounts ? { discounts } : {}),
-			line_items: [{
-				price_data: {
-					currency: 'eur',
-					unit_amount: pricing.amountCents,
-					recurring: { interval: 'year' },
-					product_data: { name: `Smart Menu Solutions – ${pricing.label}${subscription.plan === 'discovery' ? '' : ' (Renewal)'}` }
-				},
-				quantity: 1
-			}],
+			line_items: lineItems,
 			// A new menu PDF is optional and uploaded after payment (upload.html).
 			success_url: `${SITE_ORIGIN}/${lang === 'de' ? 'de/' : ''}upload.html?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${SITE_ORIGIN}/cancel.html`,
@@ -121,10 +144,11 @@ async function handleCreateCheckout(request: Request) {
 				companyName,
 				phone,
 				email,
-				lang
+				lang,
+				...addonMetadata
 			},
 			subscription_data: {
-				metadata: { type: 'renewal', subscriptionId: subscription.id, plan, firstName, lastName, companyName, phone, email, lang }
+				metadata: { type: 'renewal', subscriptionId: subscription.id, plan, firstName, lastName, companyName, phone, email, lang, ...addonMetadata }
 			}
 		});
 
@@ -148,7 +172,7 @@ async function discoveryCreditCoupon(): Promise<string> {
 			amount_off: 299,
 			currency: 'eur',
 			duration: 'once',
-			name: 'Discovery Pass credited'
+			name: 'Smart Discovery credited'
 		});
 	}
 	return DISCOVERY_COUPON_ID;

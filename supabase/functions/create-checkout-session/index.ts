@@ -70,7 +70,7 @@ Deno.serve(async (request) => {
 					price_data: {
 						currency: 'eur',
 						unit_amount: DISCOVERY_PASS_CENTS,
-						product_data: { name: 'Smart Menu Discovery Pass™ (7 days)' }
+						product_data: { name: 'Smart Discovery (7 days)' }
 					},
 					quantity: 1
 				}],

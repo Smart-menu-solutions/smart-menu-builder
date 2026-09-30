@@ -120,7 +120,7 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 		: '';
 	return isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
-		<p>your Discovery Pass for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here's what happened so far:</p>
+		<p>your Smart Discovery trial for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here's what happened so far:</p>
 		<p style="font-size:22px"><strong>${visits}</strong> times your guests opened your menu.</p>
 		${dishes ? `<p><strong>Most viewed dishes</strong></p>${dishes}` : ''}
 		<p>Want to keep your digital menu? Choose a plan now, your €2.99 is credited and your menu stays online without interruption:</p>
@@ -130,7 +130,7 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 		${EMAIL_SIGNATURE}
 	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
-		<p>Ihr Discovery Pass für <strong>${escapeHtml(menuName)}</strong> endet morgen. Das ist bisher passiert:</p>
+		<p>Ihr Test mit Smart Discovery für <strong>${escapeHtml(menuName)}</strong> endet morgen. Das ist bisher passiert:</p>
 		<p style="font-size:22px"><strong>${visits}</strong>-mal haben Ihre Gäste Ihre Speisekarte geöffnet.</p>
 		${dishes ? `<p><strong>Meistgesehene Gerichte</strong></p>${dishes}` : ''}
 		<p>Möchten Sie Ihre digitale Speisekarte behalten? Wählen Sie jetzt einen Tarif, Ihre 2,99 € werden angerechnet und Ihre Karte bleibt ohne Unterbrechung online:</p>
@@ -145,14 +145,14 @@ function discoveryEndedHtml(contactName: string, renewalUrl: string, lang: strin
 	const isEn = lang === 'en';
 	return isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
-		<p>your Discovery Pass has ended and your menu is now paused. Guests who scan your QR code will see a short "not available" note.</p>
+		<p>your Smart Discovery trial has ended and your menu is now paused. Guests who scan your QR code will see a short "not available" note.</p>
 		<p>Your menu and QR code are kept. Choose a plan and everything is back online right away, your €2.99 is credited:</p>
 		<p><a href="${renewalUrl}">Reactivate my menu</a></p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
 	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
-		<p>Ihr Discovery Pass ist abgelaufen und Ihre Speisekarte ist jetzt pausiert. Gäste, die Ihren QR-Code scannen, sehen einen kurzen Hinweis, dass die Karte nicht verfügbar ist.</p>
+		<p>Ihr Test mit Smart Discovery ist abgelaufen und Ihre Speisekarte ist jetzt pausiert. Gäste, die Ihren QR-Code scannen, sehen einen kurzen Hinweis, dass die Karte nicht verfügbar ist.</p>
 		<p>Ihre Karte und Ihr QR-Code bleiben gespeichert. Wählen Sie einen Tarif, dann ist alles sofort wieder online, Ihre 2,99 € werden angerechnet:</p>
 		<p><a href="${renewalUrl}">Speisekarte wieder aktivieren</a></p>
 		<p>Mit freundlichen Grüßen</p>
@@ -201,12 +201,12 @@ async function runDiscoveryPasses(today: string) {
 		if (today >= endDay) {
 			await supabase.from('subscriptions').update({ status: 'deactivated', updated_at: new Date().toISOString() }).eq('id', pass.id);
 			await supabase.from('menus').update({ is_published: false }).eq('slug', pass.menu_slug);
-			await sendNotification(pass.id, 'Discovery Pass abgelaufen (kein Upgrade)', {
+			await sendNotification(pass.id, 'Smart Discovery abgelaufen (kein Upgrade)', {
 				Lokal: menu?.name ?? '-', Kontakt: customer?.contact_name ?? '-', Email: customer?.email ?? '-', 'Renewal-Link': renewalUrl
 			});
 			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
-				await sendEmail(customer.email, pass.id, 'Kundenmail: Discovery Pass abgelaufen',
-					pass.lang === 'en' ? 'Your Discovery Pass has ended' : 'Ihr Discovery Pass ist abgelaufen',
+				await sendEmail(customer.email, pass.id, 'Kundenmail: Smart Discovery abgelaufen',
+					pass.lang === 'en' ? 'Your Smart Discovery trial has ended' : 'Ihr Test mit Smart Discovery ist abgelaufen',
 					discoveryEndedHtml(customer.contact_name, renewalUrl, pass.lang));
 			}
 			counts.ended += 1;
@@ -227,12 +227,12 @@ async function runDiscoveryPasses(today: string) {
 			const topDishes = [...dishTotals.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count).slice(0, 3);
 
 			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
-				await sendEmail(customer.email, pass.id, 'Kundenmail: Discovery-Bericht',
-					pass.lang === 'en' ? `${visits} guests opened your menu – your Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Discovery-Bericht`,
+				await sendEmail(customer.email, pass.id, 'Kundenmail: Smart-Discovery-Bericht',
+					pass.lang === 'en' ? `${visits} guests opened your menu – your Smart Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Smart-Discovery-Bericht`,
 					discoveryReportHtml(customer.contact_name, menu?.name ?? '', visits, topDishes, renewalUrl, pass.lang));
 			}
 			await supabase.from('subscriptions').update({ discovery_report_sent_at: new Date().toISOString() }).eq('id', pass.id);
-			await sendNotification(pass.id, 'Discovery-Bericht verschickt', {
+			await sendNotification(pass.id, 'Smart-Discovery-Bericht verschickt', {
 				Lokal: menu?.name ?? '-', Aufrufe: String(visits), Email: customer?.email ?? '-'
 			});
 			counts.reported += 1;

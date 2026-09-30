@@ -949,7 +949,7 @@ function render() {
 		const sub = subscriptionsBySlug[item.slug];
 		const statusClass = sub ? (sub.status !== 'active' ? `status-${sub.status}` : '') : 'status-none';
 		const statusLabel = sub ? subscriptionStatusLabel(sub.status) : strings().noSubscription;
-		const subInfo = sub ? strings().clientRowSub.replace('{plan}', escapeHtml(sub.plan)).replace('{date}', escapeHtml(sub.current_period_end || '?')) : '';
+		const subInfo = sub ? strings().clientRowSub.replace('{plan}', escapeHtml(PLAN_DISH_LIMITS[sub.plan]?.label || sub.plan)).replace('{date}', escapeHtml(sub.current_period_end || '?')) : '';
 		const statusBadge = `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>`;
 		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span class="client-info"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(strings().sectionsCount.replace('{n}', item.categories.length))}${subInfo}</small><span class="status-badge-row">${statusBadge}</span></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i></div>`;
 	}).join('') || `<p class="client-empty">${escapeHtml(showOnlyNeedsRenewal ? strings().noClientsNeedRenewal : strings().noClientsFound)}</p>`;
@@ -1168,7 +1168,7 @@ async function syncFromSupabase() {
 	}
 }
 // How many menu items each plan includes (same numbers as the pricing page).
-const PLAN_DISH_LIMITS = { discovery: { label: 'Discovery Pass', limit: 10 }, start: { label: 'Smart Start', limit: 50 }, pro: { label: 'Smart Pro', limit: 150 }, premium: { label: 'Smart Premium', limit: 450 } };
+const PLAN_DISH_LIMITS = { discovery: { label: 'Smart Discovery', limit: 10 }, start: { label: 'Smart Start', limit: 50 }, pro: { label: 'Smart Pro', limit: 150 }, premium: { label: 'Smart Premium', limit: 450 } };
 
 function planKey(plan) {
 	const value = String(plan || '').toLowerCase();

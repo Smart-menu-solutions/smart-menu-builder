@@ -173,7 +173,8 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 		metadata,
 		type: metadata.type === 'renewal' ? 'renewal' : 'initial',
 		lang: metadata.lang === 'en' ? 'en' : 'de',
-		photoAddon: metadata.type !== 'renewal' && metadata.photoAddon === 'true',
+		// A Smart Discovery upgrade is a renewal-type checkout that can include DishPhoto.
+		photoAddon: (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.photoAddon === 'true',
 		folder: `orders/${session.id}`,
 		order
 	};

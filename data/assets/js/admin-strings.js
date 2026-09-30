@@ -142,7 +142,7 @@ window.ADMIN_STRINGS = {
 		headerBackgroundUpdated: 'Kopfbild aktualisiert', headerBackgroundUploaded: 'Kopfbild hochgeladen',
 		logoLabel: 'Logo', noLogo: 'Kein Logo', logoUpdated: 'Logo aktualisiert', logoUploaded: 'Logo hochgeladen', logoRemoved: 'Logo entfernt',
 		menuOnlineTitle: 'Speisekarte online', menuOnlineCheck: 'Für Gäste sichtbar', 
-		menuOnline: 'Speisekarte online (für Gäste sichtbar)', menuOnlineHint: 'Erst einschalten, wenn die Karte fertig ist und der Kunde seinen QR-Code bekommt. Beim Discovery Pass starten damit die 7 Tage.',
+		menuOnline: 'Speisekarte online (für Gäste sichtbar)', menuOnlineHint: 'Erst einschalten, wenn die Karte fertig ist und der Kunde seinen QR-Code bekommt. Bei Smart Discovery starten damit die 7 Tage.',
 		menuNowOnline: 'Speisekarte ist jetzt online', menuNowOffline: 'Speisekarte ist jetzt offline',
 		photoUploaded: 'Foto hochgeladen', photosUploaded: 'Fotos hochgeladen',
 
@@ -292,7 +292,7 @@ window.ADMIN_STRINGS = {
 		headerBackgroundUpdated: 'Header background updated', headerBackgroundUploaded: 'Header background uploaded',
 		logoLabel: 'Logo', noLogo: 'No logo', logoUpdated: 'Logo updated', logoUploaded: 'Logo uploaded', logoRemoved: 'Logo removed',
 		menuOnlineTitle: 'Menu online', menuOnlineCheck: 'Visible to guests',
-		menuOnline: 'Menu online (visible to guests)', menuOnlineHint: 'Only switch on once the menu is ready and the customer gets their QR code. For a Discovery Pass this starts the 7 days.',
+		menuOnline: 'Menu online (visible to guests)', menuOnlineHint: 'Only switch on once the menu is ready and the customer gets their QR code. For Smart Discovery this starts the 7 days.',
 		menuNowOnline: 'Menu is now online', menuNowOffline: 'Menu is now offline',
 		photoUploaded: 'Photo uploaded', photosUploaded: 'Photos uploaded',
 

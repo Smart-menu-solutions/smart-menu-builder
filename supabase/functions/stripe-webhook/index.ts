@@ -27,7 +27,7 @@ const PLAN_LABELS: Record<string, string> = {
 	start: 'Smart Start',
 	pro: 'Smart Pro',
 	premium: 'Smart Premium',
-	discovery: 'Smart Menu Discovery Pass™'
+	discovery: 'Smart Discovery'
 };
 
 // Customer-facing HTML signature (not used on the internal owner-notification
@@ -218,10 +218,10 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		return;
 	}
 	const isEn = lang === 'en';
-	const subject = isEn ? 'Your Smart Menu Discovery Pass™' : 'Ihr Smart Menu Discovery Pass™';
+	const subject = isEn ? 'Welcome to Smart Discovery' : 'Willkommen bei Smart Discovery';
 	const html = isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
-		<p>thank you for your Discovery Pass! Here's how it works:</p>
+		<p>thank you for ordering Smart Discovery! Here's how it works:</p>
 		<ol>
 			<li>${uploadLink ? `Upload your menu (PDF, and dish photos if you like): <a href="${uploadLink}">Upload menu</a>` : 'Send us your menu (PDF).'}</li>
 			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code. All add-ons are included for you to try: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ and Smart ServiceHub™ (ordering at the table).</li>
@@ -234,7 +234,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		${EMAIL_SIGNATURE}
 	` : `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
-		<p>vielen Dank für Ihren Discovery Pass! So geht es weiter:</p>
+		<p>vielen Dank für Ihre Bestellung von Smart Discovery! So geht es weiter:</p>
 		<ol>
 			<li>${uploadLink ? `Laden Sie Ihre Speisekarte hoch (PDF, gern auch Fotos Ihrer Gerichte): <a href="${uploadLink}">Speisekarte hochladen</a>` : 'Schicken Sie uns Ihre Speisekarte (PDF).'}</li>
 			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code. Alle Zusatzmodule sind zum Testen dabei: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ und Smart ServiceHub™ (Bestellen am Tisch).</li>
@@ -246,7 +246,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
 	`;
-	await sendEmail(to, subscriptionId, 'Kundenbestätigung: Discovery Pass', subject, html);
+	await sendEmail(to, subscriptionId, 'Kundenbestätigung: Smart Discovery', subject, html);
 }
 
 // Sent the moment an automatic renewal payment fails — this is the start of
@@ -375,11 +375,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
 		// Paying via the renewal link is how a deactivated menu comes back online.
-		// Coming from the Discovery Pass, the add-ons it let the customer try
-		// end with it - on the real plans they're paid (addons.html).
+		// Coming from Smart Discovery, the add-ons it let the customer try are
+		// replaced by exactly the ones bought in the upgrade checkout (renewal
+		// sends them as metadata flags) - everything else goes off.
 		const fromDiscovery = existing.plan === 'discovery';
 		await supabase.from('menus').update(fromDiscovery
-			? { is_published: true, analytics_reports_enabled: false, photo_addon_enabled: false, smart_food_match_enabled: false, smartservice_hub_enabled: false }
+			? {
+				is_published: true,
+				analytics_reports_enabled: metadata.analyticsReportsAddon === 'true',
+				photo_addon_enabled: metadata.photoAddon === 'true',
+				smart_food_match_enabled: metadata.smartFoodMatchAddon === 'true',
+				smartservice_hub_enabled: metadata.smartServiceHubAddon === 'true'
+			}
 			: { is_published: true }).eq('slug', existing.menu_slug);
 		const { data: renewalOrder } = await supabase.from('orders').insert({
 			subscription_id: subscriptionId,
@@ -390,8 +397,14 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
 		const renewalAttachment = legacyPdfPath ? await fetchAttachment(legacyPdfPath, 'pdf') : null;
 		await Promise.all([
-			sendNotification(subscriptionId, fromDiscovery ? 'Upgrade vom Discovery Pass' : 'Verlängerung bestätigt', {
+			sendNotification(subscriptionId, fromDiscovery ? 'Upgrade von Smart Discovery' : 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email,
+				...(fromDiscovery ? {
+					'Smart DishPhoto™': metadata.photoAddon === 'true' ? 'Ja' : 'Nein',
+					'Smart FoodMatch™': metadata.smartFoodMatchAddon === 'true' ? 'Ja' : 'Nein',
+					'Smart WeeklyReport™': metadata.analyticsReportsAddon === 'true' ? 'Ja' : 'Nein',
+					'Smart ServiceHub™': metadata.smartServiceHubAddon === 'true' ? 'Ja' : 'Nein'
+				} : {}),
 				Speisekarte: legacyPdfPath ? 'im Anhang' : 'optional – der Kunde kann nach der Zahlung eine neue hochladen (eigene E-Mail)'
 			}, renewalAttachment ? [renewalAttachment] : undefined),
 			// An upgrade from the Discovery Pass is the customer's real first

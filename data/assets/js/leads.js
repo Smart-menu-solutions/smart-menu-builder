@@ -40,7 +40,7 @@ const TOMTOM_MAX_RADIUS = 8000;
 const TOMTOM_WINDOW_KM = 12;
 const ENRICH_CONCURRENCY = 3;
 const SITE_URL = 'https://smartmenusolutions.com/';
-// The €2.99 Discovery Pass order page - German leads get the German page,
+// The €2.99 Smart Discovery order page - German leads get the German page,
 // every other language the English one (the site only exists in EN + DE).
 const DISCOVERY_URL = { de: 'https://smartmenusolutions.com/de/discovery.html', other: 'https://smartmenusolutions.com/discovery.html' };
 
@@ -99,7 +99,7 @@ const OTHER_CITY = '__other';
 const FOLLOWUP_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// {name} = the lead's business name, {site} = SITE_URL, {discovery} = the €2.99 Discovery Pass page (DISCOVERY_URL) - see fillTemplate().
+// {name} = the lead's business name, {site} = SITE_URL, {discovery} = the €2.99 Smart Discovery page (DISCOVERY_URL) - see fillTemplate().
 // We set up and update the customer's menu for them, so never word these as
 // if the customer edits it themselves.
 const MESSAGE_TEMPLATES = {
