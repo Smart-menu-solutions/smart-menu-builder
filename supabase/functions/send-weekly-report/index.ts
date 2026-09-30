@@ -157,6 +157,8 @@ Deno.serve(async (request) => {
 		.from('subscriptions')
 		.select('id, menu_slug, stats_token, lang, customers(contact_name, email), menus!inner(name, analytics_reports_enabled)')
 		.eq('status', 'active')
+		// A Discovery Pass gets its own report on day 6 (check-subscriptions).
+		.neq('plan', 'discovery')
 		.eq('menus.analytics_reports_enabled', true);
 
 	if (error) {

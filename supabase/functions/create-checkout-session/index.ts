@@ -17,6 +17,9 @@ const PLAN_PRICING: Record<string, { amountCents: number; label: string; photoAd
 // size) - same €89/year regardless of Start/Pro/Premium.
 const SMARTSERVICE_HUB_ADDON_CENTS = 8900;
 
+// Smart Menu Discovery Pass™ - one-off, 7 days, credited on upgrade (see renewal).
+const DISCOVERY_PASS_CENTS = 299;
+
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -46,6 +49,35 @@ Deno.serve(async (request) => {
 		// effectively German-only, so an unset/unexpected value should fall
 		// back to that same historical behavior, not flip to English.
 		const lang = String(body.lang || '') === 'en' ? 'en' : 'de';
+
+		// Discovery Pass: a single one-off payment (Checkout in payment mode,
+		// no Stripe subscription, no add-ons). stripe-webhook creates the
+		// customer/menu/subscription rows the same way as for a plan, and
+		// check-subscriptions ends it after 7 days.
+		if (plan === 'discovery') {
+			if (!firstName || !lastName || !EMAIL_PATTERN.test(email)) {
+				return json({ error: 'Missing or invalid order details.' }, 400);
+			}
+			const metadata = { type: 'initial', plan, firstName, lastName, companyName, phone, email, lang };
+			const session = await stripe.checkout.sessions.create({
+				mode: 'payment',
+				customer_email: email,
+				customer_creation: 'always',
+				line_items: [{
+					price_data: {
+						currency: 'eur',
+						unit_amount: DISCOVERY_PASS_CENTS,
+						product_data: { name: 'Smart Menu Discovery Pass™ (7 days)' }
+					},
+					quantity: 1
+				}],
+				success_url: `${SITE_ORIGIN}/${lang === 'de' ? 'de/' : ''}upload.html?session_id={CHECKOUT_SESSION_ID}`,
+				cancel_url: `${SITE_ORIGIN}/cancel.html`,
+				metadata,
+				payment_intent_data: { metadata }
+			});
+			return json({ url: session.url });
+		}
 
 		const pricing = PLAN_PRICING[plan];
 		if (!pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email)) {

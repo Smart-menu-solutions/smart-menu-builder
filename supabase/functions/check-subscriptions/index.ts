@@ -79,7 +79,7 @@ async function sendDeactivatedEmail(subscriptionId: string, to: string, contactN
 	}
 	const isEn = lang === 'en';
 	const subject = isEn ? 'Your subscription has been deactivated' : 'Ihr Abo wurde deaktiviert';
-	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}`;
+	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${isEn ? 'en' : 'de'}`;
 	const html = isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>since the payment for your renewal didn't go through, your subscription has now been deactivated and your menu is no longer reachable via the QR code.</p>
@@ -98,6 +98,147 @@ async function sendDeactivatedEmail(subscriptionId: string, to: string, contactN
 		${EMAIL_SIGNATURE}
 	`;
 	await sendEmail(to, subscriptionId, 'Kundenmail: Abo deaktiviert', subject, html);
+}
+
+const DISCOVERY_DAYS = 7;
+// The report goes out on day 6 so the customer still has a day before the
+// menu pauses to decide.
+const DISCOVERY_REPORT_DAY = 6;
+
+function addDaysIso(isoDay: string, days: number): string {
+	const result = new Date(`${isoDay}T00:00:00Z`);
+	result.setUTCDate(result.getUTCDate() + days);
+	return result.toISOString().slice(0, 10);
+}
+
+type ViewRow = { metric_type: string; label: string; view_count: number };
+
+function discoveryReportHtml(contactName: string, menuName: string, visits: number, topDishes: { label: string; count: number }[], renewalUrl: string, lang: string): string {
+	const isEn = lang === 'en';
+	const dishes = topDishes.length
+		? `<ol>${topDishes.map((dish) => `<li>${escapeHtml(dish.label)} – ${dish.count}×</li>`).join('')}</ol>`
+		: '';
+	return isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>your Discovery Pass for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here's what happened so far:</p>
+		<p style="font-size:22px"><strong>${visits}</strong> times your guests opened your menu.</p>
+		${dishes ? `<p><strong>Most viewed dishes</strong></p>${dishes}` : ''}
+		<p>Want to keep your digital menu? Choose a plan now, your €2.99 is credited and your menu stays online without interruption:</p>
+		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Continue from €119 a year</a></p>
+		<p>Otherwise your menu pauses after tomorrow. You can reactivate it with the same link at any time.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
+		<p>Hallo ${escapeHtml(contactName || '')},</p>
+		<p>Ihr Discovery Pass für <strong>${escapeHtml(menuName)}</strong> endet morgen. Das ist bisher passiert:</p>
+		<p style="font-size:22px"><strong>${visits}</strong>-mal haben Ihre Gäste Ihre Speisekarte geöffnet.</p>
+		${dishes ? `<p><strong>Meistgesehene Gerichte</strong></p>${dishes}` : ''}
+		<p>Möchten Sie Ihre digitale Speisekarte behalten? Wählen Sie jetzt einen Tarif, Ihre 2,99 € werden angerechnet und Ihre Karte bleibt ohne Unterbrechung online:</p>
+		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Weitermachen ab 119 € im Jahr</a></p>
+		<p>Sonst wird Ihre Karte nach morgen pausiert. Mit demselben Link können Sie sie jederzeit wieder aktivieren.</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
+	`;
+}
+
+function discoveryEndedHtml(contactName: string, renewalUrl: string, lang: string): string {
+	const isEn = lang === 'en';
+	return isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>your Discovery Pass has ended and your menu is now paused. Guests who scan your QR code will see a short "not available" note.</p>
+		<p>Your menu and QR code are kept. Choose a plan and everything is back online right away, your €2.99 is credited:</p>
+		<p><a href="${renewalUrl}">Reactivate my menu</a></p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
+		<p>Hallo ${escapeHtml(contactName || '')},</p>
+		<p>Ihr Discovery Pass ist abgelaufen und Ihre Speisekarte ist jetzt pausiert. Gäste, die Ihren QR-Code scannen, sehen einen kurzen Hinweis, dass die Karte nicht verfügbar ist.</p>
+		<p>Ihre Karte und Ihr QR-Code bleiben gespeichert. Wählen Sie einen Tarif, dann ist alles sofort wieder online, Ihre 2,99 € werden angerechnet:</p>
+		<p><a href="${renewalUrl}">Speisekarte wieder aktivieren</a></p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
+	`;
+}
+
+// Discovery Pass lifecycle, run once a day alongside the grace-period check:
+// 1. stamp discovery_started_on the first day the menu is published (we set
+//    menus up by hand, so the customer's 7 days start when it's really live),
+// 2. on day 6 send the report with the view counts and the upgrade link,
+// 3. after day 7 take the menu offline. An upgrade (renewal link) changes the
+//    plan away from 'discovery', so upgraded passes simply drop out of here.
+async function runDiscoveryPasses(today: string) {
+	const counts = { started: 0, reported: 0, ended: 0 };
+	const { data: passes, error } = await supabase
+		.from('subscriptions')
+		.select('id, menu_slug, lang, renewal_token, discovery_started_on, discovery_report_sent_at, customers(contact_name, email), menus!inner(name, is_published)')
+		.eq('plan', 'discovery')
+		.eq('status', 'active');
+	if (error) {
+		console.error('Failed to query discovery passes', error);
+		return counts;
+	}
+
+	for (const pass of passes ?? []) {
+		const menu = pass.menus as { name: string; is_published: boolean } | null;
+		const customer = pass.customers as { contact_name: string; email: string } | null;
+		const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${pass.renewal_token}&lang=${pass.lang === 'en' ? 'en' : 'de'}`;
+
+		if (!pass.discovery_started_on) {
+			if (!menu?.is_published) continue;
+			await supabase.from('subscriptions').update({
+				discovery_started_on: today,
+				current_period_start: today,
+				current_period_end: addDaysIso(today, DISCOVERY_DAYS),
+				updated_at: new Date().toISOString()
+			}).eq('id', pass.id);
+			counts.started += 1;
+			continue;
+		}
+
+		const endDay = addDaysIso(pass.discovery_started_on, DISCOVERY_DAYS);
+		const reportDay = addDaysIso(pass.discovery_started_on, DISCOVERY_REPORT_DAY - 1);
+
+		if (today >= endDay) {
+			await supabase.from('subscriptions').update({ status: 'deactivated', updated_at: new Date().toISOString() }).eq('id', pass.id);
+			await supabase.from('menus').update({ is_published: false }).eq('slug', pass.menu_slug);
+			await sendNotification(pass.id, 'Discovery Pass abgelaufen (kein Upgrade)', {
+				Lokal: menu?.name ?? '-', Kontakt: customer?.contact_name ?? '-', Email: customer?.email ?? '-', 'Renewal-Link': renewalUrl
+			});
+			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
+				await sendEmail(customer.email, pass.id, 'Kundenmail: Discovery Pass abgelaufen',
+					pass.lang === 'en' ? 'Your Discovery Pass has ended' : 'Ihr Discovery Pass ist abgelaufen',
+					discoveryEndedHtml(customer.contact_name, renewalUrl, pass.lang));
+			}
+			counts.ended += 1;
+			continue;
+		}
+
+		if (today >= reportDay && !pass.discovery_report_sent_at) {
+			const { data: rows } = await supabase
+				.from('menu_view_daily')
+				.select('metric_type, label, view_count')
+				.eq('menu_slug', pass.menu_slug)
+				.gte('day', pass.discovery_started_on)
+				.lte('day', today);
+			const viewRows = (rows ?? []) as ViewRow[];
+			const visits = viewRows.reduce((sum, row) => row.metric_type === 'visit' ? sum + row.view_count : sum, 0);
+			const dishTotals = new Map<string, number>();
+			for (const row of viewRows) if (row.metric_type === 'dish') dishTotals.set(row.label, (dishTotals.get(row.label) || 0) + row.view_count);
+			const topDishes = [...dishTotals.entries()].map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count).slice(0, 3);
+
+			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
+				await sendEmail(customer.email, pass.id, 'Kundenmail: Discovery-Bericht',
+					pass.lang === 'en' ? `${visits} guests opened your menu – your Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Discovery-Bericht`,
+					discoveryReportHtml(customer.contact_name, menu?.name ?? '', visits, topDishes, renewalUrl, pass.lang));
+			}
+			await supabase.from('subscriptions').update({ discovery_report_sent_at: new Date().toISOString() }).eq('id', pass.id);
+			await sendNotification(pass.id, 'Discovery-Bericht verschickt', {
+				Lokal: menu?.name ?? '-', Aufrufe: String(visits), Email: customer?.email ?? '-'
+			});
+			counts.reported += 1;
+		}
+	}
+	return counts;
 }
 
 // Daily job (triggered by Supabase Cron): the 7-day grace period after
@@ -145,7 +286,9 @@ Deno.serve(async (request) => {
 		]);
 	}
 
-	return new Response(JSON.stringify({ checked: true, deactivated: (toDeactivate ?? []).length }), {
+	const discovery = await runDiscoveryPasses(today);
+
+	return new Response(JSON.stringify({ checked: true, deactivated: (toDeactivate ?? []).length, discovery }), {
 		status: 200,
 		headers: { 'Content-Type': 'application/json' }
 	});

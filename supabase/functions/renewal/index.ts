@@ -88,20 +88,24 @@ async function handleCreateCheckout(request: Request) {
 
 		const { data: subscription, error } = await supabase
 			.from('subscriptions')
-			.select('id')
+			.select('id, plan')
 			.eq('renewal_token', token)
 			.maybeSingle();
 		if (error || !subscription) return json({ error: 'This renewal link is no longer valid.' }, 404);
 
+		// Upgrading from the Discovery Pass: its €2.99 comes off the first year.
+		const discounts = subscription.plan === 'discovery' ? [{ coupon: await discoveryCreditCoupon() }] : undefined;
+
 		const session = await stripe.checkout.sessions.create({
 			mode: 'subscription',
 			customer_email: email,
+			...(discounts ? { discounts } : {}),
 			line_items: [{
 				price_data: {
 					currency: 'eur',
 					unit_amount: pricing.amountCents,
 					recurring: { interval: 'year' },
-					product_data: { name: `Smart Menu Solutions – ${pricing.label} (Renewal)` }
+					product_data: { name: `Smart Menu Solutions – ${pricing.label}${subscription.plan === 'discovery' ? '' : ' (Renewal)'}` }
 				},
 				quantity: 1
 			}],
@@ -129,6 +133,25 @@ async function handleCreateCheckout(request: Request) {
 		console.error(error);
 		return json({ error: 'Could not start renewal checkout.' }, 500);
 	}
+}
+
+// One fixed, reusable Stripe coupon (€2.99 off, first invoice only), created
+// on first use so it doesn't have to be set up by hand in the dashboard.
+const DISCOVERY_COUPON_ID = 'discovery-pass-credit';
+
+async function discoveryCreditCoupon(): Promise<string> {
+	try {
+		await stripe.coupons.retrieve(DISCOVERY_COUPON_ID);
+	} catch {
+		await stripe.coupons.create({
+			id: DISCOVERY_COUPON_ID,
+			amount_off: 299,
+			currency: 'eur',
+			duration: 'once',
+			name: 'Discovery Pass credited'
+		});
+	}
+	return DISCOVERY_COUPON_ID;
 }
 
 function json(data: unknown, status = 200) {

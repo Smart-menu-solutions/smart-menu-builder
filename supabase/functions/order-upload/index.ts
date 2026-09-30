@@ -150,7 +150,9 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 	} catch {
 		return null;
 	}
-	if (session.status !== 'complete' || session.mode !== 'subscription') return null;
+	// Plans are subscriptions; the Discovery Pass is a one-off payment.
+	const isDiscovery = session.mode === 'payment' && session.metadata?.plan === 'discovery';
+	if (session.status !== 'complete' || (session.mode !== 'subscription' && !isDiscovery)) return null;
 	if (Date.now() - session.created * 1000 > MAX_ORDER_AGE_MS) return 'expired';
 
 	if (!order) {

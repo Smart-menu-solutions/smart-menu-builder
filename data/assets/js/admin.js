@@ -1159,10 +1159,11 @@ async function syncFromSupabase() {
 	}
 }
 // How many menu items each plan includes (same numbers as the pricing page).
-const PLAN_DISH_LIMITS = { start: { label: 'Smart Start', limit: 50 }, pro: { label: 'Smart Pro', limit: 150 }, premium: { label: 'Smart Premium', limit: 450 } };
+const PLAN_DISH_LIMITS = { discovery: { label: 'Discovery Pass', limit: 10 }, start: { label: 'Smart Start', limit: 50 }, pro: { label: 'Smart Pro', limit: 150 }, premium: { label: 'Smart Premium', limit: 450 } };
 
 function planKey(plan) {
 	const value = String(plan || '').toLowerCase();
+	if (value.includes('discovery')) return 'discovery';
 	if (value.includes('premium')) return 'premium';
 	if (value.includes('pro')) return 'pro';
 	if (value.includes('start')) return 'start';

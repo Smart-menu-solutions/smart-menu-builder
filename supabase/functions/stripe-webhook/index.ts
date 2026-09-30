@@ -26,7 +26,8 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PLAN_LABELS: Record<string, string> = {
 	start: 'Smart Start',
 	pro: 'Smart Pro',
-	premium: 'Smart Premium'
+	premium: 'Smart Premium',
+	discovery: 'Smart Menu Discovery Pass™'
 };
 
 // Customer-facing HTML signature (not used on the internal owner-notification
@@ -208,6 +209,43 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 	await sendEmail(to, subscriptionId, `Kundenbestätigung: ${subject}`, subject, html);
 }
 
+// Confirmation for the €2.99 Discovery Pass - no add-on link (the pass has
+// none), and it says when the 7 days start: once the menu is live.
+async function sendDiscoveryConfirmation(subscriptionId: string, to: string, contactName: string, lang: string, uploadLink: string | null) {
+	if (!EMAIL_PATTERN.test(to)) {
+		console.error('Skipping discovery confirmation: no valid email on file', subscriptionId);
+		return;
+	}
+	const isEn = lang === 'en';
+	const subject = isEn ? 'Your Smart Menu Discovery Pass™' : 'Ihr Smart Menu Discovery Pass™';
+	const html = isEn ? `
+		<p>Hi ${escapeHtml(contactName || '')},</p>
+		<p>thank you for your Discovery Pass! Here's how it works:</p>
+		<ol>
+			<li>${uploadLink ? `Upload your menu (PDF): <a href="${uploadLink}">Upload menu</a>` : 'Send us your menu (PDF).'}</li>
+			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code.</li>
+			<li>Your 7 days start as soon as your menu is live. On day 6 you get your report: how many guests opened your menu and which dishes they looked at most.</li>
+		</ol>
+		<p>If you want to continue afterwards, the €2.99 is credited towards your plan.</p>
+		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	` : `
+		<p>Hallo ${escapeHtml(contactName || '')},</p>
+		<p>vielen Dank für Ihren Discovery Pass! So geht es weiter:</p>
+		<ol>
+			<li>${uploadLink ? `Laden Sie Ihre Speisekarte hoch (PDF): <a href="${uploadLink}">Speisekarte hochladen</a>` : 'Schicken Sie uns Ihre Speisekarte (PDF).'}</li>
+			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code.</li>
+			<li>Ihre 7 Tage beginnen, sobald Ihre Karte online ist. Am 6. Tag bekommen Sie Ihren Bericht: wie viele Gäste Ihre Speisekarte geöffnet haben und welche Gerichte am meisten angesehen wurden.</li>
+		</ol>
+		<p>Wenn Sie danach weitermachen möchten, werden die 2,99 € auf Ihren Tarif angerechnet.</p>
+		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
+	`;
+	await sendEmail(to, subscriptionId, 'Kundenbestätigung: Discovery Pass', subject, html);
+}
+
 // Sent the moment an automatic renewal payment fails — this is the start of
 // the 7-day grace period, the menu is still online at this point (only
 // check-subscriptions taking it offline after the grace period runs out).
@@ -218,7 +256,7 @@ async function sendPaymentFailedEmail(subscriptionId: string, to: string, contac
 	}
 	const isEn = lang === 'en';
 	const subject = isEn ? 'Your renewal has failed – action needed' : 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
-	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}`;
+	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${isEn ? 'en' : 'de'}`;
 	const html = isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>unfortunately, the automatic payment for renewing your subscription could not be processed.</p>
@@ -277,7 +315,9 @@ Deno.serve(async (request) => {
 });
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
-	if (session.mode !== 'subscription') return;
+	// A one-off payment-mode checkout is only ever the Discovery Pass.
+	const isDiscovery = session.mode === 'payment' && session.metadata?.plan === 'discovery';
+	if (session.mode !== 'subscription' && !isDiscovery) return;
 
 	// Stripe redelivers webhook events at least once (e.g. if a slow Resend
 	// call pushes this handler past Stripe's response timeout), so the same
@@ -332,7 +372,10 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
 		// Paying via the renewal link is how a deactivated menu comes back online.
-		await supabase.from('menus').update({ is_published: true }).eq('slug', existing.menu_slug);
+		// Coming from the Discovery Pass, its free stats end with it - the
+		// WeeklyReport is a paid add-on on the real plans.
+		const fromDiscovery = existing.plan === 'discovery';
+		await supabase.from('menus').update(fromDiscovery ? { is_published: true, analytics_reports_enabled: false } : { is_published: true }).eq('slug', existing.menu_slug);
 		const { data: renewalOrder } = await supabase.from('orders').insert({
 			subscription_id: subscriptionId,
 			type: 'renewal',
@@ -342,11 +385,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		const contactName = [metadata.firstName, metadata.lastName].filter(Boolean).join(' ');
 		const renewalAttachment = legacyPdfPath ? await fetchAttachment(legacyPdfPath, 'pdf') : null;
 		await Promise.all([
-			sendNotification(subscriptionId, 'Verlängerung bestätigt', {
+			sendNotification(subscriptionId, fromDiscovery ? 'Upgrade vom Discovery Pass' : 'Verlängerung bestätigt', {
 				'Subscription-ID': subscriptionId, Plan: plan, Email: email,
 				Speisekarte: legacyPdfPath ? 'im Anhang' : 'optional – der Kunde kann nach der Zahlung eine neue hochladen (eigene E-Mail)'
 			}, renewalAttachment ? [renewalAttachment] : undefined),
-			sendCustomerConfirmation(subscriptionId, 'renewal', email, contactName, plan, existing.addon_token, lang, uploadUrl(renewalOrder?.upload_token, lang))
+			// An upgrade from the Discovery Pass is the customer's real first
+			// order, so it gets the welcome wording, not "thanks for renewing".
+			sendCustomerConfirmation(subscriptionId, fromDiscovery ? 'initial' : 'renewal', email, contactName, plan, existing.addon_token, lang, uploadUrl(renewalOrder?.upload_token, lang))
 		]);
 		return;
 	}
@@ -374,7 +419,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		categories: [],
 		languages: ['de', 'en'],
 		is_published: false,
-		analytics_reports_enabled: metadata.analyticsReportsAddon === 'true',
+		// The Discovery Pass's whole point is the view counts - stats are on for it.
+		analytics_reports_enabled: isDiscovery || metadata.analyticsReportsAddon === 'true',
 		photo_addon_enabled: metadata.photoAddon === 'true',
 		smart_food_match_enabled: metadata.smartFoodMatchAddon === 'true',
 		smartservice_hub_enabled: metadata.smartServiceHubAddon === 'true'
@@ -389,9 +435,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 		menu_slug: slug,
 		plan,
 		status: 'active',
-		stripe_subscription_id: session.subscription as string,
+		stripe_subscription_id: (session.subscription as string) || null,
 		current_period_start: periodStart,
-		current_period_end: periodEnd,
+		// For the Discovery Pass this is only a placeholder: check-subscriptions
+		// counts its 7 days from discovery_started_on (the day it went live).
+		current_period_end: isDiscovery ? addDays(today, 7) : periodEnd,
 		lang
 	}).select().single();
 	if (subscriptionError || !subscription) {
@@ -427,7 +475,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			'Menü-Slug': slug,
 			Dateien: legacyPdfPath ? 'im Anhang' : 'ausstehend – der Kunde lädt sie nach der Zahlung hoch, dann kommt eine eigene E-Mail'
 		}, orderAttachments),
-		sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang, uploadUrl(order?.upload_token, lang))
+		isDiscovery
+			? sendDiscoveryConfirmation(subscription.id, email, contactName, lang, uploadUrl(order?.upload_token, lang))
+			: sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang, uploadUrl(order?.upload_token, lang))
 	]);
 }
 
