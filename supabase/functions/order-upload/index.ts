@@ -275,6 +275,8 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 	// Only asked for with Smart ServiceHub - how many table QR codes to set up.
 	const tablesNumber = Number(body.tables);
 	const tables = context.hubAddon && Number.isInteger(tablesNumber) && tablesNumber > 0 && tablesNumber <= 500 ? tablesNumber : null;
+	// Free text (e.g. "1-8, 12, Terrasse 1") - tables are often not numbered 1..N.
+	const tableNumbers = context.hubAddon ? String(body.tableNumbers ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 300) : '';
 
 	const pdfPath = `${context.folder}/${FILES.pdf.name}`;
 	const zipPath = zip === 'ok' ? `${context.folder}/${FILES.zip.name}` : null;
@@ -316,7 +318,7 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 		Speisekarte: pdf === 'ok' ? 'menu.pdf (Anhang)' : 'keine neue',
 		...(context.photoAddon ? { 'Foto-ZIP': zip === 'ok' ? 'photos.zip (Anhang)' : '-' } : {}),
 		Logo: logo === 'ok' ? 'im Anhang' : '-',
-		...(context.hubAddon ? { 'Anzahl Tische (ServiceHub)': tables ? String(tables) : 'nicht angegeben' } : {}),
+		...(context.hubAddon ? { 'Anzahl Tische (ServiceHub)': tables ? String(tables) : 'nicht angegeben', Tischnummern: tableNumbers || 'nicht angegeben' } : {}),
 		'Stripe-Checkout': context.session.id
 	}, attachments);
 
