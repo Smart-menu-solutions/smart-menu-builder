@@ -12,7 +12,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=logo-3">
+<link rel="stylesheet" href="assets/css/admin.css?v=publish-1">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -61,10 +61,6 @@
             <form id="clientForm" novalidate>
                 <div class="editor-tab-panel" data-tab-panel="details">
                     <div class="form-grid"><label><span data-i18n="customerName">Customer name</span><input id="businessName" required data-i18n-placeholder="customerNamePlaceholder" placeholder="e.g. Café Ole"></label><label><span data-i18n="urlSlug">URL slug</span><input id="slug" required data-i18n-placeholder="urlSlugPlaceholder" placeholder="cafe-ole"></label><label><span data-i18n="phone">Phone</span><input id="phone" data-i18n-placeholder="phonePlaceholder" placeholder="+30 210 555 0123"></label><label><span data-i18n="whatsapp">WhatsApp</span><input id="whatsapp" data-i18n-placeholder="whatsappPlaceholder" placeholder="+30 210 555 0123"></label><label class="wide"><span data-i18n="address">Address</span><input id="address" data-i18n-placeholder="addressPlaceholder" placeholder="Street, city"></label><label><span data-i18n="currency">Currency</span><select id="currency"><option>€</option><option>$</option><option>£</option></select></label></div>
-                    <div class="publish-control">
-                        <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
-                        <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
-                    </div>
                     <div class="header-bg-control">
                         <span class="header-bg-label" data-i18n="menuHeaderStyle">Menu header style</span>
                         <div class="header-bg-row">
@@ -101,6 +97,10 @@
                     <div class="language-panel"><strong data-i18n="menuLanguages">Menu languages</strong><p class="language-hint" data-i18n="menuLanguagesHint">Use the arrows to set the order languages appear in on the live menu.</p><label class="source-language"><span data-i18n="sourceLanguage">Source language</span><select id="sourceLanguage"><option value="de" selected>Deutsch</option><option value="en">English</option><option value="el">Ελληνικά</option></select></label><div id="languageEditor" class="language-editor"></div><button type="button" class="button button-ghost" id="translateMenu" data-i18n="automaticallyTranslate">Automatically translate</button><span id="translationStatus"></span></div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="addons" hidden>
+                    <div class="publish-control">
+                        <label class="publish-toggle"><input type="checkbox" id="isPublished"> <span data-i18n="menuOnline">Menu online (visible to guests)</span></label>
+                        <small data-i18n="menuOnlineHint">Only switch on once the menu is ready and the customer gets their QR code.</small>
+                    </div>
                     <p class="language-hint" data-i18n="addonsIntro">Green means the client already has it. Tick "Gratis" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
                     <div class="addon-board">
                         <div class="addon-board-row">
