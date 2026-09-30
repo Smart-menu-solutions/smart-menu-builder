@@ -209,9 +209,10 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 	await sendEmail(to, subscriptionId, `Kundenbestätigung: ${subject}`, subject, html);
 }
 
-// Confirmation for the €2.99 Discovery Pass - no add-on link (the pass has
-// none), and it says when the 7 days start: once the menu is live.
-async function sendDiscoveryConfirmation(subscriptionId: string, to: string, contactName: string, lang: string, uploadLink: string | null) {
+// Confirmation for the €2.99 Discovery Pass - no add-on link (the pass already
+// includes every add-on), it says when the 7 days start (once the QR code is
+// received) and links the live stats page, which the pass's stats flag unlocks.
+async function sendDiscoveryConfirmation(subscriptionId: string, to: string, contactName: string, lang: string, uploadLink: string | null, statsUrl: string) {
 	if (!EMAIL_PATTERN.test(to)) {
 		console.error('Skipping discovery confirmation: no valid email on file', subscriptionId);
 		return;
@@ -226,6 +227,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 			<li>We set up your digital menu with up to 10 dishes, your logo and your colours, and send you your QR code. All add-ons are included for you to try: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ and Smart ServiceHub™ (ordering at the table).</li>
 			<li><strong>Your 7 days only start once you have received your QR code</strong>, not with the payment. On day 6 you get your report: how many guests opened your menu and which dishes they looked at most.</li>
 		</ol>
+		<p><strong>Your live stats:</strong> once your menu is online you can see here at any time how often it has been opened: <a href="${statsUrl}">View live stats</a></p>
 		<p>If you want to continue afterwards, the €2.99 is credited towards your plan.</p>
 		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Best regards</p>
@@ -238,6 +240,7 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 			<li>Wir richten Ihre digitale Speisekarte mit bis zu 10 Gerichten, Ihrem Logo und Ihren Farben ein und schicken Ihnen Ihren QR-Code. Alle Zusatzmodule sind zum Testen dabei: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ und Smart ServiceHub™ (Bestellen am Tisch).</li>
 			<li><strong>Ihre 7 Tage beginnen erst, wenn Sie Ihren QR-Code erhalten haben</strong>, nicht schon mit der Bezahlung. Am 6. Tag bekommen Sie Ihren Bericht: wie viele Gäste Ihre Speisekarte geöffnet haben und welche Gerichte am meisten angesehen wurden.</li>
 		</ol>
+		<p><strong>Ihre Live-Statistik:</strong> Sobald Ihre Karte online ist, sehen Sie hier jederzeit, wie oft sie geöffnet wurde: <a href="${statsUrl}">Live-Statistik ansehen</a></p>
 		<p>Wenn Sie danach weitermachen möchten, werden die 2,99 € auf Ihren Tarif angerechnet.</p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
@@ -478,7 +481,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			Dateien: legacyPdfPath ? 'im Anhang' : 'ausstehend – der Kunde lädt sie nach der Zahlung hoch, dann kommt eine eigene E-Mail'
 		}, orderAttachments),
 		isDiscovery
-			? sendDiscoveryConfirmation(subscription.id, email, contactName, lang, uploadUrl(order?.upload_token, lang))
+			? sendDiscoveryConfirmation(subscription.id, email, contactName, lang, uploadUrl(order?.upload_token, lang), `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${lang}`)
 			: sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang, uploadUrl(order?.upload_token, lang))
 	]);
 }
