@@ -346,10 +346,27 @@ async function importPdf() {
 		}
 		if (!text.trim()) throw new Error(strings().pdfNoText);
 		const client = selectedClient();
-		client.categories = mergeImportedImages(client.categories, parsePdfText(text));
+		let imported = parsePdfText(text);
+		// Smart Discovery includes at most 10 dishes - keep the first 10 in menu
+		// order (sections left empty by that are dropped) and say how many were cut.
+		let cappedNote = '';
+		const limit = PLAN_DISH_LIMITS[planKey(subscriptionsBySlug[client.slug]?.plan)];
+		if (limit && planKey(subscriptionsBySlug[client.slug]?.plan) === 'discovery') {
+			const total = imported.reduce((sum, category) => sum + (category.items?.length || 0), 0);
+			if (total > limit.limit) {
+				let left = limit.limit;
+				imported = imported.map((category) => {
+					const items = (category.items || []).slice(0, Math.max(left, 0));
+					left -= items.length;
+					return { ...category, items };
+				}).filter((category) => category.items.length);
+				cappedNote = ' ' + strings().importCappedDiscovery.replace('{limit}', limit.limit).replace('{total}', total);
+			}
+		}
+		client.categories = mergeImportedImages(client.categories, imported);
 		await saveClients();
 		render();
-		$('#importStatus').textContent = strings().pdfImported.replace('{n}', pdf.numPages);
+		$('#importStatus').textContent = strings().pdfImported.replace('{n}', pdf.numPages) + cappedNote;
 	} catch (error) {
 		$('#importStatus').textContent = strings().pdfReadFailed.replace('{error}', error.message);
 		notify(error.message);

@@ -6,7 +6,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 // with ?session_id=..., and the customer's confirmation email links here with
 // ?token=<orders.upload_token> for uploading later. Files can only be uploaded
 // for a Checkout Session Stripe itself reports as complete (paid), always to
-// the fixed paths orders/<session id>/menu.pdf|photos.zip, through one-off
+// the fixed paths orders/<session id>/menu.pdf|photos.zip|logo, through one-off
 // signed upload URLs - the bucket has no public insert policy any more (0025).
 //
 // POST { session_id | token, action: 'status' }            -> what the page shows
@@ -37,10 +37,14 @@ const TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 const MAX_ORDER_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // same as the bucket's file_size_limit
 const FILES = {
-	pdf: { name: 'menu.pdf', magic: [0x25, 0x50, 0x44, 0x46, 0x2d], contentType: 'application/pdf' }, // "%PDF-"
-	zip: { name: 'photos.zip', magic: [0x50, 0x4b, 0x03, 0x04], contentType: 'application/zip' } // "PK\x03\x04"
+	pdf: { name: 'menu.pdf', magics: [[0x25, 0x50, 0x44, 0x46, 0x2d]], contentType: 'application/pdf' }, // "%PDF-"
+	zip: { name: 'photos.zip', magics: [[0x50, 0x4b, 0x03, 0x04]], contentType: 'application/zip' }, // "PK\x03\x04"
+	// Optional customer logo, PNG or JPEG - stored without extension, the
+	// attachment gets .png/.jpg from the file's real first bytes.
+	logo: { name: 'logo', magics: [[0x89, 0x50, 0x4e, 0x47], [0xff, 0xd8, 0xff]], contentType: 'image/png' }
 };
 type FileKind = keyof typeof FILES;
+const LOGO_TYPES = ['image/png', 'image/jpeg'];
 
 const CORS_HEADERS = {
 	'Access-Control-Allow-Origin': '*',
@@ -53,6 +57,7 @@ const MESSAGES = {
 		notFound: 'Diese Bestellung wurde nicht gefunden oder ist noch nicht bezahlt.',
 		expired: 'Dieser Upload-Link ist abgelaufen. Bitte kontaktieren Sie uns.',
 		noZip: 'Für diese Bestellung ist kein Foto-Upload gebucht.',
+		badLogo: 'Das Logo muss ein PNG- oder JPG-Bild sein.',
 		missingPdf: 'Bitte laden Sie zuerst Ihre Speisekarte als PDF hoch.',
 		missingZip: 'Bitte laden Sie noch Ihre Fotos als ZIP-Datei hoch.',
 		badPdf: 'Die Datei ist keine gültige PDF-Datei. Bitte wählen Sie eine andere Datei.',
@@ -64,6 +69,7 @@ const MESSAGES = {
 		notFound: 'This order could not be found or has not been paid yet.',
 		expired: 'This upload link has expired. Please contact us.',
 		noZip: 'No photo upload is booked for this order.',
+		badLogo: 'The logo must be a PNG or JPG image.',
 		missingPdf: 'Please upload your menu as a PDF first.',
 		missingZip: 'Please also upload your photos as a ZIP file.',
 		badPdf: 'The file is not a valid PDF. Please choose a different file.',
@@ -79,6 +85,9 @@ interface OrderContext {
 	type: 'initial' | 'renewal';
 	lang: 'de' | 'en';
 	photoAddon: boolean;
+	// Smart Discovery includes DishPhoto to try, so photos are optional there.
+	zipRequired: boolean;
+	hubAddon: boolean;
 	folder: string;
 	order: { id: string; subscription_id: string | null; files_uploaded_at: string | null } | null;
 }
@@ -105,19 +114,21 @@ Deno.serve(async (request) => {
 			case 'status':
 				return json(await statusOf(context));
 			case 'sign': {
-				const kind = body.kind === 'zip' ? 'zip' : body.kind === 'pdf' ? 'pdf' : null;
+				const kind = body.kind === 'zip' ? 'zip' : body.kind === 'pdf' ? 'pdf' : body.kind === 'logo' ? 'logo' : null;
 				if (!kind) return json({ error: text.failed }, 400);
 				if (kind === 'zip' && !context.photoAddon) return json({ error: text.noZip }, 400);
+				const contentType = kind === 'logo' ? (LOGO_TYPES.includes(String(body.contentType)) ? String(body.contentType) : null) : FILES[kind].contentType;
+				if (!contentType) return json({ error: text.badLogo }, 400);
 				const path = `${context.folder}/${FILES[kind].name}`;
 				const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path, { upsert: true });
 				if (error || !data) {
 					console.error('createSignedUploadUrl failed', path, error);
 					return json({ error: text.failed }, 500);
 				}
-				return json({ path: data.path, token: data.token, contentType: FILES[kind].contentType });
+				return json({ path: data.path, token: data.token, contentType });
 			}
 			case 'complete':
-				return await complete(context);
+				return await complete(context, body);
 			default:
 				return json({ error: text.failed }, 400);
 		}
@@ -175,6 +186,8 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 		lang: metadata.lang === 'en' ? 'en' : 'de',
 		// A Smart Discovery upgrade is a renewal-type checkout that can include DishPhoto.
 		photoAddon: (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.photoAddon === 'true',
+		zipRequired: metadata.plan !== 'discovery' && (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.photoAddon === 'true',
+		hubAddon: (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.smartServiceHubAddon === 'true',
 		folder: `orders/${session.id}`,
 		order
 	};
@@ -194,7 +207,9 @@ async function statusOf(context: OrderContext) {
 		lang: context.lang,
 		firstName: context.metadata.firstName || '',
 		photoAddon: context.photoAddon,
-		files: { pdf: FILES.pdf.name in files, zip: FILES.zip.name in files },
+		zipRequired: context.zipRequired,
+		hubAddon: context.hubAddon,
+		files: { pdf: FILES.pdf.name in files, zip: FILES.zip.name in files, logo: FILES.logo.name in files },
 		completed: Boolean(context.order?.files_uploaded_at)
 	};
 }
@@ -225,20 +240,20 @@ async function readHead(path: string, length: number): Promise<Uint8Array | null
 
 // 'ok' | 'missing' | 'bad' (bad files are deleted so they can't linger).
 async function checkFile(folder: string, kind: FileKind, sizes: Record<string, number>): Promise<'ok' | 'missing' | 'bad'> {
-	const { name, magic } = FILES[kind];
+	const { name, magics } = FILES[kind];
 	if (!(name in sizes)) return 'missing';
 	const path = `${folder}/${name}`;
-	const head = await readHead(path, magic.length);
+	const head = await readHead(path, Math.min(...magics.map((magic) => magic.length)));
 	if (head === null) return 'missing';
 	const size = sizes[name];
-	if (magic.every((byte, i) => head[i] === byte) && size > 0 && size <= MAX_UPLOAD_BYTES) return 'ok';
+	if (magics.some((magic) => magic.every((byte, i) => i >= head.length || head[i] === byte)) && size > 0 && size <= MAX_UPLOAD_BYTES) return 'ok';
 	const { error } = await supabase.storage.from(BUCKET).remove([path]);
 	if (error) console.error('Could not delete rejected upload', path, error);
 	console.warn('Rejected upload', { path, size });
 	return 'bad';
 }
 
-async function complete(context: OrderContext) {
+async function complete(context: OrderContext, body: Record<string, unknown>) {
 	const text = MESSAGES[context.lang];
 	// Paid, but Stripe's webhook hasn't created the order row yet (usually a
 	// matter of seconds) - upload.html retries on 409 + retry.
@@ -253,8 +268,13 @@ async function complete(context: OrderContext) {
 	if (context.photoAddon) {
 		zip = await checkFile(context.folder, 'zip', sizes);
 		if (zip === 'bad') return json({ error: text.badZip }, 400);
-		if (zip === 'missing') return json({ error: text.missingZip }, 400);
+		if (zip === 'missing' && context.zipRequired) return json({ error: text.missingZip }, 400);
 	}
+	const logo = await checkFile(context.folder, 'logo', sizes);
+	if (logo === 'bad') return json({ error: text.badLogo }, 400);
+	// Only asked for with Smart ServiceHub - how many table QR codes to set up.
+	const tablesNumber = Number(body.tables);
+	const tables = context.hubAddon && Number.isInteger(tablesNumber) && tablesNumber > 0 && tablesNumber <= 500 ? tablesNumber : null;
 
 	const pdfPath = `${context.folder}/${FILES.pdf.name}`;
 	const zipPath = zip === 'ok' ? `${context.folder}/${FILES.zip.name}` : null;
@@ -274,10 +294,13 @@ async function complete(context: OrderContext) {
 	}
 
 	const attachments: EmailAttachment[] = [];
-	for (const [kind, status] of [['pdf', pdf], ['zip', zip]] as const) {
+	for (const [kind, status] of [['pdf', pdf], ['zip', zip], ['logo', logo]] as const) {
 		if (status !== 'ok') continue;
 		const { data } = await supabase.storage.from(BUCKET).download(`${context.folder}/${FILES[kind].name}`);
-		if (data) attachments.push({ filename: FILES[kind].name, content: toBase64(new Uint8Array(await data.arrayBuffer())) });
+		if (!data) continue;
+		const bytes = new Uint8Array(await data.arrayBuffer());
+		const filename = kind === 'logo' ? (bytes[0] === 0x89 ? 'logo.png' : 'logo.jpg') : FILES[kind].name;
+		attachments.push({ filename, content: toBase64(bytes) });
 	}
 
 	const m = context.metadata;
@@ -292,6 +315,8 @@ async function complete(context: OrderContext) {
 		'Menü-Slug': menuSlug,
 		Speisekarte: pdf === 'ok' ? 'menu.pdf (Anhang)' : 'keine neue',
 		...(context.photoAddon ? { 'Foto-ZIP': zip === 'ok' ? 'photos.zip (Anhang)' : '-' } : {}),
+		Logo: logo === 'ok' ? 'im Anhang' : '-',
+		...(context.hubAddon ? { 'Anzahl Tische (ServiceHub)': tables ? String(tables) : 'nicht angegeben' } : {}),
 		'Stripe-Checkout': context.session.id
 	}, attachments);
 
