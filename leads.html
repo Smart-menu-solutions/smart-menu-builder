@@ -101,7 +101,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
             <li>Tab der Liste (zeigt die noch nicht angeschriebenen Kontakte): pro Kontakt einen Kanal-Button klicken (<strong>Email</strong>, <strong>WhatsApp</strong> oder <strong>Instagram</strong>) → Nachricht abschicken → zurück zur Seite und den Dialog <em>"Did that message go out?"</em> mit <strong>OK</strong> bestätigen. Erst das verschiebt den Kontakt nach <strong>"Sequence"</strong>. Ist der Dialog untergegangen: Button <strong>"Sent"</strong> klicken</li>
             <li>Nach 7 Tagen automatisch fällig in <strong>"Final"</strong> → Kanal-Button klicken → letzte Nachricht senden und bestätigen → Kontakt verschwindet danach aus der Liste</li>
             <li>Schon bestellt oder soll nicht mehr angeschrieben werden? <strong>"Stop"</strong> klicken. Versehentlich weitergeschoben? <strong>"Reset"</strong> setzt den Kontakt zurück auf neu</li>
-            <li>Liste löschen: das <strong>×</strong> im Tab der Liste (entfernt nur die noch nicht angeschriebenen Kontakte, angeschriebene bleiben in Sequence/Final). Ein Listen-Tab verschwindet von selbst, wenn alle Kontakte angeschrieben sind. <strong>Clear</strong> löscht dagegen <em>alle</em> Listen auf einmal</li>
+            <li>Liste löschen: das <strong>×</strong> im Tab der Liste (entfernt nur die noch nicht angeschriebenen Kontakte, angeschriebene bleiben in Sequence/Final). Ein Listen-Tab verschwindet von selbst, wenn alle Kontakte angeschrieben sind. <strong>Clear</strong> setzt nur die Suchleiste zurück (Land, Stadt, Typ), die Listen bleiben</li>
         </ol>
         <p style="margin:10px 0 0;font-size:12px;color:var(--muted)"><strong>"All"</strong>-Tab zeigt alle aktiven Kontakte aus allen Listen und Stufen zusammen (ohne Final/gestoppte). Sequence und Final gelten ebenfalls für alle Listen.</p>
         <p style="margin:14px 0 4px;font-size:13px;font-weight:700;color:var(--ink)">Kontakt manuell hinzufügen (nicht aus der Suche):</p>
@@ -141,7 +141,7 @@ table.leads-table th:nth-child(9),table.leads-table td:nth-child(9){width:140px}
             <button class="button button-ghost" type="button" id="leadsEnrichAll">Enrich all</button>
             <button class="button button-ghost" type="button" id="leadsExport">Export Excel</button>
             <button class="button button-ghost" type="button" id="leadsExportCsv">Export CSV</button>
-            <button class="button button-danger" type="button" id="leadsClear">Clear</button>
+            <button class="button button-ghost" type="button" id="leadsClear" title="Reset country, city and type">Clear</button>
         </div>
         <p class="leads-status" id="leadsStatus">Search via OpenStreetMap (Overpass API). A whole country is capped at 500 results per category - pick a city to get the full list for that city. Every search becomes its own list tab.</p>
     </section>

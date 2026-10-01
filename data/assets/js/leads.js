@@ -1127,19 +1127,14 @@ A new search of the same city can bring it back - use Stop to hide it for good.`
 	notify(`Deleted ${lead.name}`);
 }
 
-function clearLeads() {
-	if (!leads.length) return;
-	if (!confirm(`Clear all ${leads.length} leads in every list? This can't be undone - outreach progress will be lost too.`)) return;
-	leads = [];
-	currentStageTab = 'all';
-	localStorage.removeItem(STORAGE_KEY);
-	// Also wipes the archive (see ARCHIVE_KEY) - Clear is an explicit,
-	// confirmed "lose everything" action, so a lead re-found later should
-	// come back as genuinely new, not silently resume its old progress.
-	archive = {};
-	localStorage.removeItem(ARCHIVE_KEY);
-	$('#leadsStatus').textContent = 'Cleared - run a search to start again.';
-	render();
+// Resets only the search inputs (country, city, type) - the leads and
+// their lists stay untouched. A single list is removed via its tab's ×.
+function clearSearch() {
+	$('#leadsCountry').value = COUNTRIES[0].code;
+	currentCountry = COUNTRIES[0];
+	populateCitySelect();
+	$('#leadsCityOther').value = '';
+	$('#leadsType').value = 'all';
 }
 
 // File-name part for an export: the list being viewed ("germany-hamburg"),
@@ -1308,7 +1303,7 @@ function wireEvents() {
 	$('#leadsEnrichAll').addEventListener('click', enrichAll);
 	$('#leadsExport').addEventListener('click', exportExcel);
 	$('#leadsExportCsv').addEventListener('click', exportCsv);
-	$('#leadsClear').addEventListener('click', clearLeads);
+	$('#leadsClear').addEventListener('click', clearSearch);
 	$('#leadsAddContact').addEventListener('click', openAddContactModal);
 	$('#closeAddContact').addEventListener('click', closeAddContactModal);
 	$('#cancelAddContact').addEventListener('click', closeAddContactModal);
