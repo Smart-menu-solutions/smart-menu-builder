@@ -102,7 +102,7 @@ async function channelName(menuSlug: string): Promise<string | null> {
 // Rollout only: also announce on the old slug-only channel until every open
 // guest/staff page has reloaded the new menu.js/staff.js. Set to false
 // afterwards - then the public channel carries nothing any more.
-const SEND_LEGACY_CHANNEL = true;
+const SEND_LEGACY_CHANNEL = false;
 
 async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
 	const names = [await channelName(menuSlug), SEND_LEGACY_CHANNEL ? `restaurant:${menuSlug}` : null];
