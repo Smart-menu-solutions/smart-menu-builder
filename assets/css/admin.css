@@ -189,3 +189,14 @@
    admin.js hasPosField) - a fifth, narrow field after the price. */
 .item-row.has-pos{grid-template-columns:1.2fr 1.5fr 64px 72px 27px}
 @media(max-width:720px){.item-row.has-pos{grid-template-columns:minmax(0,1fr) 65px 72px 27px}}
+
+/* Right column (250px): .button never wraps its label, so "Änderungen
+   speichern" + "Menü-Vorschau ↗" side by side spilled over the panel edge.
+   The three client actions now stack at full width, and the QR card's LIVE
+   badge sits up by the eyebrow so "QR-Code des Kunden" gets the full width. */
+.quick-actions-panel .qr-actions{grid-template-columns:1fr}
+.quick-actions-panel .qr-actions .button{font-size:13px;padding:10px 17px}
+.qr-panel{position:relative}
+.qr-panel .qr-badge{position:absolute;top:21px;right:21px}
+.qr-panel .panel-heading h2{font-size:20px}
+.qr-panel .qr-actions .button{white-space:normal;min-width:0;line-height:1.25}
