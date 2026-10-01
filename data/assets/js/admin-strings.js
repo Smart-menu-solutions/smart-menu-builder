@@ -65,7 +65,7 @@ window.ADMIN_STRINGS = {
 		chooseHeaderPhoto: 'Kopfbild auswählen', loading: 'Wird geladen …',
 
 		subscriptionStatus: { active: 'Aktiv', expired: 'Abgelaufen', deactivated: 'Deaktiviert', cancelled: 'Gekündigt' },
-		noSubscription: 'Kein Abo', clientRowSub: ' · {plan} · bis {date}', sectionsCount: '{n} Bereiche',
+		noSubscription: 'Kein Abo', clientRowSub: ' · {plan} · bis {date}', clientRowSubDiscoveryWaiting: ' · {plan} · 7 Tage noch nicht gestartet', sectionsCount: '{n} Bereiche',
 		noClientsNeedRenewal: 'Aktuell braucht kein Kunde eine Verlängerung.', noClientsFound: 'Keine Kunden gefunden.',
 		subscriptionLocked: 'Das Abo dieses Kunden ist {status}. Die Bearbeitung ist gesperrt, bis der Kunde verlängert.', renewalLink: 'Verlängerungs-Link',
 
@@ -144,6 +144,7 @@ window.ADMIN_STRINGS = {
 		logoLabel: 'Logo', noLogo: 'Kein Logo', logoUpdated: 'Logo aktualisiert', logoUploaded: 'Logo hochgeladen', logoRemoved: 'Logo entfernt',
 		menuOnlineTitle: 'Speisekarte online', menuOnlineCheck: 'Für Gäste sichtbar', 
 		menuOnline: 'Speisekarte online (für Gäste sichtbar)', menuOnlineHint: 'Erst einschalten, wenn die Karte fertig ist und der Kunde seinen QR-Code bekommt. Bei Smart Discovery starten damit die 7 Tage.',
+		discoveryWaiting: 'Wartet auf die Online-Schaltung – die 7 Tage starten erst, wenn „Speisekarte online“ an ist.', discoveryStartsNextRun: 'Online – die 7 Tage starten mit dem nächsten täglichen Lauf (früh morgens).', discoveryRunning: 'Tag {day} von 7 – ohne Upgrade geht die Karte am {date} offline.', discoveryEnded: 'Abgelaufen – die Karte ist offline. Mit dem Upgrade-Link ist sie nach der Zahlung sofort wieder online.', discoveryUpgradeTitle: 'Kopiert den Upgrade-Link: Der Kunde wählt dort einen Tarif, die 2,99 € werden angerechnet.', upgradeLinkCopied: 'Upgrade-Link kopiert',
 		menuNowOnline: 'Speisekarte ist jetzt online', menuNowOffline: 'Speisekarte ist jetzt offline',
 		photoUploaded: 'Foto hochgeladen', photosUploaded: 'Fotos hochgeladen',
 
@@ -218,7 +219,7 @@ window.ADMIN_STRINGS = {
 		chooseHeaderPhoto: 'Choose a header photo', loading: 'Loading…',
 
 		subscriptionStatus: { active: 'Active', expired: 'Expired', deactivated: 'Deactivated', cancelled: 'Cancelled' },
-		noSubscription: 'No subscription', clientRowSub: ' · {plan} · until {date}', sectionsCount: '{n} sections',
+		noSubscription: 'No subscription', clientRowSub: ' · {plan} · until {date}', clientRowSubDiscoveryWaiting: ' · {plan} · 7 days not started yet', sectionsCount: '{n} sections',
 		noClientsNeedRenewal: 'No clients currently need renewal.', noClientsFound: 'No clients found.',
 		subscriptionLocked: 'This client\'s subscription is {status}. Editing is locked until they renew.', renewalLink: 'Renewal link',
 
@@ -295,6 +296,7 @@ window.ADMIN_STRINGS = {
 		logoLabel: 'Logo', noLogo: 'No logo', logoUpdated: 'Logo updated', logoUploaded: 'Logo uploaded', logoRemoved: 'Logo removed',
 		menuOnlineTitle: 'Menu online', menuOnlineCheck: 'Visible to guests',
 		menuOnline: 'Menu online (visible to guests)', menuOnlineHint: 'Only switch on once the menu is ready and the customer gets their QR code. For Smart Discovery this starts the 7 days.',
+		discoveryWaiting: 'Waiting to go online – the 7 days only start once "Menu online" is switched on.', discoveryStartsNextRun: 'Online – the 7 days start with the next daily run (early morning).', discoveryRunning: 'Day {day} of 7 – without an upgrade the menu goes offline on {date}.', discoveryEnded: 'Ended – the menu is offline. The upgrade link brings it straight back online after payment.', discoveryUpgradeTitle: 'Copies the upgrade link: the customer picks a plan there, the €2.99 is credited.', upgradeLinkCopied: 'Upgrade link copied',
 		menuNowOnline: 'Menu is now online', menuNowOffline: 'Menu is now offline',
 		photoUploaded: 'Photo uploaded', photosUploaded: 'Photos uploaded',
 

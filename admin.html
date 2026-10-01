@@ -100,6 +100,11 @@
                 <div class="editor-tab-panel" data-tab-panel="addons" hidden>
                     <p class="language-hint" data-i18n="addonsIntro">Green means the client already has it. Tick "Gratis" to give an add-on for free (no purchase needed). "Send link" copies their personal add-ons link so you can share it wherever's convenient.</p>
                     <div class="addon-board">
+                        <div class="addon-board-row" id="discoveryRow" style="display:none">
+                            <span class="addon-board-status" id="discoveryStatus"></span>
+                            <span class="addon-board-main"><span class="addon-board-name">Smart Discovery</span><small class="addon-board-hint" id="discoveryHint"></small></span>
+                            <button type="button" class="button button-ghost addon-board-send" id="discoverySendUpgrade" data-i18n="sendLink" data-i18n-title="discoveryUpgradeTitle" title="Copies the upgrade link">Send link</button>
+                        </div>
                         <div class="addon-board-row">
                             <span class="addon-board-status" id="addonStatusAnalytics"></span>
                             <span class="addon-board-main"><span class="addon-board-name">Smart WeeklyReport™</span><label class="addon-board-free" data-i18n-title="giveForFree" title="Give this add-on for free"><input type="checkbox" id="addonFreeAnalytics"> <span data-i18n="gratis">Gratis</span></label></span>
@@ -206,9 +211,9 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=chime-3"></script>
-<script src="data/assets/js/admin-strings.js?v=discovery-3"></script>
+<script src="data/assets/js/admin-strings.js?v=discovery-row-1"></script>
 <script src="data/assets/js/vendor/qrcode.js?v=1.5.2"></script>
-<script src="data/assets/js/admin.js?v=security-2"></script>
+<script src="data/assets/js/admin.js?v=discovery-row-1"></script>
 <script src="data/assets/js/pwa.js?v=4" defer></script>
 </body>
 </html>

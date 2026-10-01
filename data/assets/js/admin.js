@@ -860,6 +860,8 @@ function renderAddonBoard(client, clientSubscription) {
 		hint.classList.toggle('smart-match-not-ready', !qualifies);
 	}
 
+	renderDiscoveryRow(client, clientSubscription);
+
 	const addonsUrl = clientSubscription?.addon_token ? `${RENEWAL_SITE}/addons.html?token=${clientSubscription.addon_token}` : '';
 	[$('#addonSendAnalytics'), $('#addonSendSfm'), $('#addonSendPhoto'), $('#addonSendSmartServiceHub')].forEach((button) => {
 		if (!button) return;
@@ -868,6 +870,47 @@ function renderAddonBoard(client, clientSubscription) {
 	});
 
 	renderSmartServiceHubExtra(client);
+}
+
+// Smart Discovery is a plan, not an add-on, but it's the one thing on this tab
+// with a clock running, so Discovery customers get their own row on top: where
+// the 7 days stand and a "Send link" for the upgrade (renewal) page. Same
+// timing as check-subscriptions' runDiscoveryPasses(): the daily run (03:00
+// UTC) stamps discovery_started_on once the menu is online, and the run on
+// start + 7 days takes it offline.
+const DISCOVERY_DAYS = 7;
+function discoveryEndDay(startedOn) {
+	const end = new Date(`${startedOn}T00:00:00Z`);
+	end.setUTCDate(end.getUTCDate() + DISCOVERY_DAYS);
+	return end;
+}
+
+function renderDiscoveryRow(client, subscription) {
+	const row = $('#discoveryRow');
+	if (!row) return;
+	const isDiscovery = planKey(subscription?.plan) === 'discovery';
+	row.style.display = isDiscovery ? '' : 'none';
+	if (!isDiscovery) return;
+
+	const running = subscription.status === 'active' && !!subscription.discovery_started_on;
+	let hint;
+	if (subscription.status !== 'active') {
+		hint = strings().discoveryEnded;
+	} else if (!subscription.discovery_started_on) {
+		hint = client.is_published !== false ? strings().discoveryStartsNextRun : strings().discoveryWaiting;
+	} else {
+		const end = discoveryEndDay(subscription.discovery_started_on);
+		const todayUtc = Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate());
+		const day = Math.min(DISCOVERY_DAYS, Math.max(1, Math.floor((todayUtc - Date.parse(`${subscription.discovery_started_on}T00:00:00Z`)) / 86400000) + 1));
+		hint = strings().discoveryRunning.replace('{day}', day).replace('{date}', end.toLocaleDateString(dateLocale(), { timeZone: 'UTC' }));
+	}
+	$('#discoveryStatus').classList.toggle('active', running);
+	$('#discoveryHint').textContent = hint;
+
+	const upgradeUrl = subscription.renewal_token ? `${RENEWAL_SITE}/renewal.html?token=${subscription.renewal_token}&lang=${subscription.lang === 'en' ? 'en' : 'de'}` : '';
+	const button = $('#discoverySendUpgrade');
+	button.disabled = !upgradeUrl;
+	button.dataset.link = upgradeUrl;
 }
 
 // Same "Ready/Not ready" hint pattern as Smart Food Match, plus - only once
@@ -1004,7 +1047,10 @@ function render() {
 		const sub = subscriptionsBySlug[item.slug];
 		const statusClass = sub ? (sub.status !== 'active' ? `status-${sub.status}` : '') : 'status-none';
 		const statusLabel = sub ? subscriptionStatusLabel(sub.status) : strings().noSubscription;
-		const subInfo = sub ? strings().clientRowSub.replace('{plan}', escapeHtml(PLAN_DISH_LIMITS[sub.plan]?.label || sub.plan)).replace('{date}', escapeHtml(sub.current_period_end || '?')) : '';
+		// A Discovery Pass's current_period_end is only a placeholder until the
+		// 7 days start (see renderDiscoveryRow()) - don't show it as the end date.
+		const discoveryWaiting = sub && planKey(sub.plan) === 'discovery' && sub.status === 'active' && !sub.discovery_started_on;
+		const subInfo = sub ? (discoveryWaiting ? strings().clientRowSubDiscoveryWaiting : strings().clientRowSub).replace('{plan}', escapeHtml(PLAN_DISH_LIMITS[sub.plan]?.label || sub.plan)).replace('{date}', escapeHtml(sub.current_period_end || '?')) : '';
 		const statusBadge = `<span class="status-badge ${statusClass}">${escapeHtml(statusLabel)}</span>`;
 		return `<div class="client-row ${item.id === selectedId ? 'selected' : ''}" data-client="${item.id}"><span class="client-avatar">${initials(item.name)}</span><span class="client-info"><strong>${escapeHtml(item.name)}</strong><small>${escapeHtml(strings().sectionsCount.replace('{n}', item.categories.length))}${subInfo}</small><span class="status-badge-row">${statusBadge}</span></span><i class="client-status ${statusClass}" title="${escapeAttr(statusLabel)}"></i></div>`;
 	}).join('') || `<p class="client-empty">${escapeHtml(showOnlyNeedsRenewal ? strings().noClientsNeedRenewal : strings().noClientsFound)}</p>`;
@@ -1257,7 +1303,7 @@ function updateDishCount(client, subscription) {
 
 async function syncSubscriptions() {
 	if (typeof supabaseClient === 'undefined') return;
-	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token').order('created_at', { ascending: false });
+	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token, discovery_started_on, lang').order('created_at', { ascending: false });
 	if (error) return;
 	subscriptionsBySlug = {};
 	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
@@ -1382,6 +1428,12 @@ wireAddonFreeCheckboxes();
 		await navigator.clipboard.writeText(button.dataset.link);
 		notify(strings().addonsLinkCopied);
 	});
+});
+if ($('#discoverySendUpgrade')) $('#discoverySendUpgrade').addEventListener('click', async () => {
+	const button = $('#discoverySendUpgrade');
+	if (!button.dataset.link) return;
+	await navigator.clipboard.writeText(button.dataset.link);
+	notify(strings().upgradeLinkCopied);
 });
 
 // The 4 staff links and each table's QR link are rebuilt into fresh
