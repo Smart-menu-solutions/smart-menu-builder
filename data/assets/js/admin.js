@@ -613,25 +613,54 @@ async function shortHash(text) {
 	return [...new Uint8Array(digest)].slice(0, 6).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-function loadCrossOriginImage(src) {
-	return new Promise((resolve, reject) => {
-		const img = new Image();
-		img.crossOrigin = 'anonymous';
-		img.onload = () => resolve(img);
-		img.onerror = () => reject(new Error('QR image could not be loaded'));
-		img.src = src;
-	});
+// QR codes are drawn right here in the browser (vendor/qrcode.js) - the
+// links they hold (a table's carries its link_secret) are never sent to a
+// QR image service. marginModules is the white quiet zone, in QR modules.
+function drawQr(text, size, ecc, marginModules) {
+	qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+	const qr = qrcode(0, ecc);
+	qr.addData(text, 'Byte');
+	qr.make();
+	const count = qr.getModuleCount();
+	const cell = Math.max(1, Math.floor(size / (count + marginModules * 2)));
+	const offset = Math.floor((size - cell * count) / 2);
+	const canvas = document.createElement('canvas');
+	canvas.width = canvas.height = size;
+	const ctx = canvas.getContext('2d');
+	ctx.fillStyle = '#ffffff';
+	ctx.fillRect(0, 0, size, size);
+	ctx.fillStyle = '#000000';
+	for (let row = 0; row < count; row += 1) {
+		for (let col = 0; col < count; col += 1) {
+			if (qr.isDark(row, col)) ctx.fillRect(offset + col * cell, offset + row * cell, cell, cell);
+		}
+	}
+	return canvas;
+}
+
+// render() runs on every edit, so each QR image is only drawn once. A failure
+// (e.g. vendor/qrcode.js didn't load) leaves just that image empty instead of
+// breaking the whole render().
+const qrDataUrlCache = new Map();
+function qrDataUrl(text, size, ecc, marginModules) {
+	const key = `${size}|${ecc}|${marginModules}|${text}`;
+	if (!qrDataUrlCache.has(key)) {
+		try {
+			qrDataUrlCache.set(key, drawQr(text, size, ecc, marginModules).toDataURL('image/png'));
+		} catch (error) {
+			console.error('QR code could not be drawn', error);
+			return '';
+		}
+	}
+	return qrDataUrlCache.get(key);
 }
 
 async function tableQrImageUrl(client, table) {
 	const url = tableGuestUrl(client, table);
 	const cacheKey = `${table.id}|${url}`;
 	if (tableQrImageCache.has(cacheKey)) return tableQrImageCache.get(cacheKey);
-	const qr = await loadCrossOriginImage(`https://api.qrserver.com/v1/create-qr-code/?size=${TABLE_QR_SIZE}x${TABLE_QR_SIZE}&margin=12&ecc=H&data=${encodeURIComponent(url)}`);
-	const canvas = document.createElement('canvas');
-	canvas.width = canvas.height = TABLE_QR_SIZE;
+	const canvas = drawQr(url, TABLE_QR_SIZE, 'H', 2);
 	const ctx = canvas.getContext('2d');
-	ctx.drawImage(qr, 0, 0, TABLE_QR_SIZE, TABLE_QR_SIZE);
 	const label = String(table.table_number);
 	// Largest bold font whose box stays within ~42% of the width (a longer
 	// label like "T12" or "Terrasse 3" shrinks to fit instead of covering more).
@@ -886,8 +915,8 @@ function renderSmartServiceHubExtra(client) {
 		// 0019_table_link_secret.sql - table number alone is guessable, the
 		// secret is what actually keeps another table's order private) - what
 		// the owner actually needs from here is a printable QR *image* for
-		// each table's physical sticker, same on-demand QR image service the
-		// main "Client QR code" panel uses (see #qrImage). The table number is
+		// each table's physical sticker, drawn locally like the main "Client
+		// QR code" panel's (see qrDataUrl()). The table number is
 		// overlaid on the QR itself (not just printed as a caption) so two
 		// printed codes can't get mixed up - ecc=H (highest error correction)
 		// is what makes a QR code tolerate an obstruction like this in the
@@ -895,8 +924,9 @@ function renderSmartServiceHubExtra(client) {
 		tableNumbersEl.innerHTML = tables.length
 			? tables.map((table) => {
 				const tableUrl = tableGuestUrl(client, table);
-				const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=6&ecc=H&data=${encodeURIComponent(tableUrl)}`;
-				return `<div class="addon-board-row table-qr-row">${qrWithNumberMarkup(qrSrc, table.table_number, 44)}<span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><button type="button" class="button button-ghost addon-board-send" data-print-table-qr="${escapeAttr(qrSrc.replace('size=90x90', 'size=400x400'))}" data-print-table-number="${escapeAttr(String(table.table_number))}">${escapeHtml(strings().openQr)}</button><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
+				// One 400px image serves the 44px thumbnail and the printable page.
+				const qrSrc = qrDataUrl(tableUrl, 400, 'H', 2);
+				return `<div class="addon-board-row table-qr-row">${qrWithNumberMarkup(qrSrc, table.table_number, 44)}<span class="addon-board-main"><span class="addon-board-name">${escapeHtml(strings().tableLabel.replace('{n}', table.table_number))}</span></span><button type="button" class="button button-ghost addon-board-send" data-print-table-qr="${escapeAttr(qrSrc)}" data-print-table-number="${escapeAttr(String(table.table_number))}">${escapeHtml(strings().openQr)}</button><button type="button" class="button button-ghost addon-board-send" data-table-link="${escapeAttr(tableUrl)}">${escapeHtml(strings().copyLink)}</button><button type="button" class="table-chip-remove" data-remove-table="${table.id}" data-remove-table-number="${escapeAttr(String(table.table_number))}" title="${escapeHtml(strings().removeTable)}" aria-label="${escapeHtml(strings().removeTable)}">✕</button></div>`;
 			}).join('')
 			: `<p class="client-empty">${escapeHtml(strings().noTablesYet)}</p>`;
 	}
@@ -1103,7 +1133,7 @@ function render() {
 	document.querySelectorAll('[data-item-appetite-size]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemAppetiteSize.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].appetiteSize = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-item-style]').forEach((select) => select.addEventListener('change', () => { const [categoryIndex, itemIndex] = select.dataset.itemStyle.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].style = select.value; saveClients().then(render).catch((error) => notify(error.message)); }));
 	document.querySelectorAll('[data-item-favorite]').forEach((checkbox) => checkbox.addEventListener('change', () => { const [categoryIndex, itemIndex] = checkbox.dataset.itemFavorite.split('-').map(Number); client.categories[categoryIndex].items[itemIndex].isFavorite = checkbox.checked; saveClients().then(render).catch((error) => notify(error.message)); }));
-	const url = menuUrl(client); $('#qrUrl').textContent = url; $('#previewMenu').href = url; if ($('#previewMenuTop')) $('#previewMenuTop').href = url; $('#qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=12&data=${encodeURIComponent(url)}`;
+	const url = menuUrl(client); $('#qrUrl').textContent = url; $('#previewMenu').href = url; if ($('#previewMenuTop')) $('#previewMenuTop').href = url; $('#qrImage').src = qrDataUrl(url, 480, 'M', 4);
 	// The Email templates tab isn't about this client (it's the shared template
 	// list), so a locked client must not switch its buttons off - that also
 	// keeps the template toolbar's own disabled states (e.g. Delete with nothing
