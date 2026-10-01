@@ -22,6 +22,29 @@ const CORS_HEADERS = {
 const MAX_CATEGORIES = 100;
 const MAX_DISHES = 500;
 const MAX_RECOMMENDATIONS = 50;
+// Course keys of Smart Food Match recommendations - see buildCourseCatalog() in menu.js.
+const COURSES = new Set(['starter', 'main', 'dessert', 'drink']);
+
+type MenuCategory = { name?: string; items?: { name?: string }[] };
+
+function menuNames(categories: MenuCategory[] | null) {
+	const categoryNames = new Set<string>();
+	const dishNames = new Set<string>();
+	for (const category of categories || []) {
+		if (category?.name) categoryNames.add(String(category.name));
+		for (const item of category?.items || []) {
+			if (item?.name) dishNames.add(String(item.name));
+		}
+	}
+	return { categoryNames, dishNames };
+}
+
+// De-duplicated (increment_menu_views()'s ON CONFLICT DO UPDATE can't touch
+// the same row twice in one statement) and capped before any lookup, so a
+// huge array costs nothing.
+function uniqueLabels(value: unknown): string[] {
+	return [...new Set(Array.isArray(value) ? value.slice(0, 1000).map(String) : [])];
+}
 
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
@@ -37,25 +60,30 @@ Deno.serve(async (request) => {
 		const menuSlug = String(body.menuSlug || '').trim();
 		if (!menuSlug) return json({ error: 'Missing menuSlug' }, 400);
 
-		// Dedupe + cap defensively before it ever reaches the DB function - both
-		// to bound the array size against abuse and because
-		// increment_menu_views()'s ON CONFLICT DO UPDATE can't affect the same
-		// row twice within one statement.
-		const categories = [...new Set(Array.isArray(body.categories) ? body.categories.map(String) : [])].slice(0, MAX_CATEGORIES);
-		const dishes = [...new Set(Array.isArray(body.dishes) ? body.dishes.map(String) : [])].slice(0, MAX_DISHES);
-		const recommendations = [...new Set(Array.isArray(body.recommendations) ? body.recommendations.map(String) : [])].slice(0, MAX_RECOMMENDATIONS);
-
 		// Only count views for menus that are actually live and have the
 		// add-on active - also means a slug probe never reveals anything via
 		// the response (always the same 204, active or not).
 		const { data: menu } = await supabase
 			.from('menus')
-			.select('slug')
+			.select('slug, categories')
 			.eq('slug', menuSlug)
 			.eq('is_published', true)
 			.eq('analytics_reports_enabled', true)
 			.maybeSingle();
 		if (!menu) return new Response(null, { status: 204, headers: CORS_HEADERS });
+
+		// Anyone can call this endpoint, so only names that really are on this
+		// menu get counted - the exact values menu.js sends (data-category-name,
+		// data-item-name, '<course>::<dish>' for Smart Food Match). Anything
+		// else would land in the customer's stats page and weekly report.
+		const { categoryNames, dishNames } = menuNames(menu.categories);
+		const isKnownRecommendation = (label: string) => {
+			const separatorIndex = label.indexOf('::');
+			return separatorIndex > 0 && COURSES.has(label.slice(0, separatorIndex)) && dishNames.has(label.slice(separatorIndex + 2));
+		};
+		const categories = uniqueLabels(body.categories).filter((label) => categoryNames.has(label)).slice(0, MAX_CATEGORIES);
+		const dishes = uniqueLabels(body.dishes).filter((label) => dishNames.has(label)).slice(0, MAX_DISHES);
+		const recommendations = uniqueLabels(body.recommendations).filter(isKnownRecommendation).slice(0, MAX_RECOMMENDATIONS);
 
 		const today = new Date().toISOString().slice(0, 10);
 		const { error } = await supabase.rpc('increment_menu_views', {
