@@ -25,6 +25,10 @@ const CORS_HEADERS = {
 	'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
 };
 
+// One cart is a handful of lines - this only stops a single request from
+// flooding the kitchen with thousands of rows.
+const MAX_ITEMS_PER_ORDER = 50;
+
 function json(data: unknown, status = 200) {
 	return new Response(JSON.stringify(data), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
 }
@@ -61,7 +65,10 @@ const TABLE_LINK_SECRET_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 async function resolveTable(slug: string, tableNumber: string, linkSecret: string) {
 	if (!TABLE_LINK_SECRET_PATTERN.test(linkSecret)) return null;
 	const { data: menu } = await supabase.from('menus').select('*').eq('slug', slug).maybeSingle();
-	if (!menu || !menu.smartservice_hub_enabled) return null;
+	// is_published too: expiry, cancellation and the end of a Discovery Pass
+	// only unpublish the menu (check-subscriptions/stripe-webhook) - without
+	// this, ordering kept working for a customer who no longer pays.
+	if (!menu || !menu.smartservice_hub_enabled || !menu.is_published) return null;
 	const { data: table } = await supabase.from('restaurant_tables').select('id, menu_slug, table_number, status').eq('menu_slug', slug).eq('table_number', tableNumber).eq('link_secret', linkSecret).maybeSingle();
 	if (!table) return null;
 	return { table, menu };
@@ -138,6 +145,7 @@ Deno.serve(async (request) => {
 	// append-only insert either way, see 0015_smartservice_hub.sql).
 	const requested = Array.isArray(body.items) ? body.items : [];
 	if (!requested.length) return json({ error: 'No items to order.' }, 400);
+	if (requested.length > MAX_ITEMS_PER_ORDER) return json({ error: 'Too many items in one order - please send it in smaller parts.' }, 400);
 
 	const { data: existingItems } = await supabase.from('order_items').select('round_number').eq('order_group_id', group.id).order('round_number', { ascending: false }).limit(1);
 	const roundNumber = existingItems && existingItems.length ? existingItems[0].round_number + 1 : 1;

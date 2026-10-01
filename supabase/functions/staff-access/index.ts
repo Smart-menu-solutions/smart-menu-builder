@@ -24,6 +24,8 @@ const CORS_HEADERS = {
 };
 
 const TOKEN_PATTERN = /^[0-9a-f-]{36}$/i;
+// Same cap as order-session - stops one request from flooding the kitchen.
+const MAX_ITEMS_PER_ORDER = 50;
 
 function json(data: unknown, status = 200) {
 	return new Response(JSON.stringify(data), { status, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } });
@@ -65,8 +67,10 @@ async function resolveAccess(token: string) {
 	// just that link's display name (null = the role's default name).
 	const { data } = await supabase.from('restaurant_access').select('menu_slug, role, label').eq('token', token).maybeSingle();
 	if (!data) return null;
-	const { data: menu } = await supabase.from('menus').select('name, categories, languages, translations, smartservice_hub_enabled').eq('slug', data.menu_slug).maybeSingle();
-	if (!menu || !menu.smartservice_hub_enabled) return null;
+	const { data: menu } = await supabase.from('menus').select('name, categories, languages, translations, smartservice_hub_enabled, is_published').eq('slug', data.menu_slug).maybeSingle();
+	// Same rule as order-session: an unpublished menu (expired, cancelled,
+	// Discovery Pass over) has no ServiceHub either.
+	if (!menu || !menu.smartservice_hub_enabled || !menu.is_published) return null;
 	return { menuSlug: data.menu_slug as string, role: data.role as 'waiter' | 'kitchen' | 'bar' | 'cashier', label: (data.label as string | null) || null, menu };
 }
 
@@ -332,6 +336,7 @@ Deno.serve(async (request) => {
 		if (!(await tableBelongsTo(tableId, menuSlug))) return json({ error: 'Table not found.' }, 404);
 		const requested = Array.isArray(body.items) ? body.items : [];
 		if (!requested.length) return json({ error: 'No items to add.' }, 400);
+		if (requested.length > MAX_ITEMS_PER_ORDER) return json({ error: 'Too many items at once.' }, 400);
 
 		const { data: group } = await supabase.from('order_groups').select('id').eq('table_id', tableId).eq('status', 'OPEN').maybeSingle();
 		if (!group) return json({ error: 'This table is not active yet.' }, 400);
