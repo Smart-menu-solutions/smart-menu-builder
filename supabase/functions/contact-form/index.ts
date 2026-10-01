@@ -19,7 +19,24 @@ const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onb
 const SITE = 'https://smartmenusolutions.com';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // More contact emails than this within 10 minutes is a bot, not a customer.
-const MAX_PER_10_MIN = 15;
+// Per sender first, so one bot can't use up the shared limit and block the
+// form for everyone else; the shared limit stays as a backstop.
+const MAX_PER_SENDER_10_MIN = 3;
+const MAX_PER_10_MIN = 50;
+
+// HMAC of the sender's IP, keyed with a server-side secret, so the stored
+// value can't be turned back into the IP. Null if the platform sent no IP.
+// cf-connecting-ip is set by Cloudflare in front of Supabase and can't be
+// spoofed by the caller; x-forwarded-for's first entry is the same IP
+// (a caller-supplied X-Forwarded-For gets replaced, checked 2026-10-01).
+async function senderHash(request: Request): Promise<string | null> {
+	const ip = (request.headers.get('cf-connecting-ip') || (request.headers.get('x-forwarded-for') || '').split(',')[0]).trim();
+	const secret = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+	if (!ip || !secret) return null;
+	const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+	const signature = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`contact-form:${ip}`));
+	return [...new Uint8Array(signature)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+}
 
 function escapeHtml(value: string) {
 	return value.replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character] as string));
@@ -52,6 +69,11 @@ Deno.serve(async (request) => {
 	if (!name || !message || !EMAIL_PATTERN.test(email)) return redirect(`${contactPage}?error=1`);
 
 	const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+	const clientHash = await senderHash(request);
+	if (clientHash) {
+		const { count: senderCount } = await supabase.from('notifications_log').select('id', { count: 'exact', head: true }).eq('kind', 'contact_form').eq('client_hash', clientHash).gte('created_at', since);
+		if ((senderCount ?? 0) >= MAX_PER_SENDER_10_MIN) return redirect(`${contactPage}?error=1`);
+	}
 	const { count } = await supabase.from('notifications_log').select('id', { count: 'exact', head: true }).eq('kind', 'contact_form').gte('created_at', since);
 	if ((count ?? 0) >= MAX_PER_10_MIN) return redirect(`${contactPage}?error=1`);
 
@@ -77,7 +99,9 @@ Deno.serve(async (request) => {
 	} catch (error) {
 		console.error('Resend request failed', error);
 	}
-	await supabase.from('notifications_log').insert({ subscription_id: null, kind: 'contact_form', sent_to: NOTIFICATION_EMAIL, provider_message_id: providerMessageId });
+	await supabase.from('notifications_log').insert({ subscription_id: null, kind: 'contact_form', sent_to: NOTIFICATION_EMAIL, provider_message_id: providerMessageId, client_hash: clientHash });
+	// The hash is only needed for the 10-minute limit - don't keep it longer than a day.
+	await supabase.from('notifications_log').update({ client_hash: null }).eq('kind', 'contact_form').not('client_hash', 'is', null).lt('created_at', new Date(Date.now() - 24 * 3600 * 1000).toISOString());
 
 	// Only claim success if Resend actually accepted the email.
 	return providerMessageId ? redirect('thank-you.html') : redirect(`${contactPage}?error=1`);
