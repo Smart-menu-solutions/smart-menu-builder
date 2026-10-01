@@ -60,7 +60,9 @@ document.getElementById('start').addEventListener('click', async () => {
   });
   if (enrollError) return showError('Die Authenticator-Einrichtung konnte nicht gestartet werden.');
   factorId = data.id;
-  document.getElementById('qr').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data=' + encodeURIComponent(data.totp.uri);
+  // Supabase already returns the QR code as an SVG data URL - the TOTP secret
+  // must never be sent to a third-party QR service.
+  document.getElementById('qr').src = data.totp.qr_code;
   document.getElementById('secret').textContent = data.totp.secret;
   document.getElementById('enroll').hidden = false;
   document.getElementById('start').disabled = true;
