@@ -92,13 +92,14 @@ function route(request) {
 	return null;
 }
 
-// Only the anonymous published-menu read menu.js makes. The admin's own
-// reads of the same table go through supabase-js, which always sends an
-// Authorization header - those stay uncached.
+// Only the anonymous published-menu read menu.js makes (get_published_menu,
+// see 0031_published_menu_rpc.sql; the /rest/v1/menus form is what older
+// menu.js versions used). The admin's own reads go through supabase-js,
+// which always sends an Authorization header - those stay uncached.
 function isPublicMenuRequest(url, request) {
-	return url.pathname === '/rest/v1/menus'
-		&& url.searchParams.get('is_published') === 'eq.true'
-		&& !request.headers.has('authorization');
+	const isMenuRead = url.pathname === '/rest/v1/rpc/get_published_menu'
+		|| (url.pathname === '/rest/v1/menus' && url.searchParams.get('is_published') === 'eq.true');
+	return isMenuRead && !request.headers.has('authorization');
 }
 
 async function networkFirst(request, cacheName, cacheKey, fallback) {

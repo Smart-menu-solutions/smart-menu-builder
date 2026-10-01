@@ -735,7 +735,9 @@ async function loadMenu() {
 	const timeoutId = setTimeout(() => controller.abort(), 10000);
 	let response;
 	try {
-		response = await fetch(`${AUTH_CONFIG.supabaseUrl}/rest/v1/menus?slug=eq.${encodeURIComponent(slug)}&is_published=eq.true&select=*`, {
+		// Only this one published menu, by slug - the menus table itself isn't
+		// readable with the public key (see 0031_published_menu_rpc.sql).
+		response = await fetch(`${AUTH_CONFIG.supabaseUrl}/rest/v1/rpc/get_published_menu?p_slug=${encodeURIComponent(slug)}`, {
 			headers: { apikey: AUTH_CONFIG.supabasePublishableKey, Accept: 'application/json' },
 			signal: controller.signal
 		});
