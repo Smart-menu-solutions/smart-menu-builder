@@ -675,11 +675,14 @@ function loadSupabaseJs() {
 // on that one, the whole page re-renders with the fresh menu, not just the
 // order panel, so a guest's already-open tab picks up a price/dish change
 // without needing to reload.
-async function subscribeRealtime(menuSlug) {
+// channelName comes from order-session (restaurant:<slug>:<random key>, see
+// 0032_realtime_channel_key.sql) - the slug alone is public.
+async function subscribeRealtime(channelName) {
+	if (!channelName) return;
 	try {
 		await loadSupabaseJs();
 		const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
-		const channel = client.channel(`restaurant:${menuSlug}`);
+		const channel = client.channel(channelName);
 		channel.on('broadcast', { event: 'update' }, async () => {
 			const response = await fetch(`${orderEndpoint()}?slug=${encodeURIComponent(slug)}&table=${encodeURIComponent(tableNumber)}&k=${encodeURIComponent(linkSecret || '')}`).catch(() => null);
 			const data = response ? await response.json().catch(() => null) : null;
@@ -708,7 +711,7 @@ async function loadOrderSession() {
 	orderState = { tableId: data.table.id, active: data.active, sessionId: data.sessionId, order: data.order, menu: data.menu };
 	loadCart();
 	renderMenu(data.menu, true);
-	subscribeRealtime(data.menu.slug);
+	subscribeRealtime(data.channel);
 }
 
 async function loadMenu() {

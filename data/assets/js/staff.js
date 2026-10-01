@@ -843,13 +843,31 @@ function loadSupabaseJs() {
 	});
 }
 
-async function subscribeRealtime(menuSlug) {
+// A burst of broadcasts (a big order, or someone spamming the channel) turns
+// into at most one refresh every 2 seconds - the last one always runs.
+const MIN_REFRESH_GAP_MS = 2000;
+let refreshTimer = null;
+let lastRefreshAt = 0;
+function scheduleRefresh() {
+	if (refreshTimer) return;
+	const wait = Math.max(0, MIN_REFRESH_GAP_MS - (Date.now() - lastRefreshAt));
+	refreshTimer = setTimeout(() => {
+		refreshTimer = null;
+		lastRefreshAt = Date.now();
+		refresh();
+	}, wait);
+}
+
+// channelName comes from staff-access (restaurant:<slug>:<random key>, see
+// 0032_realtime_channel_key.sql) - no channel, no live push, polling only.
+async function subscribeRealtime(channelName) {
 	try {
+		if (!channelName) throw new Error('no realtime channel');
 		await loadSupabaseJs();
 		const client = window.supabase.createClient(AUTH_CONFIG.supabaseUrl, AUTH_CONFIG.supabasePublishableKey);
-		client.channel(`restaurant:${menuSlug}`)
-			.on('broadcast', { event: 'update' }, () => refresh())
-			.on('broadcast', { event: 'menu_updated' }, () => refresh())
+		client.channel(channelName)
+			.on('broadcast', { event: 'update' }, scheduleRefresh)
+			.on('broadcast', { event: 'menu_updated' }, scheduleRefresh)
 			.subscribe();
 	} catch { /* falls back to the polling interval below */ }
 	// Cheap safety net in case a broadcast is ever missed (network hiccup,
@@ -869,7 +887,7 @@ async function init() {
 	chimeForNewBills(lastTables);
 	chimeForNewOrders(lastTables);
 	render(data);
-	if (data.menuSlug) subscribeRealtime(data.menuSlug);
+	subscribeRealtime(data.channel);
 }
 
 // No connection (e.g. the installed app opened offline from its cached

@@ -193,11 +193,19 @@ async function saveClients() {
 	// subscribeRealtime(). Every saveClients() call broadcasts for every
 	// hub-enabled client touched, even when the actual edit wasn't to the
 	// menu (e.g. a language reorder) - a spurious refetch on the guest side
-	// is harmless, missing a real one wouldn't be.
-	data?.filter((row) => row.smartservice_hub_enabled).forEach((row) => {
-		const channel = supabaseClient.channel(`restaurant:${row.slug}`);
-		channel.send({ type: 'broadcast', event: 'menu_updated', payload: {} }).finally(() => supabaseClient.removeChannel(channel));
-	});
+	// is harmless, missing a real one wouldn't be. The channel name carries
+	// each restaurant's random key (restaurant_channels, see
+	// 0032_realtime_channel_key.sql); a restaurant without a row yet has no
+	// open guest or staff page to tell. Not awaited - saving never waits on it.
+	const hubSlugs = (data || []).filter((row) => row.smartservice_hub_enabled).map((row) => row.slug);
+	if (hubSlugs.length) {
+		supabaseClient.from('restaurant_channels').select('menu_slug, channel_key').in('menu_slug', hubSlugs).then(({ data: channels }) => {
+			(channels || []).forEach((row) => {
+				const channel = supabaseClient.channel(`restaurant:${row.menu_slug}:${row.channel_key}`);
+				channel.send({ type: 'broadcast', event: 'menu_updated', payload: {} }).finally(() => supabaseClient.removeChannel(channel));
+			});
+		});
+	}
 }
 function isUuid(value) { return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value); }
 function selectedClient() { return clients.find((client) => client.id === selectedId); }

@@ -54,10 +54,34 @@ function findProduct(categories: MenuCategory[], productId: string): { name: str
 	return null;
 }
 
+// The realtime channel name carries a random per-restaurant key (see
+// 0032_realtime_channel_key.sql) - the slug alone is public, so anyone could
+// have listened in on order activity or sent fake events. Only callers with
+// a valid staff link get the name. Same helper as in order-session.
+async function channelName(menuSlug: string): Promise<string | null> {
+	const lookup = () => supabase.from('restaurant_channels').select('channel_key').eq('menu_slug', menuSlug).maybeSingle();
+	let { data } = await lookup();
+	if (!data) {
+		// First use for this restaurant - a concurrent insert just loses the race.
+		await supabase.from('restaurant_channels').insert({ menu_slug: menuSlug });
+		({ data } = await lookup());
+	}
+	return data ? `restaurant:${menuSlug}:${data.channel_key}` : null;
+}
+
+// Rollout only: also announce on the old slug-only channel until every open
+// guest/staff page has reloaded the new menu.js/staff.js. Set to false
+// afterwards - then the public channel carries nothing any more.
+const SEND_LEGACY_CHANNEL = true;
+
 async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
-	const channel = supabase.channel(`restaurant:${menuSlug}`);
-	await channel.send({ type: 'broadcast', event: 'update', payload });
-	await supabase.removeChannel(channel);
+	const names = [await channelName(menuSlug), SEND_LEGACY_CHANNEL ? `restaurant:${menuSlug}` : null];
+	for (const name of names) {
+		if (!name) continue;
+		const channel = supabase.channel(name);
+		await channel.send({ type: 'broadcast', event: 'update', payload });
+		await supabase.removeChannel(channel);
+	}
 }
 
 async function resolveAccess(token: string) {
@@ -235,7 +259,7 @@ Deno.serve(async (request) => {
 		// name goes to every role (header branding), unlike categories above
 		// which only waiter/bar/cashier need for picking products to add.
 		const hubExtras = access.role === 'waiter' ? await buildActivity(access.menuSlug, parseSince(requestUrl.searchParams.get('since'))) : {};
-		return json({ ...view, ...hubExtras, menu, name: access.menu.name, label: access.label, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug });
+		return json({ ...view, ...hubExtras, menu, name: access.menu.name, label: access.label, languages: access.menu.languages, translations: access.menu.translations, menuSlug: access.menuSlug, channel: await channelName(access.menuSlug) });
 	}
 
 	if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);

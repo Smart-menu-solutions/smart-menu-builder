@@ -84,10 +84,34 @@ async function currentOrder(orderGroupId: string) {
 	return items || [];
 }
 
+// The realtime channel name carries a random per-restaurant key (see
+// 0032_realtime_channel_key.sql) - the slug alone is public, so anyone could
+// have listened in on order activity or sent fake events. Only callers who
+// passed resolveTable() get the name. Same helper as in staff-access.
+async function channelName(menuSlug: string): Promise<string | null> {
+	const lookup = () => supabase.from('restaurant_channels').select('channel_key').eq('menu_slug', menuSlug).maybeSingle();
+	let { data } = await lookup();
+	if (!data) {
+		// First use for this restaurant - a concurrent insert just loses the race.
+		await supabase.from('restaurant_channels').insert({ menu_slug: menuSlug });
+		({ data } = await lookup());
+	}
+	return data ? `restaurant:${menuSlug}:${data.channel_key}` : null;
+}
+
+// Rollout only: also announce on the old slug-only channel until every open
+// guest/staff page has reloaded the new menu.js/staff.js. Set to false
+// afterwards - then the public channel carries nothing any more.
+const SEND_LEGACY_CHANNEL = true;
+
 async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
-	const channel = supabase.channel(`restaurant:${menuSlug}`);
-	await channel.send({ type: 'broadcast', event: 'update', payload });
-	await supabase.removeChannel(channel);
+	const names = [await channelName(menuSlug), SEND_LEGACY_CHANNEL ? `restaurant:${menuSlug}` : null];
+	for (const name of names) {
+		if (!name) continue;
+		const channel = supabase.channel(name);
+		await channel.send({ type: 'broadcast', event: 'update', payload });
+		await supabase.removeChannel(channel);
+	}
 }
 
 Deno.serve(async (request) => {
@@ -106,6 +130,7 @@ Deno.serve(async (request) => {
 		return json({
 			table: { id: table.id, tableNumber: table.table_number },
 			menu,
+			channel: await channelName(table.menu_slug),
 			active: !!group,
 			sessionId: group?.id || null,
 			order: group ? { billRequestedAt: group.bill_requested_at, items: await currentOrder(group.id) } : null
