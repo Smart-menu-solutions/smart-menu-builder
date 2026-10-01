@@ -836,7 +836,7 @@ function loadSupabaseJs() {
 	return new Promise((resolve, reject) => {
 		if (window.supabase) { resolve(); return; }
 		const script = document.createElement('script');
-		script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+		script.src = 'data/assets/js/vendor/supabase.js?v=2.117.2';
 		script.onload = () => resolve();
 		script.onerror = () => reject(new Error('realtime script failed to load'));
 		document.head.appendChild(script);
