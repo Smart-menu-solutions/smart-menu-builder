@@ -890,6 +890,10 @@ function renderDiscoveryRow(client, subscription) {
 	if (!row) return;
 	const isDiscovery = planKey(subscription?.plan) === 'discovery';
 	row.style.display = isDiscovery ? '' : 'none';
+	// The online switch is the same for every plan; for a Discovery customer
+	// it's also what starts the 7 days, so it says so in its name.
+	const onlineTitle = $('#menuOnlineTitle');
+	if (onlineTitle) onlineTitle.textContent = isDiscovery ? strings().menuOnlineTitleDiscovery : strings().menuOnlineTitle;
 	if (!isDiscovery) return;
 
 	const running = subscription.status === 'active' && !!subscription.discovery_started_on;
