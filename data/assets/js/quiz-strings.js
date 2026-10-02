@@ -284,5 +284,97 @@ window.SMART_FOOD_MATCH_STRINGS = {
 		whyTemplate: 'En fonction de votre appétit ({appetite}) et de votre envie de {style}, nous avons composé cette combinaison à partir de notre carte.',
 		whyFavoritesTemplate: 'Vous vouliez voir nos favoris - voici notre recommandation.',
 		skippedMessage: 'Nous n\'avons pas encore de suggestion adaptée pour ce plat.'
+	},
+	nl: {
+		openButton: '✨ Vind mijn aanbeveling',
+		title: '🍽️ Smart FoodMatch™',
+		intro: 'Vind je perfecte aanbeveling in 10 seconden.',
+		closeLabel: 'Sluiten',
+		nextLabel: 'Volgende',
+		submitLabel: '✨ Toon mijn aanbeveling',
+		restartLabel: 'Opnieuw',
+		q1: {
+			text: 'Waar heb je vandaag zin in?',
+			options: [
+				{ value: 'food', label: 'Eten' },
+				{ value: 'drink', label: 'Drinken' },
+				{ value: 'sweet', label: 'Iets zoets' },
+				{ value: 'surprise', label: 'Verras me' }
+			]
+		},
+		q2: {
+			text: 'Hoeveel honger heb je?',
+			options: [
+				{ value: 'small', label: 'Weinig' },
+				{ value: 'medium', label: 'Gemiddeld' },
+				{ value: 'large', label: 'Veel' },
+				{ value: 'very-large', label: 'Heel veel' }
+			]
+		},
+		q3: {
+			text: 'Waar heb je op dit moment trek in?',
+			options: [
+				{ value: 'fresh', label: 'Fris & licht' },
+				{ value: 'hearty', label: 'Stevig & hartig' },
+				{ value: 'special', label: 'Iets bijzonders' },
+				{ value: 'quick', label: 'Snel & eenvoudig' },
+				{ value: 'favorites', label: 'Laat jullie favorieten zien' }
+			]
+		},
+		resultTitle: 'Jouw aanbeveling',
+		starterLabel: '🥗 Voorgerecht',
+		mainLabel: '🍖 Hoofdgerecht',
+		dessertLabel: '🍰 Dessert',
+		drinkLabel: '🥤 Drankje',
+		whyLabel: '💡 Waarom deze aanbeveling?',
+		whyTemplate: 'Op basis van je honger ({appetite}) en je zin in {style} hebben we deze combinatie van onze kaart samengesteld.',
+		whyFavoritesTemplate: 'Je wilde onze favorieten zien - hier is onze aanbeveling.',
+		skippedMessage: 'Voor dit gerecht hebben we nog geen passende suggestie.'
+	},
+	pt: {
+		openButton: '✨ Encontrar a minha recomendação',
+		title: '🍽️ Smart FoodMatch™',
+		intro: 'Encontre a sua recomendação perfeita em 10 segundos.',
+		closeLabel: 'Fechar',
+		nextLabel: 'Seguinte',
+		submitLabel: '✨ Ver a minha recomendação',
+		restartLabel: 'Tentar novamente',
+		q1: {
+			text: 'O que lhe apetece hoje?',
+			options: [
+				{ value: 'food', label: 'Comer' },
+				{ value: 'drink', label: 'Beber' },
+				{ value: 'sweet', label: 'Algo doce' },
+				{ value: 'surprise', label: 'Surpreenda-me' }
+			]
+		},
+		q2: {
+			text: 'Quanta fome tem?',
+			options: [
+				{ value: 'small', label: 'Pouca' },
+				{ value: 'medium', label: 'Média' },
+				{ value: 'large', label: 'Muita' },
+				{ value: 'very-large', label: 'Imensa' }
+			]
+		},
+		q3: {
+			text: 'O que lhe apetece neste momento?',
+			options: [
+				{ value: 'fresh', label: 'Fresco & leve' },
+				{ value: 'hearty', label: 'Substancial & saboroso' },
+				{ value: 'special', label: 'Algo especial' },
+				{ value: 'quick', label: 'Rápido & simples' },
+				{ value: 'favorites', label: 'Mostrem-me os vossos favoritos' }
+			]
+		},
+		resultTitle: 'A sua recomendação',
+		starterLabel: '🥗 Entrada',
+		mainLabel: '🍖 Prato principal',
+		dessertLabel: '🍰 Sobremesa',
+		drinkLabel: '🥤 Bebida',
+		whyLabel: '💡 Porquê esta recomendação?',
+		whyTemplate: 'Com base na sua fome ({appetite}) e na sua preferência por {style}, criámos esta combinação a partir da nossa carta.',
+		whyFavoritesTemplate: 'Queria ver os nossos favoritos - aqui está a nossa recomendação.',
+		skippedMessage: 'Ainda não temos uma sugestão adequada para este prato.'
 	}
 };

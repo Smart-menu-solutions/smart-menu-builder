@@ -48,7 +48,8 @@ function loadHeaderFonts() {
 // Only German has its own legal pages; every other language gets English.
 const LEGAL_LINK_TEXT = {
 	de: ['Datenschutz', 'Impressum'], en: ['Privacy', 'Legal notice'], el: ['Απόρρητο', 'Νομικές πληροφορίες'],
-	it: ['Privacy', 'Note legali'], es: ['Privacidad', 'Aviso legal'], fr: ['Confidentialité', 'Mentions légales']
+	it: ['Privacy', 'Note legali'], es: ['Privacidad', 'Aviso legal'], fr: ['Confidentialité', 'Mentions légales'],
+	nl: ['Privacy', 'Juridische informatie'], pt: ['Privacidade', 'Aviso legal']
 };
 function legalLinksMarkup() {
 	const [privacy, imprint] = LEGAL_LINK_TEXT[requestedLanguage] || LEGAL_LINK_TEXT.en;
@@ -64,7 +65,9 @@ const MENU_UI_TEXT = {
 	el: { back: 'Επιστροφή στο μενού', call: 'Κλήση', directions: 'Οδηγίες', madeBy: 'Ψηφιακό μενού από' },
 	it: { back: 'Torna al menu', call: 'Chiama', directions: 'Indicazioni', madeBy: 'Menu digitale di' },
 	es: { back: 'Volver al menú', call: 'Llamar', directions: 'Cómo llegar', madeBy: 'Menú digital de' },
-	fr: { back: 'Retour au menu', call: 'Appeler', directions: 'Itinéraire', madeBy: 'Menu numérique par' }
+	fr: { back: 'Retour au menu', call: 'Appeler', directions: 'Itinéraire', madeBy: 'Menu numérique par' },
+	nl: { back: 'Terug naar het menu', call: 'Bellen', directions: 'Route', madeBy: 'Digitaal menu door' },
+	pt: { back: 'Voltar ao menu', call: 'Ligar', directions: 'Direções', madeBy: 'Menu digital por' }
 };
 function menuUiText() {
 	return MENU_UI_TEXT[requestedLanguage] || MENU_UI_TEXT.en;

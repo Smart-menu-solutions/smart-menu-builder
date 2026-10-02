@@ -25,7 +25,8 @@ function subscriptionStatusLabel(status) { return strings().subscriptionStatus?.
 // customer sees, not just an admin-side convenience.
 const LANGUAGE_CATALOG = [
 	{ code: 'en', label: 'English' }, { code: 'de', label: 'Deutsch' }, { code: 'el', label: 'Ελληνικά' },
-	{ code: 'it', label: 'Italiano' }, { code: 'es', label: 'Español' }, { code: 'fr', label: 'Français' }
+	{ code: 'it', label: 'Italiano' }, { code: 'es', label: 'Español' }, { code: 'fr', label: 'Français' },
+	{ code: 'nl', label: 'Nederlands' }, { code: 'pt', label: 'Português' }
 ];
 // Enabled languages first, in the client's saved order, then any not-yet-
 // enabled catalog languages appended so they still show up (unchecked) to
@@ -552,7 +553,7 @@ function staffAccessRowsForTemplate(client) {
 // being typed out from the table number alone. Reuses staff-strings.js's
 // translations (roleLabels) rather than keeping a second copy of the same
 // words.
-const ONBOARDING_LANGS = ['de', 'en', 'el', 'it', 'es', 'fr'];
+const ONBOARDING_LANGS = ['de', 'en', 'el', 'it', 'es', 'fr', 'nl', 'pt'];
 let onboardingTemplateLang = 'de';
 
 function onboardingTemplateText(client, lang) {

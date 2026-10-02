@@ -9,7 +9,10 @@
 		en: { text: 'A new version is available', button: 'Reload' },
 		el: { text: 'Υπάρχει νέα έκδοση', button: 'Ανανέωση' },
 		it: { text: 'Nuova versione disponibile', button: 'Ricarica' },
-		es: { text: 'Nueva versión disponible', button: 'Recargar' }
+		es: { text: 'Nueva versión disponible', button: 'Recargar' },
+		fr: { text: 'Nouvelle version disponible', button: 'Recharger' },
+		nl: { text: 'Nieuwe versie beschikbaar', button: 'Vernieuwen' },
+		pt: { text: 'Nova versão disponível', button: 'Recarregar' }
 	};
 
 	function strings() {

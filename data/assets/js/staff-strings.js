@@ -473,5 +473,161 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		tablesEmailLinkText: 'Lien de la table', tablesEmailHeading: 'QR codes des tables pour {name}', tablesEmailHint: 'Chaque QR code correspond à une seule table : imprimez-le et placez-le sur la bonne table. Les clients le scannent et peuvent commander dès que la table est activée dans le Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel'
+	},
+	nl: {
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Keuken', bar: 'Bar', cashier: 'Kassa' },
+		live: 'Live', empty: 'Nog geen actieve tafels.', hubEmptyOrder: 'Nog geen bestelling.', table: 'Tafel',
+		hubStatus: { FREE: 'Vrij', ACTIVE: 'Actief', PAYMENT_PENDING: 'Bezet' },
+		allDone: 'Alles klaar', addItem: '+ Artikel', add: 'Toevoegen',
+		requestBill: '💳 Rekening vragen', billRequested: '💳 Rekening gevraagd', billFlagHint: 'Rekening gevraagd - tafel sluiten',
+		posTitle: 'Voor de kassa', posNoNumber: 'zonder kassanr.', posFood: 'Gerechten (keuken)', posDrinks: 'Dranken (bar)', posTotal: 'Totaal',
+		notesPlaceholder: 'Opmerking (optioneel)', closeTable: 'Tafel sluiten', deactivateTable: 'Tafel weer vrijgeven', activateTable: 'Activeren',
+		closeConfirm: 'Deze tafel echt sluiten? De bestelling verdwijnt uit alle weergaven.',
+			removeItem: 'Artikel verwijderen', removeConfirm: '{item} echt verwijderen?',
+			guideButton: 'Handleiding', guideTitle: 'Zo werkt het',
+			totalsButton: '📊 Totaaloverzicht', totalsHeading: 'Totaal van alle open tafels',
+			workflowButton: 'Werkwijze', workflowTitle: 'Zo werkt het hele proces',
+			workflow: [
+				"Gasten scannen de QR-code op de tafel - het menu opent, maar bestellen kan pas na activering.",
+				"Tik in de Service Hub op de vrije (groene) tafel en druk op „Activeren”.",
+				"Vanaf dan bestelt elke gast met zijn eigen telefoon - alle bestellingen komen samen bij dezelfde tafel.",
+				"De artikelen worden automatisch verdeeld over keuken en bar, afhankelijk van wat er besteld is.",
+				"Keuken en bar zien hun artikelen als lijst en markeren ze als klaar.",
+				"De gasten zien live op hun telefoon wat klaar is, met prijs en totaal.",
+				"Gasten kunnen op elk moment bijbestellen zonder het menu opnieuw te scannen.",
+				"Rekening vragen - door de gast zelf via de telefoon, of door het personeel in de Service Hub.",
+				"De tafel wordt rood, bij de kassa verschijnt 💳.",
+				"De kassa controleert de bestelling, rekent af en drukt op „Tafel sluiten” - de tafel is meteen weer vrij, dezelfde QR-code blijft geldig voor de volgende gast."
+			],
+			guide: {
+				waiter: [
+					"Alle tafels worden als tegels getoond: groen = vrij, oranje = actief, rood = rekening gevraagd.",
+					"Nieuwe gasten aan een vrije (groene) tafel? Tik op de tegel - er verschijnt een venster met „Activeren”; alleen deze knop opent de tafel echt.",
+					"Tik op een actieve tegel om de bestelling te zien en artikelen toe te voegen.",
+					"🛎️ op een tegel = er is iets klaar dat wacht om opgehaald te worden.",
+					"De gast wil betalen maar heeft dat niet via de telefoon gemeld? Druk in het venster op „Rekening vragen” - de tegel wordt rood en de kassa ziet het meteen.",
+					"Afrekenen gebeurt aan de kassa - daar wordt de tafel ook weer vrijgegeven. Alleen een per ongeluk geactiveerde tafel die nog leeg is, kun je hier vrijgeven met „Tafel weer vrijgeven”.",
+					"De gast bestelt mondeling in plaats van via de QR-code (bijv. „Nog een water, alstublieft”)? Tik op de tegel → „+ Artikel” → kies artikel en aantal → „Toevoegen”. Het gaat automatisch naar keuken of bar en komt op de rekening van de tafel.",
+					"Bij elke nieuwe 🛎️ klinkt een belsignaal. Zet het linksonder aan of uit met „Belsignaal”. Tip: tik na het openen van de pagina één keer op het scherm – de browser staat geluid pas daarna toe."
+				],
+				kitchen: [
+					"Hier zie je wat de gasten hebben besteld.",
+					"Rood = nog te doen. Tik op de regel als het klaar is. Die wordt groen.",
+					"„Alles klaar” = alles voor deze tafel is klaar.",
+					"Nieuwe bestellingen verschijnen vanzelf – met een belsignaal, en de kaart knippert kort oranje. Zet het linksonder aan of uit met „Belsignaal”. Tip: tik na het openen van de pagina één keer op het scherm – de browser staat geluid pas daarna toe."
+				],
+				bar: [
+					"Hier zie je de bestelde drankjes.",
+					"Rood = nog te doen. Tik op de regel als het klaar is. Die wordt groen.",
+					"„Alles klaar” = alle drankjes voor deze tafel zijn klaar.",
+					"Nieuwe bestellingen verschijnen vanzelf – met een belsignaal, en de kaart knippert kort oranje. Zet het linksonder aan of uit met „Belsignaal”. Tip: tik na het openen van de pagina één keer op het scherm – de browser staat geluid pas daarna toe.",
+					"De gast bestelt direct bij jou in plaats van via de QR-code? Voorbeeld: hij zit aan de bar, heeft zijn eerste bestelling via de QR-code gedaan en zegt dan „Nog een bier en een jus d’orange, alstublieft”. Tik bij zijn tafel op „+ Artikel” → kies drankje en aantal → „Toevoegen”. Het staat meteen op zijn rekening; gerechten die hij bestelt gaan automatisch naar de keuken.",
+					"„+ Artikel” bestaat alleen voor tafels die hier al een kaart hebben. Voor een andere tafel voeg je het artikel toe in de Service Hub."
+				],
+				cashier: [
+					"Hier zie je alle tafels met prijzen en totaal.",
+					"💳 De gast wil betalen.",
+					"✕ = artikel verwijderen (er wordt om bevestiging gevraagd).",
+					"„Tafel sluiten” = de gast heeft betaald, de tafel is weer vrij.",
+					"📊 Totaaloverzicht = het totaal van alle tafels die nu open zijn.",
+					"De gast bestelt bij het betalen nog iets (bijv. „Nog een espresso, alstublieft”)? Tik bij zijn tafel op „+ Artikel” → kies artikel en aantal → „Toevoegen”. Het staat meteen op de rekening en gaat automatisch naar keuken of bar.",
+					"Als een tafel om de rekening vraagt (💳), klinkt een belsignaal en knippert de kaart kort rood. Zet het linksonder aan of uit met „Belsignaal”. Tip: tik na het openen van de pagina één keer op het scherm – de browser staat geluid pas daarna toe."
+				]
+			},
+		workflowSteps: ["Gasten scannen de QR-code", "Tafel activeren", "Iedereen bestelt", "Automatische verdeling", "Keuken en bar bereiden", "Gasten zien de status live", "Altijd bijbestellen", "Rekening vragen", "Tafel wordt rood", "Tafel sluiten"],
+		noTables: 'Nog geen tafels ingesteld.', floorTitle: 'Plattegrond', ordersTitle: 'Bestellingen',
+		activityTitle: 'Live-activiteit', viewAll: 'Alles bekijken', statusTitle: 'Status per post', summaryTitle: 'Besteloverzicht', today: 'Vandaag',
+		qrOrders: 'Via QR-code', staffOrders: 'Door personeel', orderValue: 'Bestelwaarde vandaag', itemsLabel: 'artikelen',
+		statusOpen: '{n} open', statusActiveTables: '{n} actieve tafels', statusBills: '{n} rekeningen',
+		evOpened: 'Tafel geactiveerd', evOrderGuest: 'Bestelling van gast: {items}', evOrderStaff: '{who} heeft toegevoegd: {items}',
+		evReadyKitchen: 'Keuken: {n} klaar', evReadyBar: 'Bar: {n} klaar', evBill: 'Rekening gevraagd', evClosed: 'Betaald en gesloten',
+		timeJustNow: 'zojuist', timeMinutes: '{n} min geleden', timeHours: '{n} u geleden', noActivity: 'Vandaag nog geen activiteit.',
+		historyTitle: 'Verloop van vandaag', noOpenOrders: 'Momenteel geen open bestellingen.',
+		tileOpenOrders: 'Open bestellingen', tileOpenOrdersSub: 'Alle actieve tafels in één oogopslag', tileHistorySub: 'Alles wat er vandaag is gebeurd',
+		tileTotals: 'Totaaloverzicht', tileTotalsSub: 'Totaal van alle open tafels', tileHelp: 'Zo werkt het', tileHelpSub: 'Het verloop in 10 stappen',
+		chimeOn: 'Belsignaal aan', chimeOff: 'Belsignaal uit',
+		privacyLink: 'Privacy', imprintLink: 'Juridische informatie',
+		offline: 'Geen internetverbinding. De pagina laadt automatisch opnieuw zodra je weer online bent.',
+		linkIncomplete: 'Deze link is onvolledig.', linkInvalid: 'Deze link is niet meer geldig.', actionFailed: 'De actie is mislukt.',
+		tablesEmailLinkText: 'Link van de tafel', tablesEmailHeading: 'Tafel-QR-codes voor {name}', tablesEmailHint: 'Elke QR-code hoort bij één tafel: print hem en zet hem op de juiste tafel. Gasten scannen hem en kunnen bestellen zodra de tafel in de Service Hub is geactiveerd.',
+		onboardingHeading: 'Smart ServiceHub™ – toegangsgegevens voor {name}', staffHeading: 'Toegang voor personeel'
+	},
+	pt: {
+		roleLabels: { waiter: 'Service Hub', kitchen: 'Cozinha', bar: 'Bar', cashier: 'Caixa' },
+		live: 'Ao vivo', empty: 'Ainda não há mesas ativas.', hubEmptyOrder: 'Ainda sem pedido.', table: 'Mesa',
+		hubStatus: { FREE: 'Livre', ACTIVE: 'Ativa', PAYMENT_PENDING: 'Ocupada' },
+		allDone: 'Tudo pronto', addItem: '+ Artigo', add: 'Adicionar',
+		requestBill: '💳 Pedir a conta', billRequested: '💳 Conta pedida', billFlagHint: 'Conta pedida - fechar a mesa',
+		posTitle: 'Para a caixa registadora', posNoNumber: 'sem n.º de caixa', posFood: 'Pratos (cozinha)', posDrinks: 'Bebidas (bar)', posTotal: 'Total',
+		notesPlaceholder: 'Observação (opcional)', closeTable: 'Fechar a mesa', deactivateTable: 'Libertar a mesa', activateTable: 'Ativar',
+		closeConfirm: 'Fechar mesmo esta mesa? O pedido desaparece de todas as vistas.',
+			removeItem: 'Remover artigo', removeConfirm: 'Remover mesmo {item}?',
+			guideButton: 'Guia', guideTitle: 'Como funciona',
+			totalsButton: '📊 Visão geral', totalsHeading: 'Total de todas as mesas abertas',
+			workflowButton: 'Processo', workflowTitle: 'Como funciona todo o processo',
+			workflow: [
+				"Os clientes leem o código QR da mesa - o menu abre, mas só é possível pedir depois da ativação.",
+				"Toque na mesa livre (verde) no Service Hub e prima «Ativar».",
+				"A partir daí, cada cliente pede no seu próprio telemóvel - todos os pedidos chegam juntos à mesma mesa.",
+				"Os artigos são distribuídos automaticamente entre a cozinha e o bar, conforme o que foi pedido.",
+				"A cozinha e o bar veem os seus artigos em lista e marcam-nos como prontos.",
+				"Os clientes veem em direto no telemóvel o que está pronto, com preço e total.",
+				"Os clientes podem voltar a pedir a qualquer momento sem ler o menu de novo.",
+				"Pedir a conta - pelo próprio cliente no telemóvel ou pelo pessoal no Service Hub.",
+				"A mesa fica vermelha e aparece 💳 na caixa.",
+				"A caixa confere o pedido, cobra e prime «Fechar a mesa» - a mesa fica logo livre e o mesmo código QR continua válido para o próximo cliente."
+			],
+			guide: {
+				waiter: [
+					"Todas as mesas aparecem em mosaicos: verde = livre, laranja = ativa, vermelho = conta pedida.",
+					"Novos clientes numa mesa livre (verde)? Toque no mosaico - aparece uma janela com «Ativar»; só este botão abre mesmo a mesa.",
+					"Toque num mosaico ativo para ver o pedido e adicionar artigos.",
+					"🛎️ num mosaico = há algo pronto à espera de ser levantado.",
+					"O cliente quer pagar mas não o disse pelo telemóvel? Prima «Pedir a conta» na janela - o mosaico fica vermelho e a caixa vê logo.",
+					"O pagamento é feito na caixa - é também lá que a mesa é libertada. Só uma mesa ativada por engano e ainda vazia pode ser libertada aqui, com «Libertar a mesa».",
+					"O cliente pede de viva voz em vez de usar o código QR (por ex. «Mais uma água, por favor»)? Toque no mosaico → «+ Artigo» → escolha o artigo e a quantidade → «Adicionar». Vai automaticamente para a cozinha ou o bar e entra na conta da mesa.",
+					"A cada nova 🛎️ ouve-se um toque. Ligue-o ou desligue-o em baixo à esquerda com «Toque». Dica: depois de abrir a página, toque uma vez no ecrã – só então o navegador permite sons."
+				],
+				kitchen: [
+					"Aqui vê o que os clientes pediram.",
+					"Vermelho = por fazer. Toque na linha quando estiver pronto. Fica verde.",
+					"«Tudo pronto» = está tudo pronto para esta mesa.",
+					"Os novos pedidos aparecem sozinhos – com um toque, e o cartão pisca brevemente a laranja. Ligue-o ou desligue-o em baixo à esquerda com «Toque». Dica: depois de abrir a página, toque uma vez no ecrã – só então o navegador permite sons."
+				],
+				bar: [
+					"Aqui vê as bebidas pedidas.",
+					"Vermelho = por fazer. Toque na linha quando estiver pronto. Fica verde.",
+					"«Tudo pronto» = todas as bebidas desta mesa estão prontas.",
+					"Os novos pedidos aparecem sozinhos – com um toque, e o cartão pisca brevemente a laranja. Ligue-o ou desligue-o em baixo à esquerda com «Toque». Dica: depois de abrir a página, toque uma vez no ecrã – só então o navegador permite sons.",
+					"O cliente pede-lhe diretamente em vez de usar o código QR? Exemplo: está sentado ao balcão, fez o primeiro pedido com o código QR e depois diz «Mais uma cerveja e um sumo de laranja, por favor». Prima «+ Artigo» na mesa dele → escolha a bebida e a quantidade → «Adicionar». Fica logo na conta dele; os pratos que pedir vão automaticamente para a cozinha.",
+					"«+ Artigo» só existe para mesas que já têm um cartão aqui. Para outra mesa, adicione o artigo no Service Hub."
+				],
+				cashier: [
+					"Aqui vê todas as mesas com preços e total.",
+					"💳 O cliente quer pagar.",
+					"✕ = remover um artigo (é pedida confirmação).",
+					"«Fechar a mesa» = o cliente pagou, a mesa está livre outra vez.",
+					"📊 Visão geral = o total de todas as mesas abertas neste momento.",
+					"O cliente pede mais alguma coisa ao pagar (por ex. «Mais um café, por favor»)? Prima «+ Artigo» na mesa dele → escolha o artigo e a quantidade → «Adicionar». Fica logo na conta e vai automaticamente para a cozinha ou o bar.",
+					"Quando uma mesa pede a conta (💳), ouve-se um toque e o cartão pisca brevemente a vermelho. Ligue-o ou desligue-o em baixo à esquerda com «Toque». Dica: depois de abrir a página, toque uma vez no ecrã – só então o navegador permite sons."
+				]
+			},
+		workflowSteps: ["Os clientes leem o código QR", "Ativar a mesa", "Todos pedem", "Distribuição automática", "Cozinha e bar preparam", "Os clientes veem o estado em direto", "Pedir mais a qualquer momento", "Pedir a conta", "A mesa fica vermelha", "Fechar a mesa"],
+		noTables: 'Ainda não há mesas configuradas.', floorTitle: 'Planta da sala', ordersTitle: 'Pedidos',
+		activityTitle: 'Atividade ao vivo', viewAll: 'Ver tudo', statusTitle: 'Estado dos postos', summaryTitle: 'Resumo dos pedidos', today: 'Hoje',
+		qrOrders: 'Via código QR', staffOrders: 'Pelo pessoal', orderValue: 'Valor dos pedidos hoje', itemsLabel: 'artigos',
+		statusOpen: '{n} em aberto', statusActiveTables: '{n} mesas ativas', statusBills: '{n} contas',
+		evOpened: 'Mesa ativada', evOrderGuest: 'Pedido do cliente: {items}', evOrderStaff: '{who} adicionou: {items}',
+		evReadyKitchen: 'Cozinha: {n} prontos', evReadyBar: 'Bar: {n} prontos', evBill: 'Conta pedida', evClosed: 'Paga e fechada',
+		timeJustNow: 'agora mesmo', timeMinutes: 'há {n} min', timeHours: 'há {n} h', noActivity: 'Ainda sem atividade hoje.',
+		historyTitle: 'Histórico de hoje', noOpenOrders: 'Neste momento não há pedidos em aberto.',
+		tileOpenOrders: 'Pedidos em aberto', tileOpenOrdersSub: 'Todas as mesas ativas num relance', tileHistorySub: 'Tudo o que aconteceu hoje',
+		tileTotals: 'Visão geral', tileTotalsSub: 'Total de todas as mesas abertas', tileHelp: 'Como funciona', tileHelpSub: 'O processo em 10 passos',
+		chimeOn: 'Toque ligado', chimeOff: 'Toque desligado',
+		privacyLink: 'Privacidade', imprintLink: 'Aviso legal',
+		offline: 'Sem ligação à Internet. A página volta a carregar automaticamente assim que estiver de novo online.',
+		linkIncomplete: 'Este link está incompleto.', linkInvalid: 'Este link já não é válido.', actionFailed: 'A ação falhou.',
+		tablesEmailLinkText: 'Link da mesa', tablesEmailHeading: 'Códigos QR das mesas de {name}', tablesEmailHint: 'Cada código QR pertence a uma única mesa: imprima-o e coloque-o na mesa certa. Os clientes leem-no e podem pedir assim que a mesa for ativada no Service Hub.',
+		onboardingHeading: 'Smart ServiceHub™ – dados de acesso para {name}', staffHeading: 'Acesso do pessoal'
 	}
 };

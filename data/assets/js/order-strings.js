@@ -57,5 +57,23 @@ window.ORDER_STRINGS = {
 		orderButton: 'Commander',
 		sendOrder: 'Envoyer la commande', sending: 'Envoi…', added: '✓ Ajouté', addToCart: '+ Panier',
 		orderFailed: "La commande n'a pas pu être envoyée.", total: 'Total'
+	},
+	nl: {
+		currentOrder: 'Huidige bestelling', recentlyOrdered: 'Recent besteld',
+		requestBill: '💳 Rekening vragen', billRequested: '💳 Rekening gevraagd',
+		notActiveYet: 'Deze tafel is nog niet actief. Vraag het personeel om de tafel te activeren.',
+		cartTitle: 'Winkelwagen', cartEmpty: 'Nog leeg.', notesPlaceholder: 'Opmerking (optioneel)',
+		orderButton: 'Bestellen',
+		sendOrder: 'Bestelling versturen', sending: 'Versturen…', added: '✓ Toegevoegd', addToCart: '+ Winkelwagen',
+		orderFailed: 'De bestelling kon niet worden verstuurd.', total: 'Totaal'
+	},
+	pt: {
+		currentOrder: 'Pedido atual', recentlyOrdered: 'Pedido recentemente',
+		requestBill: '💳 Pedir a conta', billRequested: '💳 Conta pedida',
+		notActiveYet: 'Esta mesa ainda não está ativa. Peça ao pessoal para a ativar.',
+		cartTitle: 'Carrinho', cartEmpty: 'Ainda vazio.', notesPlaceholder: 'Observação (opcional)',
+		orderButton: 'Pedir',
+		sendOrder: 'Enviar pedido', sending: 'A enviar…', added: '✓ Adicionado', addToCart: '+ Carrinho',
+		orderFailed: 'Não foi possível enviar o pedido.', total: 'Total'
 	}
 };
