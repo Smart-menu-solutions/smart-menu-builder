@@ -52,6 +52,7 @@ window.ADMIN_STRINGS = {
 		templateName: 'Name der Vorlage', templateNamePlaceholder: 'z. B. Danke nach der ersten Bestellung',
 		templateSubjectDe: 'Betreff (Deutsch)', templateBodyDe: 'Text (Deutsch)',
 		templateSubjectEn: 'Betreff (English) – optional', templateBodyEn: 'Text (English) – optional',
+		templateSubjectIt: 'Betreff (Italiano) – optional', templateBodyIt: 'Text (Italiano) – optional',
 		cancel: 'Abbrechen', saveTemplate: 'Vorlage speichern',
 
 		deleteClient: 'Kunde löschen', previewMenu: 'Menü-Vorschau ↗', saveChanges: 'Änderungen speichern',
@@ -159,6 +160,7 @@ window.ADMIN_STRINGS = {
 		templateStoreSaveFailed: 'Die Vorlagen-Änderungen konnten in diesem Browser nicht gespeichert werden',
 		deleteTemplateCount: 'Vorlage löschen ({n})', tickToDelete: 'Zum Löschen ankreuzen', templateOwn: 'Eigene', copy: 'Kopieren',
 		templateNoEnglish: 'Noch keine englische Version – der deutsche Text wird gezeigt.', subjectLabel: 'Betreff:',
+		templateNoItalian: 'Noch keine italienische Version – der deutsche Text wird gezeigt.',
 		noTemplates: 'Keine Vorlagen. Mit „Vorlage hinzufügen“ schreiben Sie eine neue, mit „Gelöschte wiederherstellen“ holen Sie die eingebauten zurück.',
 		templateCopied: 'Vorlage kopiert ({lang})', templateNameRequired: 'Geben Sie der Vorlage zuerst einen Namen',
 		templateAdded: 'Vorlage „{name}“ hinzugefügt',
@@ -214,6 +216,7 @@ window.ADMIN_STRINGS = {
 		templateName: 'Template name', templateNamePlaceholder: 'e.g. Thank you after the first order',
 		templateSubjectDe: 'Subject (Deutsch)', templateBodyDe: 'Text (Deutsch)',
 		templateSubjectEn: 'Subject (English) - optional', templateBodyEn: 'Text (English) - optional',
+		templateSubjectIt: 'Subject (Italiano) - optional', templateBodyIt: 'Text (Italiano) - optional',
 		cancel: 'Cancel', saveTemplate: 'Save template',
 
 		deleteClient: 'Delete client', previewMenu: 'Preview menu ↗', saveChanges: 'Save changes',
@@ -319,6 +322,7 @@ window.ADMIN_STRINGS = {
 		templateStoreSaveFailed: 'Could not save the template changes in this browser',
 		deleteTemplateCount: 'Delete template ({n})', tickToDelete: 'Tick to delete', templateOwn: 'Own', copy: 'Copy',
 		templateNoEnglish: 'No English version yet - showing the German text.', subjectLabel: 'Subject:',
+		templateNoItalian: 'No Italian version yet - showing the German text.',
 		noTemplates: 'No templates. Use "Add template" to write one, or "Restore deleted" to bring the built-in ones back.',
 		templateCopied: 'Template copied ({lang})', templateNameRequired: 'Give the template a name first',
 		templateAdded: 'Template "{name}" added',

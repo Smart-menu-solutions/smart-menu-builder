@@ -1992,8 +1992,128 @@ Best regards
 	}
 };
 
+// Italian versions, for customers who ordered through the Italian website
+// (subscriptions.lang 'it'). Same wording as the Italian emails the Edge
+// Functions send (stripe-webhook, check-subscriptions, manage-addons).
+const EMAIL_TEMPLATES_IT = {
+	'Order confirmation': {
+		subject: 'Il vostro ordine presso Smart Menu Solutions',
+		body: `Buongiorno [Nome Cognome],
+
+grazie per il vostro ordine. Abbiamo ricevuto i vostri dati e il vostro menu e vi contatteremo a breve con i passi successivi.
+
+Piano: [Smart Start/Pro/Premium]
+
+Se non avete ancora prenotato Smart FoodMatch™, Smart WeeklyReport™ o Smart DishPhoto™, potete aggiungerli in qualsiasi momento: [Gestisci gli add-on →]
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'ServiceHub: tables & till numbers link (manual)': {
+		subject: 'Ultimo passo per Smart ServiceHub™: i vostri tavoli e numeri di cassa',
+		body: `Buongiorno [Nome Cognome],
+
+il vostro menu per [Nome del menu] è pronto. Perché Smart ServiceHub™ sia operativo ci servono solo due informazioni da parte vostra – bastano circa 5 minuti:
+
+1. I vostri tavoli: come sono numerati i vostri tavoli? Ogni tavolo riceve il proprio QR code per ordinare.
+2. I vostri numeri di cassa: per ogni piatto inserite il numero che ha nella vostra cassa. Così ogni ordine compare sullo schermo della cassa con il numero giusto.
+
+Tutti i vostri piatti sono già sulla pagina con descrizione e prezzo – dovete solo inserire i numeri e cliccare su "Invia":
+[Link per tavoli e numeri di cassa →]
+
+Se un piatto non ha un numero di cassa, lasciate semplicemente vuoto il campo. Potete riaprire il link in qualsiasi momento per modificare qualcosa.
+
+Appena avremo i vostri dati, configuriamo tutto e vi inviamo i QR code per i vostri tavoli.
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Finished menu: QR code delivery (manual)': {
+		subject: 'Il vostro QR code personale per [Nome del menu] è pronto',
+		body: `Buongiorno [Nome Cognome],
+
+grazie per la vostra fiducia! Il vostro menu digitale per [Nome del menu] è pronto e da subito online.
+
+In allegato trovate il vostro QR code personale (come [PNG/PDF]). Potete raggiungere il vostro menu anche direttamente tramite questo link: [Link al menu →]
+
+I prossimi passi:
+• Stampate il QR code e posizionatelo dove i vostri ospiti lo vedono – ad esempio sui tavoli, al bancone o all'ingresso.
+• I vostri ospiti scansionano il codice con la fotocamera dello smartphone e vedono subito il vostro menu aggiornato – senza app.
+• Controllate con calma il vostro menu e fateci sapere se c'è qualcosa da modificare.
+
+Le modifiche al vostro menu, come nuovi piatti o prezzi aggiornati, potete inviarcele semplicemente via e-mail. Gli aggiornamenti sono inclusi nel vostro piano ([Smart Start/Pro/Premium]).
+
+Se non avete ancora prenotato Smart FoodMatch™, Smart WeeklyReport™ o Smart DishPhoto™, potete aggiungerli in qualsiasi momento: [Gestisci gli add-on →]
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Vi auguriamo tanto successo con il vostro nuovo menu digitale e vi ringraziamo per la vostra fiducia.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Renewal confirmation': {
+		subject: 'Il vostro rinnovo presso Smart Menu Solutions',
+		body: `Buongiorno [Nome Cognome],
+
+grazie per aver rinnovato il vostro abbonamento. Abbiamo ricevuto i vostri dati e il vostro menu e vi contatteremo a breve con i passi successivi.
+
+Piano: [Smart Start/Pro/Premium]
+
+Se non avete ancora prenotato Smart FoodMatch™, Smart WeeklyReport™ o Smart DishPhoto™, potete aggiungerli in qualsiasi momento: [Gestisci gli add-on →]
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Renewal payment failed': {
+		subject: 'Il rinnovo non è andato a buon fine – serve un vostro intervento',
+		body: `Buongiorno [Nome Cognome],
+
+purtroppo non è stato possibile elaborare il pagamento automatico per il rinnovo del vostro abbonamento.
+
+Il vostro menu resta online per altri 7 giorni, così avete il tempo di sistemare la cosa. Rinnovate il vostro abbonamento tramite il link qui sotto per evitare interruzioni: [Rinnova ora →]
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Subscription deactivated': {
+		subject: 'Il vostro abbonamento è stato disattivato',
+		body: `Buongiorno [Nome Cognome],
+
+poiché il pagamento del rinnovo non è andato a buon fine, il vostro abbonamento è stato disattivato e il vostro menu non è più raggiungibile tramite il QR code.
+
+Potete riattivare il vostro abbonamento in qualsiasi momento tramite il link qui sotto: [Riattiva l'abbonamento →]
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Add-on added (mid-subscription)': {
+		subject: '[Add-on] è stato aggiunto',
+		body: `Buongiorno [Nome Cognome],
+
+[Nome dell'add-on] è ora attivo per [Nome del menu].
+
+Abbiamo addebitato l'importo proporzionale per il resto del vostro anno di abbonamento in corso: [X,XX €]. Dal prossimo rinnovo è incluso automaticamente nel vostro piano.
+(Per l'add-on foto invece: importo una tantum, nessuna nota sul rinnovo.)
+
+Cordiali saluti
+[+ firma HTML]`
+	}
+};
+
 // Which language the template cards show and copy - German by default.
 let templateLang = 'de';
+const TEMPLATE_LANG_NAMES = { de: 'Deutsch', en: 'English', it: 'Italiano' };
 
 // Staff can delete templates and write new ones. That's kept in this browser
 // only (localStorage): deleting a built-in template just hides it (it can be
@@ -2024,15 +2144,16 @@ function saveTemplateStore() {
 function visibleTemplates() {
 	const builtIn = EMAIL_TEMPLATES
 		.filter((template) => !templateStore.hidden.includes(template.name))
-		.map((template) => ({ key: template.name, name: template.name, custom: false, de: { subject: template.subject, body: template.body }, en: EMAIL_TEMPLATES_EN[template.name] || null }));
-	const custom = templateStore.custom.map((template) => ({ key: template.id, name: template.name, custom: true, de: template.de, en: template.en?.subject || template.en?.body ? template.en : null }));
+		.map((template) => ({ key: template.name, name: template.name, custom: false, de: { subject: template.subject, body: template.body }, en: EMAIL_TEMPLATES_EN[template.name] || null, it: EMAIL_TEMPLATES_IT[template.name] || null }));
+	const custom = templateStore.custom.map((template) => ({ key: template.id, name: template.name, custom: true, de: template.de, en: template.en?.subject || template.en?.body ? template.en : null, it: template.it?.subject || template.it?.body ? template.it : null }));
 	return builtIn.concat(custom);
 }
 
 // Text to show/copy in the current language. A template without an English
-// version falls back to its German text (and is flagged as such on its card).
+// or Italian version falls back to its German text (and is flagged as such
+// on its card).
 function templateText(template) {
-	return templateLang === 'en' && template.en ? template.en : template.de;
+	return templateLang !== 'de' && template[templateLang] ? template[templateLang] : template.de;
 }
 
 const templateBoard = $('#templateBoard');
@@ -2055,14 +2176,14 @@ function renderTemplateBoard() {
 	[...selectedTemplateKeys].forEach((key) => { if (!templates.some((template) => template.key === key)) selectedTemplateKeys.delete(key); });
 	templateBoard.innerHTML = templates.map((template) => {
 		const text = templateText(template);
-		const missingEnglish = templateLang === 'en' && !template.en;
+		const missingTranslation = templateLang !== 'de' && !template[templateLang];
 		return `
 		<div class="template-card">
 			<div class="template-card-head">
 				<label class="template-card-select" title="${escapeAttr(strings().tickToDelete)}"><input type="checkbox" data-template-select="${escapeAttr(template.key)}"${selectedTemplateKeys.has(template.key) ? ' checked' : ''}><span class="template-card-name">${escapeHtml(template.name)}</span>${template.custom ? `<span class="template-card-tag">${escapeHtml(strings().templateOwn)}</span>` : ''}</label>
 				<button type="button" class="button button-ghost template-card-copy" data-template-key="${escapeAttr(template.key)}">${escapeHtml(strings().copy)}</button>
 			</div>
-			${missingEnglish ? `<p class="template-card-note">${escapeHtml(strings().templateNoEnglish)}</p>` : ''}
+			${missingTranslation ? `<p class="template-card-note">${escapeHtml(templateLang === 'it' ? strings().templateNoItalian : strings().templateNoEnglish)}</p>` : ''}
 			<p class="template-card-subject"><strong>${escapeHtml(strings().subjectLabel)}</strong> ${escapeHtml(text.subject)}</p>
 			<pre class="template-card-body">${escapeHtml(text.body)}</pre>
 		</div>
@@ -2073,7 +2194,7 @@ function renderTemplateBoard() {
 
 // The form is a plain <div>, not a <form>: it sits inside the client's own
 // <form>, and nested forms aren't allowed (the browser drops the inner one).
-const TEMPLATE_FORM_FIELDS = ['#templateName', '#templateSubjectDe', '#templateBodyDe', '#templateSubjectEn', '#templateBodyEn'];
+const TEMPLATE_FORM_FIELDS = ['#templateName', '#templateSubjectDe', '#templateBodyDe', '#templateSubjectEn', '#templateBodyEn', '#templateSubjectIt', '#templateBodyIt'];
 
 function openTemplateForm() {
 	TEMPLATE_FORM_FIELDS.forEach((selector) => { $(selector).value = ''; });
@@ -2096,7 +2217,7 @@ if (templateBoard) {
 		if (!template) return;
 		const text = templateText(template);
 		await navigator.clipboard.writeText(`${text.subject}\n\n${text.body}`);
-		notify(strings().templateCopied.replace('{lang}', templateLang === 'en' && template.en ? 'English' : 'Deutsch'));
+		notify(strings().templateCopied.replace('{lang}', TEMPLATE_LANG_NAMES[templateLang !== 'de' && template[templateLang] ? templateLang : 'de']));
 	});
 	templateBoard.addEventListener('change', (event) => {
 		const key = event.target.dataset?.templateSelect;
@@ -2121,7 +2242,8 @@ if (templateBoard) {
 			id: `custom-${Date.now()}`,
 			name,
 			de: { subject: $('#templateSubjectDe').value.trim(), body: $('#templateBodyDe').value.trim() },
-			en: { subject: $('#templateSubjectEn').value.trim(), body: $('#templateBodyEn').value.trim() }
+			en: { subject: $('#templateSubjectEn').value.trim(), body: $('#templateBodyEn').value.trim() },
+			it: { subject: $('#templateSubjectIt').value.trim(), body: $('#templateBodyIt').value.trim() }
 		});
 		saveTemplateStore();
 		closeTemplateForm();

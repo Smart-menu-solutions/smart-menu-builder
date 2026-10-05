@@ -178,7 +178,7 @@
                     <div class="template-toolbar">
                         <!-- Deutsch/English stay untranslated: they name the language of the
                              customer-facing email text, not of this dashboard. -->
-                        <div class="template-lang" role="group" data-i18n-aria-label="templateLanguageAria" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button></div>
+                        <div class="template-lang" role="group" data-i18n-aria-label="templateLanguageAria" aria-label="Template language"><button type="button" class="button button-ghost template-lang-btn active" data-template-lang="de">Deutsch</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="en">English</button><button type="button" class="button button-ghost template-lang-btn" data-template-lang="it">Italiano</button></div>
                         <div class="template-actions"><button type="button" class="button button-ghost" id="templateAdd" data-i18n="addTemplate">＋ Add template</button><button type="button" class="button button-danger" id="templateDelete" disabled data-i18n="deleteTemplate">Delete template</button><button type="button" class="button button-ghost" id="templateRestore" hidden data-i18n="restoreDeleted">Restore deleted</button></div>
                     </div>
                     <div class="template-form" id="templateForm" hidden>
@@ -187,6 +187,8 @@
                         <label class="wide"><span data-i18n="templateBodyDe">Text (Deutsch)</span><textarea id="templateBodyDe" rows="7" placeholder="Hallo [Vorname Nachname],"></textarea></label>
                         <label class="wide"><span data-i18n="templateSubjectEn">Subject (English) - optional</span><input id="templateSubjectEn" placeholder="Subject"></label>
                         <label class="wide"><span data-i18n="templateBodyEn">Text (English) - optional</span><textarea id="templateBodyEn" rows="7" placeholder="Hi [First name Last name],"></textarea></label>
+                        <label class="wide"><span data-i18n="templateSubjectIt">Subject (Italiano) - optional</span><input id="templateSubjectIt" placeholder="Oggetto"></label>
+                        <label class="wide"><span data-i18n="templateBodyIt">Text (Italiano) - optional</span><textarea id="templateBodyIt" rows="7" placeholder="Buongiorno [Nome Cognome],"></textarea></label>
                         <div class="template-form-actions"><button type="button" class="button button-ghost" id="templateCancel" data-i18n="cancel">Cancel</button><button type="button" class="button button-primary" id="templateSave" data-i18n="saveTemplate">Save template</button></div>
                     </div>
                     <div class="template-board" id="templateBoard"></div>
@@ -224,9 +226,9 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=lang-nl-pt"></script>
-<script src="data/assets/js/admin-strings.js?v=servicehub-setup-1"></script>
+<script src="data/assets/js/admin-strings.js?v=templates-it-1"></script>
 <script src="data/assets/js/vendor/qrcode.js?v=1.5.2"></script>
-<script src="data/assets/js/admin.js?v=servicehub-setup-2"></script>
+<script src="data/assets/js/admin.js?v=templates-it-1"></script>
 <script src="data/assets/js/pwa.js?v=5" defer></script>
 </body>
 </html>
