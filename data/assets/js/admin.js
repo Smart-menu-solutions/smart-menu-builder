@@ -16,6 +16,7 @@ let selectedId = rememberedClientId(clients) || clients[0]?.id;
 let clientSearch = '';
 let subscriptionsBySlug = {};
 let customerInputBySlug = {};
+let setupSubmissionBySlug = {};
 let showOnlyNeedsRenewal = false;
 const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
 const LANG_STORAGE_KEY = 'smartmenu.admin.lang';
@@ -1332,6 +1333,8 @@ async function syncFromSupabase() {
 		selectedId = clients.find((client) => client.id === selectedId)?.id || rememberedClientId(clients) || clients[0]?.id;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 		render();
+		// Only now, with every menu fresh from Supabase.
+		await applySetupSubmissions();
 	} else if (clients.length) {
 		try { await saveClients(); render(); } catch (error) { notify(error.message); }
 	}
@@ -1376,23 +1379,75 @@ async function syncSubscriptions() {
 	subscriptionsBySlug = {};
 	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
 	render();
-	// Table and till numbers the customer typed on the upload page (Smart
-	// ServiceHub, 0034_order_table_and_pos_numbers.sql) - the newest order that
-	// has them wins, per field. A separate query on purpose: if it fails, the
-	// subscriptions above are still shown.
+	// Table numbers the customer typed on the upload page (optional, Smart
+	// ServiceHub, 0034_servicehub_setup.sql) - the newest order that has them.
+	// A separate query on purpose: if it fails, the subscriptions above are
+	// still shown.
 	const slugBySubscription = new Map((data || []).map((row) => [row.id, row.menu_slug]));
-	const { data: orders, error: ordersError } = await supabaseClient.from('orders').select('subscription_id, table_numbers, pos_numbers, created_at').order('created_at', { ascending: false });
+	const { data: orders, error: ordersError } = await supabaseClient.from('orders').select('subscription_id, table_numbers, created_at').order('created_at', { ascending: false });
 	if (ordersError) return;
 	customerInputBySlug = {};
 	(orders || []).forEach((order) => {
 		const slug = slugBySubscription.get(order.subscription_id);
-		if (!slug) return;
-		const input = (customerInputBySlug[slug] ||= { tables: '', pos: '' });
-		if (!input.tables && order.table_numbers) input.tables = order.table_numbers;
-		if (!input.pos && order.pos_numbers) input.pos = order.pos_numbers;
+		if (!slug || !order.table_numbers || customerInputBySlug[slug]) return;
+		customerInputBySlug[slug] = { tables: order.table_numbers };
 	});
 	render();
 }
+
+// What the customer sent through servicehub-setup.html (link from the
+// Add-ons tab). The Edge Function creates the tables itself; the till numbers
+// are written into the dishes here, by dish id, right after this tab loaded
+// the menus fresh from Supabase - so no older copy of a menu in some builder
+// tab can win over them (see 0034_servicehub_setup.sql). A submission is only
+// marked applied once the menus are saved.
+async function applySetupSubmissions() {
+	if (typeof supabaseClient === 'undefined') return;
+	const { data, error } = await supabaseClient.from('servicehub_setup_submissions').select('id, menu_slug, numbers, tables_created, created_at, applied_at').order('created_at', { ascending: true });
+	if (error) return;
+	setupSubmissionBySlug = {};
+	(data || []).forEach((row) => { setupSubmissionBySlug[row.menu_slug] = row; });
+	const open = (data || []).filter((row) => !row.applied_at && clients.some((client) => client.slug === row.menu_slug));
+	if (open.length) {
+		open.forEach((row) => {
+			const client = clients.find((item) => item.slug === row.menu_slug);
+			const itemsById = new Map(client.categories.flatMap((category) => category.items || []).map((item) => [item.id, item]));
+			Object.entries(row.numbers || {}).forEach(([id, value]) => {
+				const item = itemsById.get(id);
+				if (item) item.posNumber = String(value || '').trim().slice(0, 20);
+			});
+		});
+		try {
+			await saveClients();
+		} catch (saveError) {
+			notify(strings().savedLocallyCloudFailed.replace('{error}', saveError.message));
+			return;
+		}
+		const appliedAt = new Date().toISOString();
+		const { error: markError } = await supabaseClient.from('servicehub_setup_submissions').update({ applied_at: appliedAt }).in('id', open.map((row) => row.id));
+		if (!markError) open.forEach((row) => { row.applied_at = appliedAt; });
+		const names = [...new Set(open.map((row) => clients.find((client) => client.slug === row.menu_slug)?.name).filter(Boolean))];
+		notify(strings().setupApplied.replace('{names}', names.join(', ')));
+	}
+	render();
+}
+
+function setupLinkFor(client) {
+	if (!client.setup_token) return '';
+	const lang = subscriptionsBySlug[client.slug]?.lang;
+	return `${RENEWAL_SITE}/servicehub-setup.html?token=${client.setup_token}&lang=${['en', 'it'].includes(lang) ? lang : 'de'}`;
+}
+
+if ($('#copySetupLink')) $('#copySetupLink').addEventListener('click', async () => {
+	const link = setupLinkFor(selectedClient());
+	if (!link) return;
+	try {
+		await navigator.clipboard.writeText(link);
+		notify(strings().setupLinkCopied);
+	} catch {
+		window.prompt(strings().setupLinkTitle, link);
+	}
+});
 
 // "1–8, 12, Terrasse 1" -> ['1', …, '8', '12', 'Terrasse 1']. Ranges only
 // for plain numbers and at most 200 tables, anything else stays as written.
@@ -1409,63 +1464,29 @@ function parseTableList(text) {
 	return [...new Set(tables)];
 }
 
-// One dish per line: "Rindersuppe 350", "350 Rindersuppe", "Rindersuppe: 350".
-// "Suppe 350, Salat 351" on one line works too, as long as every part has
-// its own number. Returns [{ name, number }].
-function parsePosList(text) {
-	const entries = [];
-	String(text || '').split(/[\n;]+/).forEach((line) => {
-		// Not at a decimal comma: "Cola 0,3 l 120" is one dish.
-		const parts = line.split(/,(?!\d)/);
-		const pieces = parts.length > 1 && parts.every((part) => /\d/.test(part)) ? parts : [line];
-		pieces.forEach((piece) => {
-			const value = piece.trim();
-			if (!value) return;
-			const atEnd = value.match(/^(.*\D)\s*[:=–—-]?\s*(\d{1,10})$/);
-			const atStart = value.match(/^(\d{1,10})\s*[:=.)–—-]?\s+(.+)$/);
-			const match = atEnd ? { name: atEnd[1], number: atEnd[2] } : atStart ? { name: atStart[2], number: atStart[1] } : null;
-			if (match && match.name.replace(/[^\p{L}]/gu, '').length >= 2) entries.push({ name: match.name.replace(/[\s:=–—-]+$/, '').trim(), number: match.number });
-		});
-	});
-	return entries;
-}
-
-// Dish names as written in the menu ("1. Rindersuppe") and as the customer
-// typed them ("rindersuppe") compare equal: no numbering, case or punctuation.
-function posMatchKey(name) {
-	return String(name || '').toLowerCase().replace(/^\s*\d+\s*[.)]\s*/, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-}
-
-// Exact name first; otherwise the one dish whose name contains the typed
-// name (or the other way round). Two or more candidates = no guess.
-function matchPosEntries(client, entries) {
-	const items = (client.categories || []).flatMap((category) => category.items || []);
-	const keyed = items.map((item) => ({ item, key: posMatchKey(item.name) }));
-	const matched = [];
-	const unmatched = [];
-	entries.forEach((entry) => {
-		const key = posMatchKey(entry.name);
-		let candidates = keyed.filter((row) => row.key === key);
-		if (!candidates.length && key.length >= 4) candidates = keyed.filter((row) => row.key.includes(key) || (row.key.length >= 4 && key.includes(row.key)));
-		if (candidates.length === 1) matched.push({ item: candidates[0].item, number: entry.number });
-		else unmatched.push(entry.name);
-	});
-	return { matched, unmatched };
-}
-
 function renderCustomerOrderInput(client) {
-	const input = customerInputBySlug[client.slug] || { tables: '', pos: '' };
+	const tablesText = customerInputBySlug[client.slug]?.tables || '';
 	const tablesBox = $('#customerTablesBox');
 	if (tablesBox) {
-		tablesBox.hidden = !input.tables;
-		$('#customerTablesText').textContent = input.tables;
+		tablesBox.hidden = !tablesText;
+		$('#customerTablesText').textContent = tablesText;
 	}
-	const posBox = $('#customerPosBox');
-	if (posBox) {
-		posBox.hidden = !input.pos;
-		$('#customerPosText').textContent = input.pos;
-		const status = $('#customerPosStatus');
-		if (status.dataset.slug !== client.slug) { status.textContent = ''; status.dataset.slug = client.slug; }
+	const copyButton = $('#copySetupLink');
+	if (copyButton) copyButton.disabled = !setupLinkFor(client);
+	const box = $('#setupSubmissionBox');
+	if (box) {
+		const submission = setupSubmissionBySlug[client.slug];
+		box.hidden = !submission;
+		if (submission) {
+			const when = new Date(submission.created_at).toLocaleString(currentLang === 'de' ? 'de-DE' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' });
+			const count = Object.values(submission.numbers || {}).filter(Boolean).length;
+			const created = submission.tables_created || [];
+			$('#setupSubmissionTitle').textContent = strings().setupReceived.replace('{date}', when);
+			$('#setupSubmissionText').textContent = [
+				(submission.applied_at ? strings().setupNumbersApplied : strings().setupNumbersPending).replace('{n}', count),
+				created.length ? strings().setupTablesCreated.replace('{n}', created.length).replace('{list}', created.join(', ')) : strings().setupNoNewTables
+			].join('\n');
+		}
 	}
 }
 
@@ -1480,20 +1501,6 @@ if ($('#createCustomerTables')) $('#createCustomerTables').addEventListener('cli
 	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
 	notify(strings().customerTablesCreated.replace('{n}', missing.length));
 	await syncSmartServiceHub();
-});
-
-if ($('#applyCustomerPos')) $('#applyCustomerPos').addEventListener('click', async () => {
-	const client = selectedClient();
-	const status = $('#customerPosStatus');
-	const entries = parsePosList(customerInputBySlug[client.slug]?.pos);
-	const { matched, unmatched } = matchPosEntries(client, entries);
-	if (!matched.length) { status.textContent = strings().customerPosNoneMatched; return; }
-	if (!confirm(strings().applyPosConfirm.replace('{n}', matched.length).replace('{name}', client.name))) return;
-	matched.forEach(({ item, number }) => { item.posNumber = number.slice(0, 20); });
-	render();
-	status.textContent = strings().customerPosApplied.replace('{n}', matched.length).replace('{total}', entries.length)
-		+ (unmatched.length ? ` ${strings().customerPosUnmatched.replace('{list}', unmatched.join(', '))}` : '');
-	try { await saveClients(); } catch (error) { notify(strings().savedLocallyCloudFailed.replace('{error}', error.message)); }
 });
 
 async function loadActivity() {

@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
-                    <div class="import-panel"><strong data-i18n="importMenuPdf">Import menu PDF</strong><p data-i18n="importMenuPdfHint">Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf" data-i18n="importPdfButton">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu" data-i18n="exportJson">Export JSON</button><button type="button" class="button button-ghost" id="importMenu" data-i18n="importJson">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div><div class="customer-input-box" id="customerPosBox" hidden><p class="addon-extra-heading" data-i18n="customerPosHeading">Till numbers from the customer's order</p><p class="customer-input-text" id="customerPosText"></p><button type="button" class="button button-ghost" id="applyCustomerPos" data-i18n="applyCustomerPos">Apply till numbers</button><span class="customer-input-status" id="customerPosStatus"></span></div></div>
+                    <div class="import-panel"><strong data-i18n="importMenuPdf">Import menu PDF</strong><p data-i18n="importMenuPdfHint">Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf" data-i18n="importPdfButton">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu" data-i18n="exportJson">Export JSON</button><button type="button" class="button button-ghost" id="importMenu" data-i18n="importJson">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
                     <div class="menu-heading"><div><p class="eyebrow" data-i18n="menuContent">Menu content</p><div class="menu-heading-title"><h3 data-i18n="sectionsAndDishes">Sections & dishes</h3><span class="dish-count" id="dishCount" role="status" aria-live="polite"></span></div></div><button type="button" class="button button-ghost" id="addCategory" data-i18n="addSection">＋ Add section</button></div>
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
@@ -138,6 +138,14 @@
                                     <select id="smartServiceHubNewAccessRole" data-i18n-aria-label="accessRoleAria" aria-label="Role"></select>
                                     <input type="text" id="smartServiceHubNewAccessName" maxlength="40" data-i18n-placeholder="accessNamePlaceholder" placeholder="Name, e.g. Beach Bar">
                                     <button type="button" class="button button-ghost" id="smartServiceHubAddAccess" data-i18n="addAccess">＋ Add access</button>
+                                </div>
+                            </div>
+                            <div class="addon-extra-block">
+                                <p class="addon-extra-heading" data-i18n="setupHeading">Tables &amp; till numbers from the customer</p>
+                                <div class="addon-board-row"><span class="addon-board-main"><span class="addon-board-name" data-i18n="setupLinkTitle">Link for tables &amp; till numbers</span><span class="addon-board-hint" data-i18n="setupLinkHint">The customer sees every dish with description and price and only types the till numbers and their tables.</span></span><button type="button" class="button button-ghost addon-board-send" id="copySetupLink" data-i18n="copyLink">Copy link</button></div>
+                                <div class="customer-input-box" id="setupSubmissionBox" hidden>
+                                    <p class="addon-extra-heading" id="setupSubmissionTitle"></p>
+                                    <p class="customer-input-text" id="setupSubmissionText"></p>
                                 </div>
                             </div>
                             <div class="addon-extra-block">
@@ -216,9 +224,9 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=lang-nl-pt"></script>
-<script src="data/assets/js/admin-strings.js?v=customer-input-1"></script>
+<script src="data/assets/js/admin-strings.js?v=servicehub-setup-1"></script>
 <script src="data/assets/js/vendor/qrcode.js?v=1.5.2"></script>
-<script src="data/assets/js/admin.js?v=customer-input-1"></script>
+<script src="data/assets/js/admin.js?v=servicehub-setup-1"></script>
 <script src="data/assets/js/pwa.js?v=5" defer></script>
 </body>
 </html>

@@ -41,3 +41,6 @@ verify_jwt = false
 
 [functions.order-upload]
 verify_jwt = false
+
+[functions.servicehub-setup]
+verify_jwt = false
