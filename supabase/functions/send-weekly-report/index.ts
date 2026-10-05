@@ -45,13 +45,42 @@ const EMAIL_SIGNATURE = `
 </tr>
 </table>`;
 
+const REPLY_TO_EMAIL = 'info@smartmenusolutions.com';
+
+// Plain-text part sent next to the HTML: spam filters penalise HTML-only mails.
+function htmlToText(html: string): string {
+	return html
+		.replace(/<(style|script|head)[^>]*>[\s\S]*?<\/\1>/gi, '')
+		.replace(/<a\s[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (_m, href: string, label: string) => {
+			const text = label.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+			if (!text) return '';
+			return href.startsWith('mailto:') || href.includes(text) ? text : `${text} (${href.replace(/&amp;/g, '&')})`;
+		})
+		.replace(/<br\s*\/?>/gi, '\n')
+		.replace(/<li[^>]*>/gi, '- ')
+		.replace(/<\/(p|h[1-6]|ul|ol)>/gi, '\n\n')
+		.replace(/<\/(div|li|tr)>/gi, '\n')
+		.replace(/<[^>]+>/g, '')
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'")
+		.replace(/&#(\d+);/g, (_m, code: string) => String.fromCodePoint(Number(code)))
+		.replace(/&amp;/g, '&')
+		.replace(/[ \t]+/g, ' ')
+		.replace(/ *\n */g, '\n')
+		.replace(/\n{3,}/g, '\n\n')
+		.trim();
+}
+
 async function sendEmail(recipient: string, subscriptionId: string | null, kind: string, subject: string, html: string) {
 	let providerMessageId: string | null = null;
 	try {
 		const response = await fetch('https://api.resend.com/emails', {
 			method: 'POST',
 			headers: { Authorization: `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-			body: JSON.stringify({ from: FROM_EMAIL, to: [recipient], subject, html })
+			body: JSON.stringify({ from: FROM_EMAIL, to: [recipient], reply_to: REPLY_TO_EMAIL, subject, html, text: htmlToText(html) })
 		});
 		const data = await response.json().catch(() => ({}));
 		if (response.ok) providerMessageId = data.id ?? null;
