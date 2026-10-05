@@ -13,7 +13,7 @@
 <script src="data/assets/js/vendor/pdf.min.js?v=3.11.174"></script>
 <script src="data/assets/js/vendor/tesseract.min.js?v=5.1.1"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=right-column-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=customer-input-1">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -90,7 +90,7 @@
                     </div>
                 </div>
                 <div class="editor-tab-panel" data-tab-panel="menu" hidden>
-                    <div class="import-panel"><strong data-i18n="importMenuPdf">Import menu PDF</strong><p data-i18n="importMenuPdfHint">Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf" data-i18n="importPdfButton">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu" data-i18n="exportJson">Export JSON</button><button type="button" class="button button-ghost" id="importMenu" data-i18n="importJson">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div></div>
+                    <div class="import-panel"><strong data-i18n="importMenuPdf">Import menu PDF</strong><p data-i18n="importMenuPdfHint">Upload a customer PDF to create a draft menu. Check the extracted text before saving.</p><input id="menuPdf" type="file" accept="application/pdf"><button type="button" class="button button-ghost" id="importPdf" data-i18n="importPdfButton">Import PDF</button><span id="importStatus"></span><div class="backup-actions"><button type="button" class="button button-ghost" id="exportMenu" data-i18n="exportJson">Export JSON</button><button type="button" class="button button-ghost" id="importMenu" data-i18n="importJson">Import JSON</button><input id="menuJson" type="file" accept="application/json,.json" hidden></div><div class="customer-input-box" id="customerPosBox" hidden><p class="addon-extra-heading" data-i18n="customerPosHeading">Till numbers from the customer's order</p><p class="customer-input-text" id="customerPosText"></p><button type="button" class="button button-ghost" id="applyCustomerPos" data-i18n="applyCustomerPos">Apply till numbers</button><span class="customer-input-status" id="customerPosStatus"></span></div></div>
                     <div class="menu-heading"><div><p class="eyebrow" data-i18n="menuContent">Menu content</p><div class="menu-heading-title"><h3 data-i18n="sectionsAndDishes">Sections & dishes</h3><span class="dish-count" id="dishCount" role="status" aria-live="polite"></span></div></div><button type="button" class="button button-ghost" id="addCategory" data-i18n="addSection">＋ Add section</button></div>
                     <div id="categoryEditor" class="category-editor"></div>
                 </div>
@@ -142,6 +142,11 @@
                             </div>
                             <div class="addon-extra-block">
                                 <p class="addon-extra-heading" data-i18n="tables">Tables</p>
+                                <div class="customer-input-box" id="customerTablesBox" hidden>
+                                    <p class="addon-extra-heading" data-i18n="customerTablesHeading">From the customer's order</p>
+                                    <p class="customer-input-text" id="customerTablesText"></p>
+                                    <button type="button" class="button button-ghost" id="createCustomerTables" data-i18n="createCustomerTables">Create these tables</button>
+                                </div>
                                 <div class="addon-extra-add">
                                     <input type="text" id="smartServiceHubNewTable" data-i18n-placeholder="tableNumberPlaceholder" placeholder="Table number, e.g. 12">
                                     <button type="button" class="button button-ghost" id="smartServiceHubAddTable" data-i18n="addTable">＋ Add table</button>
@@ -211,9 +216,9 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=lang-nl-pt"></script>
-<script src="data/assets/js/admin-strings.js?v=import-confirm"></script>
+<script src="data/assets/js/admin-strings.js?v=customer-input-1"></script>
 <script src="data/assets/js/vendor/qrcode.js?v=1.5.2"></script>
-<script src="data/assets/js/admin.js?v=import-confirm"></script>
+<script src="data/assets/js/admin.js?v=customer-input-1"></script>
 <script src="data/assets/js/pwa.js?v=5" defer></script>
 </body>
 </html>

@@ -110,7 +110,7 @@ interface OrderContext {
 	zipRequired: boolean;
 	hubAddon: boolean;
 	folder: string;
-	order: { id: string; subscription_id: string | null; files_uploaded_at: string | null } | null;
+	order: { id: string; subscription_id: string | null; files_uploaded_at: string | null; table_numbers: string | null; pos_numbers: string | null } | null;
 }
 
 Deno.serve(async (request) => {
@@ -168,7 +168,7 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 		if (!TOKEN_PATTERN.test(token)) return null;
 		const { data } = await supabase
 			.from('orders')
-			.select('id, subscription_id, files_uploaded_at, stripe_checkout_session_id')
+			.select('id, subscription_id, files_uploaded_at, table_numbers, pos_numbers, stripe_checkout_session_id')
 			.eq('upload_token', token)
 			.maybeSingle();
 		if (!data?.stripe_checkout_session_id || !SESSION_ID_PATTERN.test(data.stripe_checkout_session_id)) return null;
@@ -193,7 +193,7 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 		// the session id.
 		const { data } = await supabase
 			.from('orders')
-			.select('id, subscription_id, files_uploaded_at')
+			.select('id, subscription_id, files_uploaded_at, table_numbers, pos_numbers')
 			.eq('stripe_checkout_session_id', session.id)
 			.maybeSingle();
 		order = data;
@@ -231,6 +231,10 @@ async function statusOf(context: OrderContext) {
 		zipRequired: context.zipRequired,
 		hubAddon: context.hubAddon,
 		files: { pdf: FILES.pdf.name in files, zip: FILES.zip.name in files, logo: FILES.logo.name in files },
+		// Filled in again when the customer comes back through the email link,
+		// so a second upload doesn't blank what they typed the first time.
+		tableNumbers: context.hubAddon ? context.order?.table_numbers || '' : '',
+		posNumbers: context.hubAddon ? context.order?.pos_numbers || '' : '',
 		completed: Boolean(context.order?.files_uploaded_at)
 	};
 }
@@ -296,16 +300,23 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 	// Only asked for with Smart ServiceHub - which table QR codes to set up.
 	// Free text (e.g. "1-8, 12, Terrasse 1") - tables are often not numbered 1..N.
 	const tableNumbers = context.hubAddon ? String(body.tableNumbers ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 300) : '';
+	// Till numbers per dish, one per line ("Rindersuppe 350") - line breaks
+	// stay, the builder reads them line by line.
+	const posNumbers = context.hubAddon ? String(body.posNumbers ?? '').replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000b-\u001f]/g, ' ').trim().slice(0, 5000) : '';
 
 	const pdfPath = `${context.folder}/${FILES.pdf.name}`;
 	const zipPath = zip === 'ok' ? `${context.folder}/${FILES.zip.name}` : null;
 	const again = Boolean(context.order?.files_uploaded_at);
 	if (context.order) {
-		await supabase.from('orders').update({
+		// Saved on the order before any email goes out: on 2026-10-05 the table
+		// numbers only lived in the notification email, and were lost with it.
+		const { error: updateError } = await supabase.from('orders').update({
 			files_uploaded_at: new Date().toISOString(),
 			...(pdf === 'ok' ? { pdf_path: pdfPath } : {}),
-			photo_zip_path: zipPath
+			photo_zip_path: zipPath,
+			...(context.hubAddon ? { table_numbers: tableNumbers || null, pos_numbers: posNumbers || null } : {})
 		}).eq('id', context.order.id);
+		if (updateError) console.error('orders update failed', context.order.id, updateError);
 	}
 
 	let menuSlug = '-';
@@ -355,6 +366,7 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 		...(context.photoAddon ? { 'Foto-ZIP': zip === 'ok' ? delivered('zip', 'photos.zip') : '-' } : {}),
 		Logo: logo === 'ok' ? delivered('logo', 'Logo') : '-',
 		...(context.hubAddon ? { 'Tischnummern (ServiceHub)': tableNumbers || 'nicht angegeben' } : {}),
+		...(context.hubAddon ? { 'Kassennummern (ServiceHub)': posNumbers ? `\n${posNumbers}` : 'nicht angegeben' } : {}),
 		'Stripe-Checkout': context.session.id
 	}, attachments);
 
@@ -384,7 +396,7 @@ function escapeHtml(value: string): string {
 // stripe-webhook's sendNotification().
 async function sendNotification(subscriptionId: string | null, subject: string, lines: Record<string, string>, attachments: EmailAttachment[]) {
 	const html = `<h2>${escapeHtml(subject)}</h2><ul>${
-		Object.entries(lines).map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value ?? '-'))}</li>`).join('')
+		Object.entries(lines).map(([label, value]) => `<li><strong>${escapeHtml(label)}:</strong> ${escapeHtml(String(value ?? '-')).replace(/\n/g, '<br>')}</li>`).join('')
 	}</ul>`;
 	let providerMessageId: string | null = null;
 	try {

@@ -200,3 +200,8 @@
 .qr-panel .qr-badge{position:absolute;top:21px;right:21px}
 .qr-panel .panel-heading h2{font-size:20px}
 .qr-panel .qr-actions .button{white-space:normal;min-width:0;line-height:1.25}
+/* What the customer typed on the upload page (tables, till numbers) - see renderCustomerOrderInput() */
+.customer-input-box{display:grid;justify-items:start;gap:8px;margin:10px 0 12px;padding:10px 12px;border:1px dashed var(--orange);border-radius:10px;background:var(--tint)}
+.customer-input-text{margin:0;white-space:pre-wrap;font-size:13px;color:var(--ink);max-height:220px;overflow-y:auto;justify-self:stretch}
+.customer-input-status{font-size:12px;color:var(--muted)}
+.customer-input-box[hidden]{display:none}

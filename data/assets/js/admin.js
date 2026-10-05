@@ -15,6 +15,7 @@ function rememberedClientId(list) {
 let selectedId = rememberedClientId(clients) || clients[0]?.id;
 let clientSearch = '';
 let subscriptionsBySlug = {};
+let customerInputBySlug = {};
 let showOnlyNeedsRenewal = false;
 const RENEWAL_SITE = 'https://smart-menu-solutions.github.io/smart-menu-solutions';
 const LANG_STORAGE_KEY = 'smartmenu.admin.lang';
@@ -930,6 +931,7 @@ function renderAddonBoard(client, clientSubscription) {
 		button.dataset.link = addonsUrl;
 	});
 
+	renderCustomerOrderInput(client);
 	renderSmartServiceHubExtra(client);
 }
 
@@ -1369,12 +1371,130 @@ function updateDishCount(client, subscription) {
 
 async function syncSubscriptions() {
 	if (typeof supabaseClient === 'undefined') return;
-	const { data, error } = await supabaseClient.from('subscriptions').select('menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token, discovery_started_on, lang').order('created_at', { ascending: false });
+	const { data, error } = await supabaseClient.from('subscriptions').select('id, menu_slug, plan, status, current_period_end, renewal_token, stats_token, addon_token, discovery_started_on, lang').order('created_at', { ascending: false });
 	if (error) return;
 	subscriptionsBySlug = {};
 	(data || []).forEach((row) => { if (!subscriptionsBySlug[row.menu_slug]) subscriptionsBySlug[row.menu_slug] = row; });
 	render();
+	// Table and till numbers the customer typed on the upload page (Smart
+	// ServiceHub, 0034_order_table_and_pos_numbers.sql) - the newest order that
+	// has them wins, per field. A separate query on purpose: if it fails, the
+	// subscriptions above are still shown.
+	const slugBySubscription = new Map((data || []).map((row) => [row.id, row.menu_slug]));
+	const { data: orders, error: ordersError } = await supabaseClient.from('orders').select('subscription_id, table_numbers, pos_numbers, created_at').order('created_at', { ascending: false });
+	if (ordersError) return;
+	customerInputBySlug = {};
+	(orders || []).forEach((order) => {
+		const slug = slugBySubscription.get(order.subscription_id);
+		if (!slug) return;
+		const input = (customerInputBySlug[slug] ||= { tables: '', pos: '' });
+		if (!input.tables && order.table_numbers) input.tables = order.table_numbers;
+		if (!input.pos && order.pos_numbers) input.pos = order.pos_numbers;
+	});
+	render();
 }
+
+// "1–8, 12, Terrasse 1" -> ['1', …, '8', '12', 'Terrasse 1']. Ranges only
+// for plain numbers and at most 200 tables, anything else stays as written.
+function parseTableList(text) {
+	const tables = [];
+	String(text || '').split(/[,;\n]+/).map((part) => part.trim()).filter(Boolean).forEach((part) => {
+		const range = part.match(/^(\d+)\s*(?:-|–|—|bis|to|a)\s*(\d+)$/i);
+		if (range && Number(range[2]) >= Number(range[1]) && Number(range[2]) - Number(range[1]) < 200) {
+			for (let n = Number(range[1]); n <= Number(range[2]); n += 1) tables.push(String(n));
+		} else {
+			tables.push(part.slice(0, 20));
+		}
+	});
+	return [...new Set(tables)];
+}
+
+// One dish per line: "Rindersuppe 350", "350 Rindersuppe", "Rindersuppe: 350".
+// "Suppe 350, Salat 351" on one line works too, as long as every part has
+// its own number. Returns [{ name, number }].
+function parsePosList(text) {
+	const entries = [];
+	String(text || '').split(/[\n;]+/).forEach((line) => {
+		// Not at a decimal comma: "Cola 0,3 l 120" is one dish.
+		const parts = line.split(/,(?!\d)/);
+		const pieces = parts.length > 1 && parts.every((part) => /\d/.test(part)) ? parts : [line];
+		pieces.forEach((piece) => {
+			const value = piece.trim();
+			if (!value) return;
+			const atEnd = value.match(/^(.*\D)\s*[:=–—-]?\s*(\d{1,10})$/);
+			const atStart = value.match(/^(\d{1,10})\s*[:=.)–—-]?\s+(.+)$/);
+			const match = atEnd ? { name: atEnd[1], number: atEnd[2] } : atStart ? { name: atStart[2], number: atStart[1] } : null;
+			if (match && match.name.replace(/[^\p{L}]/gu, '').length >= 2) entries.push({ name: match.name.replace(/[\s:=–—-]+$/, '').trim(), number: match.number });
+		});
+	});
+	return entries;
+}
+
+// Dish names as written in the menu ("1. Rindersuppe") and as the customer
+// typed them ("rindersuppe") compare equal: no numbering, case or punctuation.
+function posMatchKey(name) {
+	return String(name || '').toLowerCase().replace(/^\s*\d+\s*[.)]\s*/, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+}
+
+// Exact name first; otherwise the one dish whose name contains the typed
+// name (or the other way round). Two or more candidates = no guess.
+function matchPosEntries(client, entries) {
+	const items = (client.categories || []).flatMap((category) => category.items || []);
+	const keyed = items.map((item) => ({ item, key: posMatchKey(item.name) }));
+	const matched = [];
+	const unmatched = [];
+	entries.forEach((entry) => {
+		const key = posMatchKey(entry.name);
+		let candidates = keyed.filter((row) => row.key === key);
+		if (!candidates.length && key.length >= 4) candidates = keyed.filter((row) => row.key.includes(key) || (row.key.length >= 4 && key.includes(row.key)));
+		if (candidates.length === 1) matched.push({ item: candidates[0].item, number: entry.number });
+		else unmatched.push(entry.name);
+	});
+	return { matched, unmatched };
+}
+
+function renderCustomerOrderInput(client) {
+	const input = customerInputBySlug[client.slug] || { tables: '', pos: '' };
+	const tablesBox = $('#customerTablesBox');
+	if (tablesBox) {
+		tablesBox.hidden = !input.tables;
+		$('#customerTablesText').textContent = input.tables;
+	}
+	const posBox = $('#customerPosBox');
+	if (posBox) {
+		posBox.hidden = !input.pos;
+		$('#customerPosText').textContent = input.pos;
+		const status = $('#customerPosStatus');
+		if (status.dataset.slug !== client.slug) { status.textContent = ''; status.dataset.slug = client.slug; }
+	}
+}
+
+if ($('#createCustomerTables')) $('#createCustomerTables').addEventListener('click', async () => {
+	const client = selectedClient();
+	const wanted = parseTableList(customerInputBySlug[client.slug]?.tables);
+	const existing = new Set((smartServiceTablesBySlug[client.slug] || []).map((table) => String(table.table_number)));
+	const missing = wanted.filter((number) => !existing.has(number));
+	if (!missing.length) return notify(strings().customerTablesAllThere);
+	if (!confirm(strings().createTablesConfirm.replace('{n}', missing.length).replace('{name}', client.name).replace('{list}', missing.join(', ')))) return;
+	const { error } = await supabaseClient.from('restaurant_tables').insert(missing.map((number) => ({ menu_slug: client.slug, table_number: number })));
+	if (error) { notify(strings().couldNotAddTable.replace('{error}', error.message)); return; }
+	notify(strings().customerTablesCreated.replace('{n}', missing.length));
+	await syncSmartServiceHub();
+});
+
+if ($('#applyCustomerPos')) $('#applyCustomerPos').addEventListener('click', async () => {
+	const client = selectedClient();
+	const status = $('#customerPosStatus');
+	const entries = parsePosList(customerInputBySlug[client.slug]?.pos);
+	const { matched, unmatched } = matchPosEntries(client, entries);
+	if (!matched.length) { status.textContent = strings().customerPosNoneMatched; return; }
+	if (!confirm(strings().applyPosConfirm.replace('{n}', matched.length).replace('{name}', client.name))) return;
+	matched.forEach(({ item, number }) => { item.posNumber = number.slice(0, 20); });
+	render();
+	status.textContent = strings().customerPosApplied.replace('{n}', matched.length).replace('{total}', entries.length)
+		+ (unmatched.length ? ` ${strings().customerPosUnmatched.replace('{list}', unmatched.join(', '))}` : '');
+	try { await saveClients(); } catch (error) { notify(strings().savedLocallyCloudFailed.replace('{error}', error.message)); }
+});
 
 async function loadActivity() {
 	const list = $('#activityList');
