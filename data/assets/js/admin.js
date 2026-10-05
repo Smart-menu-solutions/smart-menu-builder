@@ -1765,6 +1765,30 @@ Mit freundlichen Grüßen
 [+ HTML-Signatur]`
 	},
 	{
+		// Manual - sent once a Smart ServiceHub menu is set up, with the link
+		// from Add-ons → "Link für Tische & Kassennummern" (servicehub-setup.html).
+		name: 'ServiceHub: tables & till numbers link (manual)',
+		subject: 'Letzter Schritt für Smart ServiceHub™: Ihre Tische und Kassennummern',
+		body: `Hallo [Vorname Nachname],
+
+Ihre Speisekarte für [Menü-Name] ist eingerichtet. Damit Smart ServiceHub™ startklar ist, brauchen wir nur noch zwei Angaben von Ihnen – das dauert etwa 5 Minuten:
+
+1. Ihre Tische: Wie sind Ihre Tische nummeriert? Jeder Tisch bekommt seinen eigenen QR-Code zum Bestellen.
+2. Ihre Kassennummern: Tragen Sie bei jedem Gericht die Nummer ein, die es in Ihrer Kasse hat. Dann erscheint jede Bestellung mit der richtigen Nummer auf dem Kassen-Bildschirm.
+
+Alle Ihre Gerichte stehen auf der Seite schon mit Beschreibung und Preis bereit – Sie tragen nur noch die Nummern ein und klicken auf „Absenden“:
+[Link für Tische & Kassennummern →]
+
+Hat ein Gericht keine Kassennummer, lassen Sie das Feld einfach leer. Den Link können Sie jederzeit wieder öffnen, um etwas zu ändern.
+
+Sobald wir Ihre Angaben haben, richten wir alles ein und senden Ihnen die QR-Codes für Ihre Tische.
+
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
 		// Manual - not sent by any Edge Function. Written by hand and sent
 		// with the client's QR code attached once the menu is finished.
 		name: 'Finished menu: QR code delivery (manual)',
@@ -1862,6 +1886,27 @@ thank you for your order. We've received your details and menu and will get back
 Plan: [Smart Start/Pro/Premium]
 
 If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: [Manage add-ons →]
+
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
+
+Best regards
+[+ HTML signature]`
+	},
+	'ServiceHub: tables & till numbers link (manual)': {
+		subject: 'Last step for Smart ServiceHub™: your tables and till numbers',
+		body: `Hi [First name Last name],
+
+your menu for [Menu name] is set up. To get Smart ServiceHub™ ready, we only need two more things from you – it takes about 5 minutes:
+
+1. Your tables: how are your tables numbered? Each table gets its own QR code for ordering.
+2. Your till numbers: for each dish, enter the number it has in your till. Then every order shows up on the cashier screen with the right number.
+
+All your dishes are already on the page with description and price – you only type the numbers and click "Send":
+[Link for tables & till numbers →]
+
+If a dish has no till number, just leave the field empty. You can open the link again at any time to change something.
+
+As soon as we have your details, we set everything up and send you the QR codes for your tables.
 
 If you have any questions, reach us anytime at info@smartmenusolutions.com.
 
