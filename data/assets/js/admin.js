@@ -260,22 +260,63 @@ function parsePdfText(text) {
 	const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
 	const pricePattern = /(?:\d+[.,]\d{2}\s*(?:€|EUR|\$|USD|£|GBP)?|(?:€|EUR|\$|USD|£|GBP)\s*\d+[.,]\d{2})\s*$/i;
 	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getränke|kalte\s+getränke|frühstück\s*(?:&|und)\s+snacks?|kuchen\s*(?:&|und)\s+desserts?|spezialitäten|vorspeisen|hauptgerichte|hauptspeisen|nachspeisen|salate|snacks?|beilagen|suppen|pizza|pasta|burger|desserts?|starters?|mains?|sides?|soups?|salads?|hot\s+drinks?|cold\s+drinks?|breakfast\s*(?:&|and)\s+snacks?)$/i;
-	// Table headers from a PDF's column labels (e.g. "Produkt Preis") — never
-	// real menu categories, but they otherwise pass the generic heuristic
-	// below and, repeated on every page, used to create one duplicate
-	// category per page instead of being ignored.
 	const headerLinePattern = /^(produkt|preis|price|artikel|bezeichnung|men[uü]|item|name|beschreibung|description|qty|anzahl|product)(\s*(preis|price))?$/i;
 	const looksLikeCategory = (line) => line.length <= 42 && !headerLinePattern.test(line) && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
-	// PDFs commonly print "1. Item name – 6,90 €" on one line and the
-	// description on the following line(s) (see the blank-line-separated
-	// layout this parser is built for). Track the most recently added item
-	// so the next non-price, non-category line(s) can be attached to it as
-	// its description instead of being silently dropped.
+	const cleanName = (value) => value
+		.replace(/^[\s•*\-–—▪◦]+/, '')
+		.replace(/[.·‧… ]{2,}$/, '')
+		.replace(/[\s•*\-–—]+$/, '')
+		.trim();
+	const isPriceOnly = (line) => {
+		const match = line.match(pricePattern);
+		return Boolean(match) && !cleanName(line.slice(0, match.index));
+	};
+	const numberedItemPattern = /^\d+[.)]\s+\S/;
+	const looksLikeDescription = (line) => /,\s|\s(mit|und|with|and|con)\s|^(mit|with|con)\s/i.test(line) || /^[a-zäöüß]/.test(line);
+	// A capitalised line without digits can be a section ("Getränke") but
+	// just as well a dish name or its description. It counts as a section
+	// unless a price on a line of its own follows within the next two lines
+	// (then it is the start of a dish) - except when the very next line is
+	// clearly a dish of its own (numbered, or with its price on the line).
+	const isSectionAt = (index) => {
+		const line = lines[index];
+		if (!looksLikeCategory(line)) return false;
+		if (knownCategoryPattern.test(line)) return true;
+		// Right under a "name – price" line, "Joghurt, Gurke und Knoblauch" or
+		// "mit Pommes" is that dish's description, not a new section.
+		const previous = lines[index - 1] || '';
+		if (/,\s|^(mit|with|con|avec)\s/i.test(line) && pricePattern.test(previous) && !isPriceOnly(previous)) return false;
+		const next = lines[index + 1] || '';
+		if (numberedItemPattern.test(next) || (pricePattern.test(next) && !isPriceOnly(next))) return true;
+		// "Tiramisu" directly above "€6,90" is that dish.
+		if (isPriceOnly(next)) return false;
+		// Name, description, price - or section, dish, price? The middle line
+		// decides: a description reads like one ("mit …", commas, lower case).
+		if (isPriceOnly(lines[index + 2] || '')) return !looksLikeDescription(next);
+		return true;
+	};
+	// Two common PDF layouts: "1. Item name – 6,90 €" with the description on
+	// the following line(s), and (Word/Canva menus) the name, the description
+	// and the price each on a line of their own. Lines without a price wait in
+	// `pending` until the next price decides what they are: a price on its own
+	// line makes them a new dish (first line = name, rest = description),
+	// anything else makes them the description of the dish before.
 	let lastItem = null;
-	lines.forEach((line) => {
+	let pending = [];
+	const ensureCategory = () => {
+		if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
+	};
+	const flushAsDescription = () => {
+		if (lastItem && pending.length) lastItem.description = [lastItem.description, ...pending].filter(Boolean).join(' ');
+		pending = [];
+	};
+	lines.forEach((line, index) => {
 		const match = line.match(pricePattern);
 		if (!match) {
-			if (looksLikeCategory(line)) {
+			// Column headers ("Produkt Preis") are never content.
+			if (headerLinePattern.test(line)) return;
+			if (isSectionAt(index)) {
+				flushAsDescription();
 				lastItem = null;
 				const existing = categoryByName.get(line);
 				if (existing) {
@@ -287,23 +328,29 @@ function parsePdfText(text) {
 				}
 				return;
 			}
-			if (lastItem) lastItem.description = lastItem.description ? `${lastItem.description} ${line}` : line;
+			pending.push(line);
 			return;
 		}
 		const price = match[0].replace(/[^0-9.,]/g, '').replace(',', '.');
-		const name = line.slice(0, match.index)
-			.replace(/^[\s•*\-–—▪◦]+/, '')
-			.replace(/[.·‧… ]{2,}$/, '')
-			.replace(/[\s•*\-–—]+$/, '')
-			.trim();
+		const name = cleanName(line.slice(0, match.index));
 		if (name) {
-			if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
+			flushAsDescription();
+			ensureCategory();
 			lastItem = { id: crypto.randomUUID(), name, description: '', price };
 			category.items.push(lastItem);
+			return;
+		}
+		if (pending.length) {
+			ensureCategory();
+			const [itemName, ...descriptionLines] = pending;
+			lastItem = { id: crypto.randomUUID(), name: cleanName(itemName), description: descriptionLines.join(' '), price };
+			category.items.push(lastItem);
+			pending = [];
 		} else {
 			lastItem = null;
 		}
 	});
+	flushAsDescription();
 	const nonEmptyCategories = categories.filter((c) => c.items.length);
 	return nonEmptyCategories.length ? nonEmptyCategories : [{ name: 'Imported menu', items: [{ id: crypto.randomUUID(), name: 'Review imported PDF text', description: text.slice(0, 240), price: '0.00' }] }];
 }
