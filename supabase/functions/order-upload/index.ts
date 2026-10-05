@@ -36,6 +36,9 @@ const TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 // not forever.
 const MAX_ORDER_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 const MAX_UPLOAD_BYTES = 50 * 1024 * 1024; // same as the bucket's file_size_limit
+// Resend allows 40 MB per email after base64 (+33 %) - about 30 MB of files.
+const ATTACHMENT_BUDGET_BYTES = 25 * 1024 * 1024;
+const DOWNLOAD_LINK_SECONDS = 30 * 24 * 60 * 60;
 const FILES = {
 	pdf: { name: 'menu.pdf', magics: [[0x25, 0x50, 0x44, 0x46, 0x2d]], contentType: 'application/pdf' }, // "%PDF-"
 	zip: { name: 'photos.zip', magics: [[0x50, 0x4b, 0x03, 0x04]], contentType: 'application/zip' }, // "PK\x03\x04"
@@ -311,15 +314,32 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 		menuSlug = data?.menu_slug || '-';
 	}
 
+	// Resend rejects the whole email above 40 MB including the base64 overhead
+	// (a 27 MB photo ZIP + 4 MB PDF did exactly that on 2026-10-05), so files
+	// are attached smallest first up to ATTACHMENT_BUDGET_BYTES and the rest
+	// goes into the email as a signed download link instead.
 	const attachments: EmailAttachment[] = [];
-	for (const [kind, status] of [['pdf', pdf], ['zip', zip], ['logo', logo]] as const) {
-		if (status !== 'ok') continue;
-		const { data } = await supabase.storage.from(BUCKET).download(`${context.folder}/${FILES[kind].name}`);
+	const links: Partial<Record<FileKind, string>> = {};
+	const ready = ([['pdf', pdf], ['zip', zip], ['logo', logo]] as const)
+		.filter(([, status]) => status === 'ok')
+		.map(([kind]) => ({ kind, size: sizes[FILES[kind].name] ?? 0 }))
+		.sort((a, b) => a.size - b.size);
+	let attachedBytes = 0;
+	for (const { kind, size } of ready) {
+		const path = `${context.folder}/${FILES[kind].name}`;
+		if (attachedBytes + size > ATTACHMENT_BUDGET_BYTES) {
+			const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(path, DOWNLOAD_LINK_SECONDS);
+			links[kind] = signed?.signedUrl || `kein Link möglich - Datei liegt im Speicher unter ${path}`;
+			continue;
+		}
+		const { data } = await supabase.storage.from(BUCKET).download(path);
 		if (!data) continue;
 		const bytes = new Uint8Array(await data.arrayBuffer());
 		const filename = kind === 'logo' ? (bytes[0] === 0x89 ? 'logo.png' : 'logo.jpg') : FILES[kind].name;
 		attachments.push({ filename, content: toBase64(bytes) });
+		attachedBytes += size;
 	}
+	const delivered = (kind: FileKind, label: string) => links[kind] ? `${label} – Download (30 Tage gültig): ${links[kind]}` : `${label} (Anhang)`;
 
 	const m = context.metadata;
 	const subject = context.type === 'renewal'
@@ -331,9 +351,9 @@ async function complete(context: OrderContext, body: Record<string, unknown>) {
 		Email: m.email || context.session.customer_details?.email || '-',
 		Plan: m.plan || '-',
 		'Menü-Slug': menuSlug,
-		Speisekarte: pdf === 'ok' ? 'menu.pdf (Anhang)' : 'keine neue',
-		...(context.photoAddon ? { 'Foto-ZIP': zip === 'ok' ? 'photos.zip (Anhang)' : '-' } : {}),
-		Logo: logo === 'ok' ? 'im Anhang' : '-',
+		Speisekarte: pdf === 'ok' ? delivered('pdf', 'menu.pdf') : 'keine neue',
+		...(context.photoAddon ? { 'Foto-ZIP': zip === 'ok' ? delivered('zip', 'photos.zip') : '-' } : {}),
+		Logo: logo === 'ok' ? delivered('logo', 'Logo') : '-',
 		...(context.hubAddon ? { 'Tischnummern (ServiceHub)': tableNumbers || 'nicht angegeben' } : {}),
 		'Stripe-Checkout': context.session.id
 	}, attachments);
