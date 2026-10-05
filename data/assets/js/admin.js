@@ -2,7 +2,17 @@ const STORAGE_KEY = 'menupilot.clients.v1';
 const seedClients = [{ id: 'customer-001', name: 'Taverna Athens', slug: 'taverna-athens', phone: '+30 123456789', whatsapp: '+30 123456789', address: 'Rhodes, Greece', currency: '€', languages: ['en', 'de', 'el'], categories: [{ name: 'Starters', items: [{ name: 'Tzatziki', description: 'Greek yogurt with cucumber and garlic', price: '5.90' }] }, { name: 'Mains', items: [{ name: 'Gyros plate', description: 'With fries and tzatziki', price: '14.90' }] }, { name: 'Drinks', items: [{ name: 'Coca Cola', description: '0.33L', price: '3.50' }] }] }];
 const $ = (selector) => document.querySelector(selector);
 let clients = loadClients();
-let selectedId = clients[0]?.id;
+// The customer that was open last, so a reload (Ctrl+F5, update banner)
+// doesn't quietly land on the first customer in the list - a PDF import
+// right after such a reload once replaced the wrong menu.
+const SELECTED_STORAGE_KEY = 'smartmenu.admin.selectedSlug';
+function rememberedClientId(list) {
+	try {
+		const slug = localStorage.getItem(SELECTED_STORAGE_KEY);
+		return list.find((client) => client.slug === slug)?.id;
+	} catch { return undefined; }
+}
+let selectedId = rememberedClientId(clients) || clients[0]?.id;
 let clientSearch = '';
 let subscriptionsBySlug = {};
 let showOnlyNeedsRenewal = false;
@@ -371,6 +381,10 @@ function pdfPageText(content) {
 async function importPdf() {
 	const file = $('#menuPdf').files[0];
 	if (!file) return notify(strings().choosePdfFirst);
+	// Taken once here: the import replaces this customer's menu, even when
+	// another one gets clicked while the PDF is still being read.
+	const client = selectedClient();
+	if (!confirm(strings().importReplaceConfirm.replace('{name}', client.name))) return;
 	$('#importStatus').textContent = strings().readingPdf;
 	try {
 		const pdfjs = window.pdfjsLib;
@@ -401,7 +415,6 @@ async function importPdf() {
 			await worker.terminate();
 		}
 		if (!text.trim()) throw new Error(strings().pdfNoText);
-		const client = selectedClient();
 		let imported = parsePdfText(text);
 		// Smart Discovery includes at most 10 dishes - keep the first 10 in menu
 		// order (sections left empty by that are dropped) and say how many were cut.
@@ -1073,6 +1086,7 @@ function renderOnboardingTemplate(client) {
 function render() {
 	const client = selectedClient() || clients[0]; if (!client) return;
 	selectedId = client.id;
+	try { localStorage.setItem(SELECTED_STORAGE_KEY, client.slug); } catch { /* convenience only */ }
 	// Fill in a Smart Food Match tag suggestion the first time a category/item
 	// is ever rendered with that field still empty, then leave it alone for
 	// good - once a real value is stored (even an auto-suggested one), this
@@ -1299,7 +1313,7 @@ $('#deleteClient').addEventListener('click', deleteClient); if ($('#deleteClient
 	}
 });
 function exportMenu() { const client = selectedClient(); const blob = new Blob([JSON.stringify({ name: client.name, slug: client.slug, categories: client.categories }, null, 2)], { type: 'application/json' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `${client.slug}-menu.json`; link.click(); URL.revokeObjectURL(link.href); }
-$('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEventListener('click', () => $('#menuJson').click()); $('#menuJson').addEventListener('change', async () => { const file = $('#menuJson').files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); const client = selectedClient(); client.categories = normalizeClient({ categories: imported.categories }).categories; if (imported.name) client.name = imported.name; if (imported.slug) client.slug = slugifyName(imported.slug); await saveClients(); render(); notify(strings().menuJsonImported); } catch (error) { notify(strings().jsonImportFailed.replace('{error}', error.message)); } });
+$('#exportMenu').addEventListener('click', exportMenu); $('#importMenu').addEventListener('click', () => $('#menuJson').click()); $('#menuJson').addEventListener('change', async () => { const file = $('#menuJson').files[0]; if (!file) return; const client = selectedClient(); if (!confirm(strings().importReplaceConfirm.replace('{name}', client.name))) { $('#menuJson').value = ''; return; } try { const imported = JSON.parse(await file.text()); client.categories = normalizeClient({ categories: imported.categories }).categories; if (imported.name) client.name = imported.name; if (imported.slug) client.slug = slugifyName(imported.slug); await saveClients(); render(); notify(strings().menuJsonImported); } catch (error) { notify(strings().jsonImportFailed.replace('{error}', error.message)); } });
 async function syncFromSupabase() {
 	if (typeof supabaseClient === 'undefined') return;
 	const { data, error } = await supabaseClient.from('menus').select('*').order('created_at');
@@ -1313,7 +1327,7 @@ async function syncFromSupabase() {
 		const RECENT_MS = 15 * 60 * 1000;
 		const localOnlyClients = clients.filter((client) => !remoteSlugs.has(client.slug) && client.localCreatedAt && (Date.now() - client.localCreatedAt) < RECENT_MS);
 		clients = [...remoteClients, ...localOnlyClients];
-		selectedId = clients.find((client) => client.id === selectedId)?.id || clients[0]?.id;
+		selectedId = clients.find((client) => client.id === selectedId)?.id || rememberedClientId(clients) || clients[0]?.id;
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
 		render();
 	} else if (clients.length) {

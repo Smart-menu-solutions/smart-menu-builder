@@ -70,6 +70,7 @@ window.ADMIN_STRINGS = {
 		subscriptionLocked: 'Das Abo dieses Kunden ist {status}. Die Bearbeitung ist gesperrt, bis der Kunde verlängert.', renewalLink: 'Verlängerungs-Link',
 
 		choosePdfFirst: 'Wählen Sie zuerst ein PDF aus', readingPdf: 'PDF wird gelesen …',
+		importReplaceConfirm: 'Die Speisekarte von „{name}“ wird komplett ersetzt.\n\nIst das der richtige Kunde?',
 		pdfReaderFailed: 'Der PDF-Leser konnte nicht geladen werden.', noTextLayerOcr: 'Keine Textebene gefunden. OCR läuft …',
 		ocrReaderFailed: 'Der OCR-Leser konnte nicht geladen werden.', pdfNoText: 'In diesem PDF wurde kein lesbarer Text gefunden.',
 		importCappedDiscovery: 'Smart Discovery: nur die ersten {limit} von {total} Gerichten übernommen.',
@@ -224,6 +225,7 @@ window.ADMIN_STRINGS = {
 		subscriptionLocked: 'This client\'s subscription is {status}. Editing is locked until they renew.', renewalLink: 'Renewal link',
 
 		choosePdfFirst: 'Choose a PDF first', readingPdf: 'Reading PDF…',
+		importReplaceConfirm: 'The whole menu of “{name}” will be replaced.\n\nIs this the right customer?',
 		pdfReaderFailed: 'PDF reader could not be loaded.', noTextLayerOcr: 'No text layer found. Running OCR…',
 		ocrReaderFailed: 'OCR reader could not be loaded.', pdfNoText: 'No readable text found in this PDF.',
 		importCappedDiscovery: 'Smart Discovery: kept only the first {limit} of {total} dishes.',
