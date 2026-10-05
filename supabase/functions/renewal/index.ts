@@ -84,7 +84,9 @@ async function handleCreateCheckout(request: Request) {
 		const email = String(body.email || '').trim();
 		const companyName = String(body.companyName || '').trim();
 		const phone = String(body.phone || '').trim();
-		const lang = String(body.lang || '') === 'en' ? 'en' : 'de';
+		// 'it' since the Italian website (2026-10-05); unknown -> 'de' as before.
+		const requestedLang = String(body.lang || '');
+		const lang = requestedLang === 'en' || requestedLang === 'it' ? requestedLang : 'de';
 
 		const pricing = PLAN_PRICING[plan];
 		if (!TOKEN_PATTERN.test(token) || !pricing || !firstName || !lastName || !EMAIL_PATTERN.test(email)) {
@@ -133,7 +135,7 @@ async function handleCreateCheckout(request: Request) {
 			...(discounts ? { discounts } : {}),
 			line_items: lineItems,
 			// A new menu PDF is optional and uploaded after payment (upload.html).
-			success_url: `${SITE_ORIGIN}/${lang === 'de' ? 'de/' : ''}upload.html?session_id={CHECKOUT_SESSION_ID}`,
+			success_url: `${SITE_ORIGIN}/${lang === 'en' ? '' : `${lang}/`}upload.html?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${SITE_ORIGIN}/cancel.html`,
 			metadata: {
 				type: 'renewal',

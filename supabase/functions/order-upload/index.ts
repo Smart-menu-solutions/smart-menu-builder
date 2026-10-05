@@ -76,14 +76,32 @@ const MESSAGES = {
 		badZip: 'The file is not a valid ZIP file. Please choose a different file.',
 		processing: 'Your payment is still being processed. One moment please …',
 		failed: 'Something went wrong. Please try again.'
+	},
+	it: {
+		notFound: 'Questo ordine non è stato trovato o non è ancora stato pagato.',
+		expired: 'Questo link di caricamento è scaduto. Contattateci.',
+		noZip: 'Per questo ordine non è previsto il caricamento delle foto.',
+		badLogo: "Il logo deve essere un'immagine PNG o JPG.",
+		missingPdf: 'Caricate prima il vostro menu in PDF.',
+		missingZip: 'Caricate anche le vostre foto come file ZIP.',
+		badPdf: 'Il file non è un PDF valido. Scegliete un altro file.',
+		badZip: 'Il file non è un file ZIP valido. Scegliete un altro file.',
+		processing: 'Il vostro pagamento è ancora in elaborazione. Un momento, per favore …',
+		failed: 'Purtroppo qualcosa non ha funzionato. Riprovate.'
 	}
 };
+
+// 'it' since the Italian website (2026-10-05); unknown -> 'de' as before.
+type Lang = 'de' | 'en' | 'it';
+function normalizeLang(value: unknown): Lang {
+	return value === 'en' || value === 'it' ? value : 'de';
+}
 
 interface OrderContext {
 	session: Stripe.Checkout.Session;
 	metadata: Record<string, string>;
 	type: 'initial' | 'renewal';
-	lang: 'de' | 'en';
+	lang: Lang;
 	photoAddon: boolean;
 	// Smart Discovery includes DishPhoto to try, so photos are optional there.
 	zipRequired: boolean;
@@ -102,7 +120,7 @@ Deno.serve(async (request) => {
 	} catch {
 		return json({ error: MESSAGES.en.failed }, 400);
 	}
-	const requestLang = body.lang === 'en' ? 'en' : 'de';
+	const requestLang = normalizeLang(body.lang);
 
 	try {
 		const context = await resolveOrder(String(body.session_id || ''), String(body.token || ''));
@@ -183,7 +201,7 @@ async function resolveOrder(sessionId: string, token: string): Promise<OrderCont
 		session,
 		metadata,
 		type: metadata.type === 'renewal' ? 'renewal' : 'initial',
-		lang: metadata.lang === 'en' ? 'en' : 'de',
+		lang: normalizeLang(metadata.lang),
 		// A Smart Discovery upgrade is a renewal-type checkout that can include DishPhoto.
 		photoAddon: (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.photoAddon === 'true',
 		zipRequired: metadata.plan !== 'discovery' && (metadata.type !== 'renewal' || metadata.fromDiscovery === 'true') && metadata.photoAddon === 'true',

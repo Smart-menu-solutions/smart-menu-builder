@@ -30,6 +30,17 @@ const PLAN_LABELS: Record<string, string> = {
 	discovery: 'Smart Discovery'
 };
 
+// Customer language: 'it' since the Italian website (2026-10-05). Anything
+// unknown falls back to 'de', subscriptions.lang's column default.
+type Lang = 'de' | 'en' | 'it';
+function normalizeLang(value: unknown): Lang {
+	return value === 'en' || value === 'it' ? value : 'de';
+}
+// Folder of that language's pages on the website (English lives at the root).
+function sitePath(lang: Lang): string {
+	return lang === 'en' ? '' : `${lang}/`;
+}
+
 // Customer-facing HTML signature (not used on the internal owner-notification
 // bullet-list emails). Mirrors scratch/email-signature.html exactly, image
 // URLs point at the live site so they render in any mail client.
@@ -159,7 +170,7 @@ async function sendNotification(subscriptionId: string | null, subject: string, 
 // The customer's personal link to upload.html, where the menu PDF (and the
 // photo ZIP) are uploaded after payment - see order-upload.
 function uploadUrl(uploadToken: string | undefined, lang: string): string | null {
-	return uploadToken ? `${SITE_ORIGIN}/${lang === 'en' ? '' : 'de/'}upload.html?token=${uploadToken}` : null;
+	return uploadToken ? `${SITE_ORIGIN}/${sitePath(normalizeLang(lang))}upload.html?token=${uploadToken}` : null;
 }
 
 async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' | 'renewal', to: string, contactName: string, plan: string, addonToken: string, lang: string, uploadLink: string | null) {
@@ -175,24 +186,42 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 	}
 	const planLabel = PLAN_LABELS[plan] || plan;
 	const isEn = lang === 'en';
-	const subject = isEn
+	const isIt = lang === 'it';
+	const addonsUrl = `${SITE_ORIGIN}/addons.html?token=${addonToken}&lang=${normalizeLang(lang)}`;
+	const subject = isIt
+		? (kind === 'renewal' ? 'Il vostro rinnovo presso Smart Menu Solutions' : 'Il vostro ordine presso Smart Menu Solutions')
+		: isEn
 		? (kind === 'renewal' ? 'Your renewal at Smart Menu Solutions' : 'Your order at Smart Menu Solutions')
 		: (kind === 'renewal' ? 'Ihre Verlängerung bei Smart Menu Solutions' : 'Ihre Bestellung bei Smart Menu Solutions');
-	const intro = isEn
+	const intro = isIt
+		? (kind === 'renewal' ? 'grazie per aver rinnovato il vostro abbonamento.' : 'grazie per il vostro ordine.')
+		: isEn
 		? (kind === 'renewal' ? 'thank you for renewing your subscription.' : 'thank you for your order.')
 		: (kind === 'renewal' ? 'vielen Dank für die Verlängerung Ihres Abos.' : 'vielen Dank für Ihre Bestellung.');
+	const uploadParagraphIt = !uploadLink ? '' : kind === 'renewal'
+		? `<p>Se il vostro menu è cambiato, potete caricare qui la nuova versione: <a href="${uploadLink}">Carica il menu</a></p>`
+		: `<p>Se non avete ancora caricato il vostro menu (PDF), potete farlo qui in qualsiasi momento: <a href="${uploadLink}">Carica il menu</a></p>`;
 	const uploadParagraphEn = !uploadLink ? '' : kind === 'renewal'
 		? `<p>If your menu has changed, you can upload the new version here: <a href="${uploadLink}">Upload menu</a></p>`
 		: `<p>If you haven't uploaded your menu (PDF) yet, you can do it here at any time: <a href="${uploadLink}">Upload menu</a></p>`;
 	const uploadParagraphDe = !uploadLink ? '' : kind === 'renewal'
 		? `<p>Falls sich Ihre Speisekarte geändert hat, können Sie hier die neue Version hochladen: <a href="${uploadLink}">Speisekarte hochladen</a></p>`
 		: `<p>Falls Sie Ihre Speisekarte (PDF) noch nicht hochgeladen haben, können Sie das hier jederzeit nachholen: <a href="${uploadLink}">Speisekarte hochladen</a></p>`;
-	const html = isEn ? `
+	const html = isIt ? `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>${intro} Abbiamo ricevuto il vostro ordine e vi contatteremo a breve con i passi successivi.</p>
+		<p><strong>Piano:</strong> ${escapeHtml(planLabel)}</p>
+		${uploadParagraphIt}
+		<p>Se non avete ancora prenotato Smart FoodMatch™, Smart WeeklyReport™ o Smart DishPhoto™, potete aggiungerli in qualsiasi momento: <a href="${addonsUrl}">Gestisci gli add-on</a></p>
+		<p>Per qualsiasi domanda potete scriverci in qualsiasi momento a <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	` : isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>${intro} We've received your order and will get back to you shortly with the next steps.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
 		${uploadParagraphEn}
-		<p>If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Manage add-ons</a></p>
+		<p>If you haven't booked Smart FoodMatch™, Smart WeeklyReport™ or Smart DishPhoto™ yet, you can add them anytime: <a href="${addonsUrl}">Manage add-ons</a></p>
 		<p>If you have any questions, reach us anytime at <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
@@ -201,7 +230,7 @@ async function sendCustomerConfirmation(subscriptionId: string, kind: 'initial' 
 		<p>${intro} Wir haben Ihre Bestellung erhalten und melden uns in Kürze mit den nächsten Schritten.</p>
 		<p><strong>Plan:</strong> ${escapeHtml(planLabel)}</p>
 		${uploadParagraphDe}
-		<p>Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${SITE_ORIGIN}/addons.html?token=${addonToken}">Zusatzmodule verwalten</a></p>
+		<p>Falls Sie Smart FoodMatch™, Smart WeeklyReport™ oder Smart DishPhoto™ noch nicht gebucht haben, können Sie das jederzeit nachholen: <a href="${addonsUrl}">Zusatzmodule verwalten</a></p>
 		<p>Bei Fragen erreichen Sie uns jederzeit unter <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
@@ -218,8 +247,22 @@ async function sendDiscoveryConfirmation(subscriptionId: string, to: string, con
 		return;
 	}
 	const isEn = lang === 'en';
-	const subject = isEn ? 'Welcome to Smart Discovery' : 'Willkommen bei Smart Discovery';
-	const html = isEn ? `
+	const isIt = lang === 'it';
+	const subject = isIt ? 'Benvenuti in Smart Discovery' : isEn ? 'Welcome to Smart Discovery' : 'Willkommen bei Smart Discovery';
+	const html = isIt ? `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>grazie per aver ordinato Smart Discovery! Ecco come funziona:</p>
+		<ol>
+			<li>${uploadLink ? `Caricate il vostro menu (PDF, e se volete anche le foto dei piatti): <a href="${uploadLink}">Carica il menu</a>` : 'Inviateci il vostro menu (PDF).'}</li>
+			<li>Prepariamo il vostro menu digitale con fino a 10 piatti, il vostro logo e i vostri colori e vi inviamo il vostro QR code. Tutti gli add-on sono inclusi da provare: Smart WeeklyReport™, Smart FoodMatch™, Smart DishPhoto™ e Smart ServiceHub™ (ordinazioni al tavolo).</li>
+			<li><strong>I vostri 7 giorni iniziano solo quando ricevete il vostro QR code</strong>, non con il pagamento. Il 6° giorno ricevete il vostro report: quanti ospiti hanno aperto il vostro menu e quali piatti sono stati visti di più.</li>
+		</ol>
+		<p><strong>Le vostre statistiche dal vivo:</strong> appena il vostro menu è online, potete vedere qui in qualsiasi momento quante volte è stato aperto: <a href="${statsUrl}">Vedi le statistiche dal vivo</a></p>
+		<p>Se poi volete continuare, i 2,99 € vengono scalati dal vostro piano.</p>
+		<p>Per qualsiasi domanda potete scriverci in qualsiasi momento a <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	` : isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>thank you for ordering Smart Discovery! Here's how it works:</p>
 		<ol>
@@ -258,9 +301,18 @@ async function sendPaymentFailedEmail(subscriptionId: string, to: string, contac
 		return;
 	}
 	const isEn = lang === 'en';
-	const subject = isEn ? 'Your renewal has failed – action needed' : 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
-	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${isEn ? 'en' : 'de'}`;
-	const html = isEn ? `
+	const isIt = lang === 'it';
+	const subject = isIt ? 'Il rinnovo non è andato a buon fine – serve un vostro intervento' : isEn ? 'Your renewal has failed – action needed' : 'Ihre Verlängerung ist fehlgeschlagen – bitte handeln';
+	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${normalizeLang(lang)}`;
+	const html = isIt ? `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>purtroppo non è stato possibile elaborare il pagamento automatico per il rinnovo del vostro abbonamento.</p>
+		<p>Il vostro menu resta online per altri 7 giorni, così avete il tempo di sistemare la cosa. Rinnovate il vostro abbonamento tramite il link qui sotto per evitare interruzioni:</p>
+		<p><a href="${renewalUrl}">Rinnova ora</a></p>
+		<p>Per qualsiasi domanda potete scriverci in qualsiasi momento a <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	` : isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>unfortunately, the automatic payment for renewing your subscription could not be processed.</p>
 		<p>Your menu will stay online for another 7 days so you have time to sort this out. Please renew your subscription via the link below to avoid any interruption:</p>
@@ -348,7 +400,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 	const email = metadata.email || session.customer_details?.email || '';
 	// Defaults to 'de' to match subscriptions.lang's column default - see
 	// create-checkout-session/renewal for where this is actually set.
-	const lang = metadata.lang === 'en' ? 'en' : 'de';
+	const lang = normalizeLang(metadata.lang);
 	const today = new Date();
 	const periodStart = today.toISOString().slice(0, 10);
 	const periodEnd = addDays(today, 365);

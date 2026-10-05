@@ -11,6 +11,12 @@ const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY') ?? '';
 const FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL') ?? 'Smart Menu Builder <onboarding@resend.dev>';
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Customer language: 'it' since the Italian website (2026-10-05). Anything
+// unknown falls back to 'de', subscriptions.lang's column default.
+function normalizeLang(value: unknown): 'de' | 'en' | 'it' {
+	return value === 'en' || value === 'it' ? value : 'de';
+}
+
 function escapeHtml(value: string): string {
 	return value.replace(/[&<>"']/g, (character) => ({
 		'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
@@ -78,9 +84,18 @@ async function sendDeactivatedEmail(subscriptionId: string, to: string, contactN
 		return;
 	}
 	const isEn = lang === 'en';
-	const subject = isEn ? 'Your subscription has been deactivated' : 'Ihr Abo wurde deaktiviert';
-	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${isEn ? 'en' : 'de'}`;
-	const html = isEn ? `
+	const isIt = lang === 'it';
+	const subject = isIt ? 'Il vostro abbonamento è stato disattivato' : isEn ? 'Your subscription has been deactivated' : 'Ihr Abo wurde deaktiviert';
+	const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${renewalToken}&lang=${normalizeLang(lang)}`;
+	const html = isIt ? `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>poiché il pagamento del rinnovo non è andato a buon fine, il vostro abbonamento è stato disattivato e il vostro menu non è più raggiungibile tramite il QR code.</p>
+		<p>Potete riattivare il vostro abbonamento in qualsiasi momento tramite il link qui sotto:</p>
+		<p><a href="${renewalUrl}">Riattiva l'abbonamento</a></p>
+		<p>Per qualsiasi domanda potete scriverci in qualsiasi momento a <a href="mailto:info@smartmenusolutions.com">info@smartmenusolutions.com</a>.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	` : isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>since the payment for your renewal didn't go through, your subscription has now been deactivated and your menu is no longer reachable via the QR code.</p>
 		<p>You can reactivate your subscription anytime via the link below:</p>
@@ -118,6 +133,17 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 	const dishes = topDishes.length
 		? `<ol>${topDishes.map((dish) => `<li>${escapeHtml(dish.label)} – ${dish.count}×</li>`).join('')}</ol>`
 		: '';
+	if (lang === 'it') return `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>la vostra prova Smart Discovery per <strong>${escapeHtml(menuName)}</strong> termina domani. Ecco cosa è successo finora:</p>
+		<p style="font-size:22px"><strong>${visits}</strong> volte i vostri ospiti hanno aperto il vostro menu.</p>
+		${dishes ? `<p><strong>Piatti più visti</strong></p>${dishes}` : ''}
+		<p>Volete tenere il vostro menu digitale? Scegliete ora un piano: i vostri 2,99 € vengono scalati e il vostro menu resta online senza interruzioni:</p>
+		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Continua da 119 € all'anno</a></p>
+		<p>Altrimenti dopo domani il vostro menu viene messo in pausa. Con lo stesso link potete riattivarlo in qualsiasi momento.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	`;
 	return isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>your Smart Discovery trial for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here's what happened so far:</p>
@@ -143,6 +169,14 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 
 function discoveryEndedHtml(contactName: string, renewalUrl: string, lang: string): string {
 	const isEn = lang === 'en';
+	if (lang === 'it') return `
+		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
+		<p>la vostra prova Smart Discovery è terminata e il vostro menu ora è in pausa. Gli ospiti che scansionano il vostro QR code vedono un breve avviso che il menu non è disponibile.</p>
+		<p>Il vostro menu e il vostro QR code restano salvati. Scegliete un piano e tutto torna subito online; i vostri 2,99 € vengono scalati:</p>
+		<p><a href="${renewalUrl}">Riattiva il mio menu</a></p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	`;
 	return isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
 		<p>your Smart Discovery trial has ended and your menu is now paused. Guests who scan your QR code will see a short "not available" note.</p>
@@ -181,7 +215,7 @@ async function runDiscoveryPasses(today: string) {
 	for (const pass of passes ?? []) {
 		const menu = pass.menus as { name: string; is_published: boolean } | null;
 		const customer = pass.customers as { contact_name: string; email: string } | null;
-		const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${pass.renewal_token}&lang=${pass.lang === 'en' ? 'en' : 'de'}`;
+		const renewalUrl = `${SITE_ORIGIN}/renewal.html?token=${pass.renewal_token}&lang=${normalizeLang(pass.lang)}`;
 
 		if (!pass.discovery_started_on) {
 			if (!menu?.is_published) continue;
@@ -206,7 +240,7 @@ async function runDiscoveryPasses(today: string) {
 			});
 			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
 				await sendEmail(customer.email, pass.id, 'Kundenmail: Smart Discovery abgelaufen',
-					pass.lang === 'en' ? 'Your Smart Discovery trial has ended' : 'Ihr Test mit Smart Discovery ist abgelaufen',
+					pass.lang === 'it' ? 'La vostra prova Smart Discovery è terminata' : pass.lang === 'en' ? 'Your Smart Discovery trial has ended' : 'Ihr Test mit Smart Discovery ist abgelaufen',
 					discoveryEndedHtml(customer.contact_name, renewalUrl, pass.lang));
 			}
 			counts.ended += 1;
@@ -228,7 +262,7 @@ async function runDiscoveryPasses(today: string) {
 
 			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
 				await sendEmail(customer.email, pass.id, 'Kundenmail: Smart-Discovery-Bericht',
-					pass.lang === 'en' ? `${visits} guests opened your menu – your Smart Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Smart-Discovery-Bericht`,
+					pass.lang === 'it' ? `Il vostro menu è stato aperto ${visits} volte – il vostro report Smart Discovery` : pass.lang === 'en' ? `${visits} guests opened your menu – your Smart Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Smart-Discovery-Bericht`,
 					discoveryReportHtml(customer.contact_name, menu?.name ?? '', visits, topDishes, renewalUrl, pass.lang));
 			}
 			await supabase.from('subscriptions').update({ discovery_report_sent_at: new Date().toISOString() }).eq('id', pass.id);

@@ -55,8 +55,9 @@ Deno.serve(async (request) => {
 	} catch {
 		return redirect('contact.html');
 	}
-	const lang = form.get('lang') === 'de' ? 'de' : 'en';
-	const contactPage = lang === 'de' ? 'de/contact.html' : 'contact.html';
+	const formLang = form.get('lang');
+	const lang = formLang === 'de' || formLang === 'it' ? formLang : 'en';
+	const contactPage = lang === 'en' ? 'contact.html' : `${lang}/contact.html`;
 	const field = (name: string, max: number) => String(form.get(name) ?? '').trim().slice(0, max);
 
 	// Honeypot: a hidden field real visitors never see. Pretend success so
@@ -77,7 +78,9 @@ Deno.serve(async (request) => {
 	const { count } = await supabase.from('notifications_log').select('id', { count: 'exact', head: true }).eq('kind', 'contact_form').gte('created_at', since);
 	if ((count ?? 0) >= MAX_PER_10_MIN) return redirect(`${contactPage}?error=1`);
 
-	const subject = lang === 'de' ? `Neue Kontaktanfrage (DE) – ${name}` : `New contact request (EN) – ${name}`;
+	// The owner reads these, so the Italian one is labelled in German - "(IT)"
+	// says which language to answer in.
+	const subject = lang === 'de' ? `Neue Kontaktanfrage (DE) – ${name}` : lang === 'it' ? `Neue Kontaktanfrage (IT) – ${name}` : `New contact request (EN) – ${name}`;
 	const html = `<h2 style="font-family:Arial,sans-serif">${escapeHtml(subject)}</h2>
 		<table style="font-family:Arial,sans-serif;font-size:14px;border-collapse:collapse">
 			<tr><td style="padding:4px 12px 4px 0;color:#737373">Name</td><td style="padding:4px 0">${escapeHtml(name)}</td></tr>

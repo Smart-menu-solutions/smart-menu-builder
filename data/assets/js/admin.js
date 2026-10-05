@@ -912,7 +912,7 @@ function renderDiscoveryRow(client, subscription) {
 	$('#discoveryStatus').classList.toggle('active', running);
 	$('#discoveryHint').textContent = hint;
 
-	const upgradeUrl = subscription.renewal_token ? `${RENEWAL_SITE}/renewal.html?token=${subscription.renewal_token}&lang=${subscription.lang === 'en' ? 'en' : 'de'}` : '';
+	const upgradeUrl = subscription.renewal_token ? `${RENEWAL_SITE}/renewal.html?token=${subscription.renewal_token}&lang=${['en', 'it'].includes(subscription.lang) ? subscription.lang : 'de'}` : '';
 	const button = $('#discoverySendUpgrade');
 	button.disabled = !upgradeUrl;
 	button.dataset.link = upgradeUrl;

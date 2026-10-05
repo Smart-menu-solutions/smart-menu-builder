@@ -321,8 +321,15 @@ async function handlePost(request: Request) {
 				customer.email,
 				subscription.id,
 				'Add-on hinzugefügt',
-				subscription.lang === 'en' ? `${addon.label} has been added` : `${addon.label} wurde hinzugefügt`,
-				subscription.lang === 'en' ? `<p>Hi ${escapeHtml(customer.contact_name || '')},</p>
+				subscription.lang === 'it' ? `${addon.label} è stato aggiunto` : subscription.lang === 'en' ? `${addon.label} has been added` : `${addon.label} wurde hinzugefügt`,
+				subscription.lang === 'it' ? `<p>Buongiorno ${escapeHtml(customer.contact_name || '')},</p>
+				<p><strong>${escapeHtml(addon.label)}</strong> è ora attivo per <strong>${escapeHtml(menu?.name || '')}</strong>.</p>
+				<p>${addon.billing === 'recurring'
+					? `Abbiamo addebitato l'importo proporzionale per il resto del vostro anno di abbonamento in corso: <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. Dal prossimo rinnovo è incluso automaticamente nel vostro piano.`
+					: `Abbiamo addebitato l'importo una tantum di <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. Vi contatteremo a breve per organizzare le foto del vostro menu.`
+				}</p>
+				<p>Cordiali saluti</p>
+				${EMAIL_SIGNATURE}` : subscription.lang === 'en' ? `<p>Hi ${escapeHtml(customer.contact_name || '')},</p>
 				<p><strong>${escapeHtml(addon.label)}</strong> is now active for <strong>${escapeHtml(menu?.name || '')}</strong>.</p>
 				<p>${addon.billing === 'recurring'
 					? `We've charged the pro-rated amount for the rest of your current plan year: <strong>${((paid.amount_paid ?? 0) / 100).toFixed(2)} €</strong>. From your next renewal on, it's included automatically with your plan.`

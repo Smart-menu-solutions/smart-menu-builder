@@ -99,6 +99,13 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 
 function trendLine(current: number, previous: number, lang: string): string {
 	const isEn = lang === 'en';
+	if (lang === 'it') {
+		if (previous === 0) return current > 0 ? 'Nuovo questa settimana' : '';
+		const changeIt = Math.round(((current - previous) / previous) * 100);
+		if (changeIt > 0) return `▲ ${changeIt}% in più rispetto alla settimana scorsa`;
+		if (changeIt < 0) return `▼ ${Math.abs(changeIt)}% in meno rispetto alla settimana scorsa`;
+		return 'Come la settimana scorsa';
+	}
 	if (previous === 0) return current > 0 ? (isEn ? 'New this week' : 'Neu diese Woche') : '';
 	const change = Math.round(((current - previous) / previous) * 100);
 	if (change > 0) return isEn ? `▲ ${change}% more than last week` : `▲ ${change}% mehr als letzte Woche`;
@@ -109,9 +116,23 @@ function trendLine(current: number, previous: number, lang: string): string {
 function reportHtml(menuName: string, rangeStart: string, rangeEnd: string, totalVisits: number, previousWeekVisits: number, topCategories: { label: string; count: number }[], topDishes: { label: string; count: number }[], statsUrl: string, lang: string): string {
 	const isEn = lang === 'en';
 	const trend = trendLine(totalVisits, previousWeekVisits, lang);
+	const isIt = lang === 'it';
 	const listItems = (items: { label: string; count: number }[]) => items.length
 		? items.map((item) => `<li>${escapeHtml(item.label)} - ${item.count}×</li>`).join('')
-		: `<li>${isEn ? 'No views yet this week.' : 'Noch keine Aufrufe diese Woche.'}</li>`;
+		: `<li>${isIt ? 'Ancora nessuna visualizzazione questa settimana.' : isEn ? 'No views yet this week.' : 'Noch keine Aufrufe diese Woche.'}</li>`;
+	if (isIt) return `
+		<p>Buongiorno,</p>
+		<p>ecco il report settimanale per <strong>${escapeHtml(menuName)}</strong> (dal ${rangeStart} al ${rangeEnd}):</p>
+		<p style="font-size:20px"><strong>${totalVisits}</strong> visite${trend ? ` <span style="color:#666">(${escapeHtml(trend)})</span>` : ''}</p>
+		<p><strong>Categorie più viste</strong></p>
+		<ul>${listItems(topCategories)}</ul>
+		<p><strong>Piatti più visti</strong></p>
+		<ul>${listItems(topDishes)}</ul>
+		<p><a href="${statsUrl}">Vedi tutte le statistiche</a></p>
+		<p>Siete soddisfatti di Smart Menu Solutions? Saremo felici di ricevere una <a href="${GOOGLE_REVIEW_URL}">recensione su Google</a>.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	`;
 	return isEn ? `
 		<p>Hi,</p>
 		<p>here's the weekly report for <strong>${escapeHtml(menuName)}</strong> (${rangeStart} to ${rangeEnd}):</p>
@@ -184,7 +205,9 @@ Deno.serve(async (request) => {
 		const previousWeekVisits = sumVisits(allRows, previousRangeStart, previousRangeEnd);
 		const topCategories = topLabels(allRows, 'category', rangeStart, rangeEnd, 3);
 		const topDishes = topLabels(allRows, 'dish', rangeStart, rangeEnd, 3);
-		const statsUrl = `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}`;
+		// lang= opens the stats page in the customer's language (de/en/it).
+		const statsLang = subscription.lang === 'en' || subscription.lang === 'it' ? subscription.lang : 'de';
+		const statsUrl = `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${statsLang}`;
 
 		const isEn = subscription.lang === 'en';
 		await sendEmail(

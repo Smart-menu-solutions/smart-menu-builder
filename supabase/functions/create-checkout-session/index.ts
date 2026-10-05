@@ -48,7 +48,11 @@ Deno.serve(async (request) => {
 		// default - every subscription before this feature existed was
 		// effectively German-only, so an unset/unexpected value should fall
 		// back to that same historical behavior, not flip to English.
-		const lang = String(body.lang || '') === 'en' ? 'en' : 'de';
+		// 'it' since the Italian website (2026-10-05).
+		const requestedLang = String(body.lang || '');
+		const lang = requestedLang === 'en' || requestedLang === 'it' ? requestedLang : 'de';
+		// Folder of that language's pages (English lives at the site root).
+		const sitePath = lang === 'en' ? '' : `${lang}/`;
 
 		// Discovery Pass: a single one-off payment (Checkout in payment mode,
 		// no Stripe subscription, no add-ons). stripe-webhook creates the
@@ -74,7 +78,7 @@ Deno.serve(async (request) => {
 					},
 					quantity: 1
 				}],
-				success_url: `${SITE_ORIGIN}/${lang === 'de' ? 'de/' : ''}upload.html?session_id={CHECKOUT_SESSION_ID}`,
+				success_url: `${SITE_ORIGIN}/${sitePath}upload.html?session_id={CHECKOUT_SESSION_ID}`,
 				cancel_url: `${SITE_ORIGIN}/cancel.html`,
 				metadata,
 				payment_intent_data: { metadata }
@@ -162,7 +166,7 @@ Deno.serve(async (request) => {
 			customer_email: email,
 			line_items: lineItems,
 			// Files are uploaded after payment (upload.html + order-upload function).
-			success_url: `${SITE_ORIGIN}/${lang === 'de' ? 'de/' : ''}upload.html?session_id={CHECKOUT_SESSION_ID}`,
+			success_url: `${SITE_ORIGIN}/${sitePath}upload.html?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${SITE_ORIGIN}/cancel.html`,
 			metadata: {
 				type: 'initial',

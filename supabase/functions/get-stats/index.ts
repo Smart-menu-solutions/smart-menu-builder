@@ -58,7 +58,7 @@ function sumVisits(rows: { day: string; metric_type: string; view_count: number 
 // demo clients that predate it). Falls back to the untranslated source
 // name if this menu has no English translation for it yet.
 type MenuTranslations = { categories?: Record<string, { name?: string }>; items?: Record<string, { name?: string }> } | undefined;
-const SUPPORTED_LANGUAGES = ['en', 'de'];
+const SUPPORTED_LANGUAGES = ['en', 'de', 'it'];
 function translateCategoryLabel(translations: MenuTranslations, sourceLabel: string): string {
 	return translations?.categories?.[sourceLabel]?.name || sourceLabel;
 }
