@@ -95,7 +95,12 @@
 				// The staff id leaves the secret out - it only needs to tell apps apart.
 				id: start.pathname + (perMenu ? '?client=' + encodeURIComponent(client) : ''),
 				start_url: start.href,
-				scope: absolute('./'),
+				// Each installable page is its own app with just that page as its
+				// scope. With the shared folder as scope, Android counts every page
+				// under it as part of whichever app was installed first (e.g.
+				// SmartPilot) and offers "Open in app" instead of "Install" on the
+				// kitchen page.
+				scope: start.origin + start.pathname,
 				icons: base.icons.map((icon) => ({ ...icon, src: absolute(icon.src) })),
 				...(name && name !== document.title ? { name, short_name: shortName } : {})
 			};
