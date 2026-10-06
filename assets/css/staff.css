@@ -29,6 +29,10 @@ button{font-family:inherit}
 .sh-nav-btn .sh-icon,.sh-foldout-btn .sh-icon:first-child{color:var(--orange);flex:0 0 auto}
 .sh-nav-btn:hover,.sh-foldout-btn:hover{border-color:var(--orange)}
 .sh-nav-btn.is-off .sh-icon{color:var(--muted)}
+.sh-nav-btn.is-cta{border-color:var(--orange);background:var(--tint)}
+.sh-nav-btn:disabled{opacity:.6;cursor:default}
+.sh-push-hint{display:flex;align-items:flex-start;gap:.6rem;margin:0;padding:.65rem .85rem;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:.8rem;line-height:1.4}
+.sh-push-hint .sh-icon{color:var(--orange);flex:0 0 auto}
 .sh-foldout-btn span{flex:1}
 .sh-foldout-btn .sh-icon:last-child{color:var(--muted);transition:transform .2s}
 .sh-foldout.is-open .sh-foldout-btn{border-color:var(--orange);background:var(--tint)}

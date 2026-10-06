@@ -84,6 +84,22 @@ async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
 	}
 }
 
+// Push to the staff phones (staff-push Edge Function) - kept alive past the
+// response with waitUntil and never awaited, so a slow or failing push
+// service can't delay or break the action itself. excludeAccessToken: the
+// link that made the change doesn't need to be told about it. Same helper
+// as in order-session.
+function notifyStaff(menuSlug: string, event: Record<string, unknown>, excludeAccessToken?: string) {
+	const task = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/staff-push`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}` },
+		body: JSON.stringify({ action: 'notify', menuSlug, event, excludeAccessToken })
+	}).then((response) => response.body?.cancel()).catch(() => {});
+	try {
+		(globalThis as { EdgeRuntime?: { waitUntil(promise: Promise<unknown>): void } }).EdgeRuntime?.waitUntil(task);
+	} catch { /* the push is a nice-to-have - the action already went through */ }
+}
+
 async function resolveAccess(token: string) {
 	// A restaurant can have several links per role (see
 	// 0023_multiple_staff_access.sql) - everything below goes by role only,
@@ -291,9 +307,12 @@ Deno.serve(async (request) => {
 		const ownStation = role === 'kitchen' ? 'KITCHEN' : 'BAR';
 		let query = supabase.from('order_items').update({ dispatched_at: new Date().toISOString() }).is('dispatched_at', null).eq('station', ownStation);
 		query = body.action === 'dispatch_item' ? query.eq('id', String(body.itemId || '')) : query.eq('serve_table_id', String(body.tableId || ''));
-		const { error } = await query;
+		const { data: dispatched, error } = await query.select('quantity, serve_table_id');
 		if (error) return json({ error: error.message }, 500);
 		await broadcast(menuSlug, { type: 'dispatched', tableId: body.tableId });
+		// The Table Hub hears that something is ready to be picked up.
+		const readyCount = (dispatched || []).reduce((sum, item) => sum + item.quantity, 0);
+		if (readyCount) notifyStaff(menuSlug, { type: 'ready', tableId: dispatched![0].serve_table_id, station: ownStation, count: readyCount }, token);
 		return json({ success: true });
 	}
 
@@ -350,6 +369,7 @@ Deno.serve(async (request) => {
 		if (error) return json({ error: error.message }, 500);
 		await supabase.from('restaurant_tables').update({ status: 'PAYMENT_PENDING' }).eq('id', tableId);
 		await broadcast(menuSlug, { type: 'bill_requested', tableId });
+		notifyStaff(menuSlug, { type: 'bill', tableId }, token);
 		return json({ success: true });
 	}
 
@@ -382,6 +402,7 @@ Deno.serve(async (request) => {
 		const { error: insertError } = await supabase.from('order_items').insert(rows);
 		if (insertError) return json({ error: insertError.message }, 500);
 		await broadcast(menuSlug, { type: 'order_placed', tableId });
+		notifyStaff(menuSlug, { type: 'order', tableId, items: rows.map((row) => ({ name: row.product_name, quantity: row.quantity, station: row.station })) }, token);
 		return json({ success: true });
 	}
 

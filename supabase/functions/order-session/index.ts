@@ -114,6 +114,21 @@ async function broadcast(menuSlug: string, payload: Record<string, unknown>) {
 	}
 }
 
+// Push to the staff phones (staff-push Edge Function). Kept alive past the
+// response with waitUntil and never awaited, so a slow or failing push
+// service can't delay or break the guest's order. Same helper as in
+// staff-access.
+function notifyStaff(menuSlug: string, event: Record<string, unknown>) {
+	const task = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/staff-push`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''}` },
+		body: JSON.stringify({ action: 'notify', menuSlug, event })
+	}).then((response) => response.body?.cancel()).catch(() => {});
+	try {
+		(globalThis as { EdgeRuntime?: { waitUntil(promise: Promise<unknown>): void } }).EdgeRuntime?.waitUntil(task);
+	} catch { /* the push is a nice-to-have - the order already went through */ }
+}
+
 Deno.serve(async (request) => {
 	if (request.method === 'OPTIONS') return new Response('ok', { headers: CORS_HEADERS });
 
@@ -127,9 +142,12 @@ Deno.serve(async (request) => {
 		if (!resolved) return json({ error: 'This table does not exist.' }, 404);
 		const { table, menu } = resolved;
 		const group = table.status !== 'FREE' ? await openGroup(table.id) : null;
+		// setup_token is the secret behind servicehub-setup.html (0034) - it
+		// must never reach a guest's phone with the rest of the menu row.
+		const { setup_token: _setupToken, ...guestMenu } = menu;
 		return json({
 			table: { id: table.id, tableNumber: table.table_number },
-			menu,
+			menu: guestMenu,
 			channel: await channelName(table.menu_slug),
 			active: !!group,
 			sessionId: group?.id || null,
@@ -163,6 +181,7 @@ Deno.serve(async (request) => {
 		if (error) return json({ error: error.message }, 500);
 		await supabase.from('restaurant_tables').update({ status: 'PAYMENT_PENDING' }).eq('id', table.id);
 		await broadcast(table.menu_slug, { type: 'bill_requested', tableId: table.id });
+		notifyStaff(table.menu_slug, { type: 'bill', tableId: table.id });
 		return json({ success: true });
 	}
 
@@ -198,5 +217,6 @@ Deno.serve(async (request) => {
 	if (insertError) return json({ error: insertError.message }, 500);
 
 	await broadcast(table.menu_slug, { type: 'order_placed', tableId: table.id });
+	notifyStaff(table.menu_slug, { type: 'order', tableId: table.id, items: rows.map((row) => ({ name: row.product_name, quantity: row.quantity, station: row.station })) });
 	return json({ order: { billRequestedAt: group.bill_requested_at, items: await currentOrder(group.id) } });
 });

@@ -11,7 +11,10 @@
 
    Never cached: anything that isn't a GET, Edge Functions (orders, staff,
    stats), auth, realtime, and any Supabase request carrying a login session
-   - so no order state, bill or owner data ever lands in the cache. */
+   - so no order state, bill or owner data ever lands in the cache.
+
+   Also shows the staff screens' push notifications (see the push and
+   notificationclick handlers below). */
 
 const VERSION = 'v1';
 const PAGES = `sms-pages-${VERSION}`;
@@ -59,6 +62,36 @@ self.addEventListener('message', (event) => {
 self.addEventListener('fetch', (event) => {
 	const strategy = route(event.request);
 	if (strategy) event.respondWith(strategy());
+});
+
+// Staff push notifications (staff-push Edge Function, switched on in
+// staff.js). Every push shows a notification - browsers, Safari above all,
+// take the permission away from sites that receive pushes silently.
+self.addEventListener('push', (event) => {
+	let data = {};
+	try { data = event.data ? event.data.json() : {}; } catch { data = { body: event.data ? event.data.text() : '' }; }
+	event.waitUntil(self.registration.showNotification(data.title || 'Smart ServiceHub', {
+		body: data.body || '',
+		icon: 'assets/icons/icon-192.png',
+		tag: data.tag || undefined,
+		renotify: !!data.tag,
+		vibrate: [200, 100, 200],
+		data: { url: data.url || '' }
+	}));
+});
+
+// A tap brings that staff screen to the front: the open tab or app if there
+// is one, otherwise it opens anew (the url carries the staff link).
+self.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const target = event.notification.data?.url;
+	if (!target) return;
+	event.waitUntil((async () => {
+		const path = new URL(target).pathname;
+		const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+		const open = windows.find((client) => new URL(client.url).pathname === path);
+		return open ? open.focus() : self.clients.openWindow(target);
+	})());
 });
 
 function pageName(url) {

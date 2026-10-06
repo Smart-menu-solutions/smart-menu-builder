@@ -149,6 +149,114 @@ function chimeForNewOrders(tables) {
 	setTimeout(() => { fresh.forEach((id) => freshOrderTables.delete(id)); rerender(); }, 6000);
 }
 
+// Push notifications (staff-push Edge Function): on top of the chime, a
+// notification on the phone even when its screen is off or another app is
+// open - the same moments the chime rings for. Switched on per device with
+// the sidebar button, never on page load. Android and desktop browsers can do
+// it right in the browser; iPhone/iPad only in the app added to the Home
+// Screen (Apple's rule), so Safari itself just gets the hint how to get there.
+const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isInstalledApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.isSecureContext;
+// 'unsupported' | 'install-first' | 'blocked' | 'off' | 'on'
+let pushState = pushSupported ? 'off' : (isAppleMobile && !isInstalledApp ? 'install-first' : 'unsupported');
+let pushBusy = false;
+let pushRegistration = null;
+let vapidPublicKey = '';
+
+function pushEndpoint() { return `${AUTH_CONFIG.supabaseUrl}/functions/v1/staff-push`; }
+
+function base64UrlToBytes(value) {
+	const base64 = value.replace(/-/g, '+').replace(/_/g, '/');
+	const binary = atob(base64 + '='.repeat((4 - (base64.length % 4)) % 4));
+	return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+// Everything the button needs is fetched up front, so its tap goes straight
+// into pushManager.subscribe() - Safari only asks for permission when that
+// call comes right from a tap.
+async function preparePush() {
+	if (!pushSupported) return;
+	if (Notification.permission === 'denied') { pushState = 'blocked'; return; }
+	try {
+		pushRegistration = await Promise.race([navigator.serviceWorker.ready, new Promise((resolve) => setTimeout(resolve, 8000))]);
+		if (!pushRegistration) return;
+		const subscription = await pushRegistration.pushManager.getSubscription();
+		pushState = subscription && Notification.permission === 'granted' ? 'on' : 'off';
+		vapidPublicKey = (await (await fetch(pushEndpoint())).json()).publicKey || '';
+	} catch { /* stays 'off' - a tap on the button tries again */ }
+}
+
+async function savePushSubscription(subscription, test) {
+	const response = await fetch(pushEndpoint(), {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'subscribe', token, subscription: subscription.toJSON(), lang: currentLang, test })
+	});
+	const data = await response.json().catch(() => ({}));
+	if (!response.ok) throw new Error(data.error || strings().pushFailed);
+	return data;
+}
+
+async function enablePush() {
+	const registration = pushRegistration || await navigator.serviceWorker.ready;
+	// A newer sw.js is still waiting (this page was open before the update):
+	// the old one can't show pushes yet, so switch over first - pwa.js reloads
+	// the page, then one more tap on the button.
+	if (registration.waiting) {
+		registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+		return;
+	}
+	if (!vapidPublicKey) vapidPublicKey = (await (await fetch(pushEndpoint())).json()).publicKey || '';
+	let subscription;
+	try {
+		subscription = await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64UrlToBytes(vapidPublicKey) });
+	} catch (error) {
+		// Prompt declined or just closed - not an error worth an alert.
+		if (Notification.permission !== 'granted') { pushState = Notification.permission === 'denied' ? 'blocked' : 'off'; return; }
+		throw error;
+	}
+	// test: staff-push sends a first notification right away, so whoever
+	// switched it on sees at once that it arrives.
+	const result = await savePushSubscription(subscription, true);
+	pushState = 'on';
+	if (result.test && (result.test < 200 || result.test >= 300)) alert(`${strings().pushFailed} (${result.test})`);
+}
+
+async function disablePush() {
+	const registration = pushRegistration || await navigator.serviceWorker.ready;
+	const subscription = await registration.pushManager.getSubscription();
+	if (subscription) {
+		await fetch(pushEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unsubscribe', token, endpoint: subscription.endpoint }) }).catch(() => {});
+		await subscription.unsubscribe();
+	}
+	pushState = 'off';
+}
+
+function togglePush() {
+	if (pushBusy) return;
+	pushBusy = true;
+	(pushState === 'on' ? disablePush() : enablePush())
+		.catch((error) => alert(`${strings().pushFailed}${error?.message ? ` (${error.message})` : ''}`))
+		.finally(() => { pushBusy = false; rerender(); });
+}
+
+// The notification texts follow the language this screen is switched to.
+function refreshPushLanguage() {
+	pushRegistration?.pushManager.getSubscription()
+		.then((subscription) => subscription && savePushSubscription(subscription, false))
+		.catch(() => { /* keeps the previous language */ });
+}
+
+function pushMarkup() {
+	if (pushState === 'unsupported') return '';
+	if (pushState === 'install-first' || pushState === 'blocked') {
+		return `<p class="sh-push-hint">${icon('bell', 18)}<span>${escapeHtml(pushState === 'blocked' ? strings().pushBlocked : strings().pushInstallFirst)}</span></p>`;
+	}
+	const on = pushState === 'on';
+	return `<button type="button" class="sh-nav-btn ${on ? '' : 'is-cta'}" data-push-toggle aria-pressed="${on}" ${pushBusy ? 'disabled' : ''}>${icon('bell', 18)}<span>${escapeHtml(on ? strings().pushOn : strings().pushEnable)}</span></button>`;
+}
+
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
 // menu.js's itemTranslation()/categoryName(), so it works even though
@@ -621,6 +729,7 @@ function sidebarMarkup() {
 		<div class="sh-nav">
 			${totalsButton}
 			${soundButton}
+			${pushMarkup()}
 			${foldoutMarkup('guide', strings().guideButton, guideContent())}
 			${foldoutMarkup('workflow', strings().workflowButton, workflowContent())}
 		</div>
@@ -727,10 +836,17 @@ async function onAppClick(event) {
 		return;
 	}
 
+	// Called straight from the tap, before any await - see preparePush().
+	if (event.target.closest('[data-push-toggle]')) {
+		togglePush();
+		return;
+	}
+
 	if (langButton) {
 		currentLang = langButton.dataset.lang;
 		try { localStorage.setItem(LANG_STORAGE_KEY, currentLang); } catch { /* convenience only */ }
 		rerender();
+		if (pushState === 'on') refreshPushLanguage();
 		return;
 	}
 
@@ -888,6 +1004,7 @@ async function init() {
 	chimeForNewOrders(lastTables);
 	render(data);
 	subscribeRealtime(data.channel);
+	preparePush().then(rerender);
 }
 
 // No connection (e.g. the installed app opened offline from its cached
