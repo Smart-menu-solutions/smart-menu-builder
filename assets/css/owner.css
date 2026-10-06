@@ -1,4 +1,4 @@
-/* "Mein Smart Menu" owner app (owner.html) - phone first, centred column on
+/* "SmartPilot" owner app (owner.html) - phone first, centred column on
    bigger screens. Same tokens as menu.css. */
 :root{--ink:#262421;--grey:#6f6a63;--muted:#9b958d;--line:#e7e5e1;--alt:#fafaf9;--orange:#f66a09;--orange-dark:#d85d06;--tint:#fff1e4;--green:#2f9e5b;--green-tint:#e3f4ea;--red:#c8423a}
 *{box-sizing:border-box}

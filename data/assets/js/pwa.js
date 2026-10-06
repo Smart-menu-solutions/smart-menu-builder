@@ -88,7 +88,7 @@
 		const apply = () => {
 			const name = document.title.split(' — ')[0].trim();
 			// Staff: "Küche · El Greco" is too long for a home-screen label, "Küche" isn't.
-			// A page can name its own label (owner.html: "Mein Menü").
+			// A page can name its own label (owner.html: "SmartPilot").
 			const shortName = (link.dataset.shortName || (perMenu ? name : name.split(' · ')[0])).slice(0, 12);
 			const manifest = {
 				...base,

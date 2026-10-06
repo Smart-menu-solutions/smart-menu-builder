@@ -1422,7 +1422,7 @@ if ($('#copySetupLink')) $('#copySetupLink').addEventListener('click', async () 
 	}
 });
 
-// "Mein Smart Menu" owner app link (owner.html, 0035_owner_app.sql) - every
+// "SmartPilot" owner app link (owner.html, 0035_owner_app.sql) - every
 // menu that existed then has one, a newer menu gets it on the first copy.
 async function ownerAppLinkFor(client) {
 	if (typeof supabaseClient === 'undefined') return '';
@@ -1815,11 +1815,11 @@ Mit freundlichen Grüßen
 	{
 		// Manual - sent once the menu is live, with the link from the QR panel
 		// -> "App-Link für Inhaber kopieren" (owner.html, 0035_owner_app.sql).
-		name: 'Mein Smart Menu: app link (manual)',
-		subject: 'Ihre App „Mein Smart Menu“ für [Menü-Name]',
+		name: 'SmartPilot: app link (manual)',
+		subject: 'Ihre App „SmartPilot“ für [Menü-Name]',
 		body: `Hallo [Vorname Nachname],
 
-ab sofort haben Sie für [Menü-Name] Ihre eigene App „Mein Smart Menu“. Dort finden Sie alles an einem Ort:
+ab sofort haben Sie für [Menü-Name] Ihre eigene App „SmartPilot“. Dort finden Sie alles an einem Ort:
 
 • Ihre Speisekarte und Ihren QR-Code
 • Tischkarten zum Ausdrucken – fertig mit Ihrem Logo und QR-Code
@@ -1962,11 +1962,11 @@ We wish you every success with your new digital menu and thank you for your trus
 Best regards
 [+ HTML signature]`
 	},
-	'Mein Smart Menu: app link (manual)': {
-		subject: 'Your app "Mein Smart Menu" for [Menu name]',
+	'SmartPilot: app link (manual)': {
+		subject: 'Your app "SmartPilot" for [Menu name]',
 		body: `Hi [First name Last name],
 
-from now on you have your own app "Mein Smart Menu" for [Menu name]. Everything in one place:
+from now on you have your own app "SmartPilot" for [Menu name]. Everything in one place:
 
 • Your menu and your QR code
 • Table cards to print – ready with your logo and QR code
@@ -2106,11 +2106,11 @@ Vi auguriamo tanto successo con il vostro nuovo menu digitale e vi ringraziamo p
 Cordiali saluti
 [+ firma HTML]`
 	},
-	'Mein Smart Menu: app link (manual)': {
-		subject: 'La vostra app "Mein Smart Menu" per [Nome del menu]',
+	'SmartPilot: app link (manual)': {
+		subject: 'La vostra app "SmartPilot" per [Nome del menu]',
 		body: `Buongiorno [Nome Cognome],
 
-da oggi avete la vostra app "Mein Smart Menu" per [Nome del menu]. Tutto in un unico posto:
+da oggi avete la vostra app "SmartPilot" per [Nome del menu]. Tutto in un unico posto:
 
 • Il vostro menu e il vostro QR code
 • Segnatavolo da stampare – già pronti con il vostro logo e QR code

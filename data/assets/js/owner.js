@@ -1,4 +1,4 @@
-/* "Mein Smart Menu" - the restaurant owner's app (owner.html?t=<token>).
+/* "SmartPilot" - the restaurant owner's app (owner.html?t=<token>).
    Everything comes from the owner-app Edge Function; the token in the link
    is the only credential (see 0035_owner_app.sql). Installable via pwa.js /
    manifest-owner.webmanifest, which keeps ?t= in the installed app's start
@@ -14,7 +14,7 @@
 
 	const TEXT = {
 		de: {
-			appName: 'Mein Smart Menu', shortName: 'Mein Menü', loading: 'Wird geladen …',
+			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Wird geladen …',
 			invalidTitle: 'Link nicht gültig', invalid: 'Bitte wenden Sie sich an {contact}.',
 			offlineTitle: 'Keine Verbindung', offline: 'Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', retry: 'Erneut versuchen',
 			online: '● Online', notOnline: '● Offline',
@@ -34,7 +34,7 @@
 			cards: { title: 'Tischkarten – {name}', print: 'Drucken / als PDF speichern', summaryTables: '{tables} Tische mit „Scannen & bestellen“, dazu ein Blatt „Einfach scannen“ für Eingang, Bar oder Fenster – {sheets} Blätter A4.', summaryMenu: 'Ein Blatt A4 mit 4 Karten „Einfach scannen“.', hint: 'Entlang der gestrichelten Linien schneiden, am besten dickeres Papier (ab 250 g/m²). Im Druckdialog Skalierung 100 % wählen.' }
 		},
 		en: {
-			appName: 'Mein Smart Menu', shortName: 'My Menu', loading: 'Loading …',
+			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Loading …',
 			invalidTitle: 'Link not valid', invalid: 'Please contact {contact}.',
 			offlineTitle: 'No connection', offline: 'Please check your internet connection and try again.', retry: 'Try again',
 			online: '● Online', notOnline: '● Offline',
@@ -54,7 +54,7 @@
 			cards: { title: 'Table cards – {name}', print: 'Print / save as PDF', summaryTables: '{tables} tables with "Scan & order", plus one sheet of "Just scan" cards for the entrance, bar or window – {sheets} A4 sheets.', summaryMenu: 'One A4 sheet with 4 "Just scan" cards.', hint: 'Cut along the dashed lines, ideally on thicker paper (250 g/m² or more). Choose 100% scale in the print dialog.' }
 		},
 		it: {
-			appName: 'Mein Smart Menu', shortName: 'Il mio menu', loading: 'Caricamento …',
+			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Caricamento …',
 			invalidTitle: 'Link non valido', invalid: 'Contattateci a {contact}.',
 			offlineTitle: 'Nessuna connessione', offline: 'Controllate la connessione a internet e riprovate.', retry: 'Riprova',
 			online: '● Online', notOnline: '● Offline',
