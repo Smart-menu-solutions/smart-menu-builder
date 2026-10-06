@@ -1449,6 +1449,72 @@ if ($('#copyOwnerAppLink')) $('#copyOwnerAppLink').addEventListener('click', asy
 	}
 });
 
+// The same link as a PNG to hand over in person: the owner scans it with the
+// phone camera and installs SmartPilot on the spot. Texts in the customer's
+// language (the lang the link carries). Drawn locally like every QR here -
+// the link is personal and never goes to a QR image service.
+const OWNER_QR_TEXT = {
+	de: { scan: 'Mit der Handy-Kamera scannen und SmartPilot installieren', personal: 'Persönlicher Link – bitte nicht weitergeben' },
+	en: { scan: 'Scan with your phone camera and install SmartPilot', personal: 'Personal link – please do not share it' },
+	it: { scan: 'Scansionate con la fotocamera e installate SmartPilot', personal: 'Link personale – non condividetelo' }
+};
+
+function loadImage(src) {
+	return new Promise((resolve) => {
+		const image = new Image();
+		image.onload = () => resolve(image);
+		image.onerror = () => resolve(null);
+		image.src = src;
+	});
+}
+
+// Largest font size (down to 60% of the wanted one) that fits maxWidth.
+function fillFittedText(ctx, text, x, y, maxWidth, size, weight, color) {
+	let current = size;
+	do {
+		ctx.font = `${weight} ${current}px "Open Sans", Arial, sans-serif`;
+		current -= 2;
+	} while (ctx.measureText(text).width > maxWidth && current > size * 0.6);
+	ctx.fillStyle = color;
+	ctx.fillText(text, x, y, maxWidth);
+}
+
+async function ownerAppQrBlob(client, link) {
+	const text = OWNER_QR_TEXT[new URL(link).searchParams.get('lang')] || OWNER_QR_TEXT.de;
+	const canvas = document.createElement('canvas');
+	canvas.width = 1000;
+	canvas.height = 1320;
+	const ctx = canvas.getContext('2d');
+	ctx.fillStyle = '#ffffff';
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+	const icon = await loadImage('assets/icons/icon-192.png');
+	if (icon) ctx.drawImage(icon, 440, 56, 120, 120);
+	ctx.textAlign = 'center';
+	fillFittedText(ctx, 'SmartPilot', 500, 254, 900, 66, 'bold', '#262421');
+	fillFittedText(ctx, client.name, 500, 314, 900, 40, 'normal', '#6f6a63');
+	ctx.drawImage(SmartQr.draw(link, 760, 'M', 4), 120, 360);
+	fillFittedText(ctx, text.scan, 500, 1192, 900, 36, 'bold', '#262421');
+	fillFittedText(ctx, text.personal, 500, 1250, 900, 28, 'normal', '#9b958d');
+	return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+if ($('#downloadOwnerAppQr')) $('#downloadOwnerAppQr').addEventListener('click', async () => {
+	const client = selectedClient();
+	if (!client) return;
+	const link = await ownerAppLinkFor(client);
+	if (!link) { notify(strings().ownerAppLinkFailed); return; }
+	const blob = await ownerAppQrBlob(client, link);
+	if (!blob) { notify(strings().ownerAppLinkFailed); return; }
+	const blobUrl = URL.createObjectURL(blob);
+	const anchor = document.createElement('a');
+	anchor.href = blobUrl;
+	anchor.download = `smartpilot-${client.slug}.png`;
+	document.body.appendChild(anchor);
+	anchor.click();
+	anchor.remove();
+	URL.revokeObjectURL(blobUrl);
+});
+
 // "1–8, 12, Terrasse 1" -> ['1', …, '8', '12', 'Terrasse 1']. Ranges only
 // for plain numbers and at most 200 tables, anything else stays as written.
 function parseTableList(text) {

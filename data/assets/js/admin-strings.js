@@ -64,7 +64,7 @@ window.ADMIN_STRINGS = {
 		tableCardsSummaryMenu: 'Ein Blatt A4 mit 4 Karten „Einfach scannen“.',
 		tableCardsHint: 'Entlang der gestrichelten Linien schneiden, am besten dickeres Papier (ab 250 g/m²). Im Druckdialog Skalierung 100 % wählen.',
 		popupBlocked: 'Neues Fenster wurde blockiert – bitte Pop-ups für diese Seite erlauben.',
-		ownerAppLink: 'App-Link für Inhaber kopieren', ownerAppLinkTitle: 'App-Link „SmartPilot“ für den Inhaber',
+		ownerAppLink: 'App-Link für Inhaber kopieren', ownerAppLinkTitle: 'App-Link „SmartPilot“ für den Inhaber', ownerAppQr: 'SmartPilot-QR-Code herunterladen',
 		ownerAppLinkCopied: 'App-Link kopiert – jetzt an den Kunden schicken (Vorlage „SmartPilot: App-Link“)', ownerAppLinkFailed: 'App-Link konnte nicht geladen werden – Kunde zuerst speichern.',
 		qrHelper: 'Scannen öffnet die digitale Live-Speisekarte dieses Kunden. Speichern Sie den QR-Code für Tischaufsteller, Schaufenster oder Belege.',
 
@@ -235,7 +235,7 @@ window.ADMIN_STRINGS = {
 		tableCardsSummaryMenu: 'One A4 sheet with 4 "Just scan" cards.',
 		tableCardsHint: 'Cut along the dashed lines, ideally on thicker paper (250 g/m² or more). Choose 100% scale in the print dialog.',
 		popupBlocked: 'The new window was blocked – please allow pop-ups for this page.',
-		ownerAppLink: 'Copy owner app link', ownerAppLinkTitle: 'Owner app link "SmartPilot"',
+		ownerAppLink: 'Copy owner app link', ownerAppLinkTitle: 'Owner app link "SmartPilot"', ownerAppQr: 'Download SmartPilot QR code',
 		ownerAppLinkCopied: 'App link copied - now send it to the customer (template "SmartPilot: app link")', ownerAppLinkFailed: 'Could not load the app link - save the client first.',
 		qrHelper: 'Scan to open this client’s live digital menu. Save the QR on table cards, windows, or receipts.',
 
