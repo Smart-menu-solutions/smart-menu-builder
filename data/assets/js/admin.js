@@ -622,7 +622,9 @@ function onboardingTemplateText(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const staffLines = staffAccessRowsForTemplate(client).map((row) => `${staffAccessName(row, lang)}: ${row.token ? staffAccessUrl(row) : '-'}`).join('\n');
-	return `${heading}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}`;
+	// How staff switch on push notifications (staff-push) on their phones.
+	const pushHint = strings.onboardingPushHint ? `\n\n${strings.onboardingPushHint}` : '';
+	return `${heading}\n\n${strings.staffHeading || 'Staff access'}:\n${staffLines}${pushHint}`;
 }
 
 // Rich version of the same content - used both for the on-screen preview
@@ -641,6 +643,7 @@ function onboardingTemplateHtml(client, lang) {
 		<p style="font-weight:700;font-size:15px;margin:0 0 16px">${escapeHtml(heading)}</p>
 		<p style="${sectionLabelStyle}">${escapeHtml(strings.staffHeading || 'Staff access')}</p>
 		<table cellpadding="0" cellspacing="0">${staffRows}</table>
+		${strings.onboardingPushHint ? `<p style="margin:14px 0 0;font-size:14px">${escapeHtml(strings.onboardingPushHint)}</p>` : ''}
 	</div>`;
 }
 
