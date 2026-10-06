@@ -1,6 +1,6 @@
 /* Registers sw.js (offline menu + installable app) and shows a small
    "new version" banner when an update is waiting. Loaded by menu.html,
-   admin.html, login.html and the staff pages (kitchen/waiter/bar/cashier). */
+   admin.html, login.html, owner.html and the staff pages (kitchen/waiter/bar/cashier). */
 (function () {
 	if (!('serviceWorker' in navigator) || !window.isSecureContext) return;
 
@@ -64,7 +64,8 @@
 	// The staff pages (data-per-staff-link) work the same way, keyed on their
 	// ?t= link instead: the installed kitchen/bar/... app has to reopen with
 	// that link, a bare kitchen.html would only say "link incomplete". Named
-	// "Küche · El Greco" once staff.js has set the title.
+	// "Küche · El Greco" once staff.js has set the title. The owner app
+	// (owner.html) uses the same ?t= mechanism.
 	async function personalizeManifest() {
 		const perMenu = document.querySelector('link[rel="manifest"][data-per-restaurant]');
 		const link = perMenu || document.querySelector('link[rel="manifest"][data-per-staff-link]');
@@ -83,11 +84,12 @@
 		const start = new URL(location.pathname, location.href);
 		start.searchParams.set(key, client);
 		const lang = new URLSearchParams(location.search).get('lang');
-		if (lang && perMenu) start.searchParams.set('lang', lang);
+		if (lang) start.searchParams.set('lang', lang);
 		const apply = () => {
 			const name = document.title.split(' — ')[0].trim();
 			// Staff: "Küche · El Greco" is too long for a home-screen label, "Küche" isn't.
-			const shortName = (perMenu ? name : name.split(' · ')[0]).slice(0, 12);
+			// A page can name its own label (owner.html: "Mein Menü").
+			const shortName = (link.dataset.shortName || (perMenu ? name : name.split(' · ')[0])).slice(0, 12);
 			const manifest = {
 				...base,
 				// The staff id leaves the secret out - it only needs to tell apps apart.

@@ -684,30 +684,9 @@ async function shortHash(text) {
 	return [...new Uint8Array(digest)].slice(0, 6).map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
-// QR codes are drawn right here in the browser (vendor/qrcode.js) - the
-// links they hold (a table's carries its link_secret) are never sent to a
-// QR image service. marginModules is the white quiet zone, in QR modules.
-function drawQr(text, size, ecc, marginModules) {
-	qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
-	const qr = qrcode(0, ecc);
-	qr.addData(text, 'Byte');
-	qr.make();
-	const count = qr.getModuleCount();
-	const cell = Math.max(1, Math.floor(size / (count + marginModules * 2)));
-	const offset = Math.floor((size - cell * count) / 2);
-	const canvas = document.createElement('canvas');
-	canvas.width = canvas.height = size;
-	const ctx = canvas.getContext('2d');
-	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(0, 0, size, size);
-	ctx.fillStyle = '#000000';
-	for (let row = 0; row < count; row += 1) {
-		for (let col = 0; col < count; col += 1) {
-			if (qr.isDark(row, col)) ctx.fillRect(offset + col * cell, offset + row * cell, cell, cell);
-		}
-	}
-	return canvas;
-}
+// QR codes are drawn in the browser by table-cards.js (vendor/qrcode.js) -
+// the links they hold are never sent to a QR image service.
+function drawQr(text, size, ecc, marginModules) { return SmartQr.draw(text, size, ecc, marginModules); }
 
 // render() runs on every edit, so each QR image is only drawn once. A failure
 // (e.g. vendor/qrcode.js didn't load) leaves just that image empty instead of
@@ -726,38 +705,8 @@ function qrDataUrl(text, size, ecc, marginModules) {
 	return qrDataUrlCache.get(key);
 }
 
-// A table's QR with its number drawn into the middle of the code (ecc=H
-// tolerates the covered part) - used for the email images and the printed
-// table cards, so both always show the same code.
-function drawTableQr(url, label, size, marginModules) {
-	const canvas = drawQr(url, size, 'H', marginModules);
-	const ctx = canvas.getContext('2d');
-	// Largest bold font whose box stays within ~42% of the width (a longer
-	// label like "T12" or "Terrasse 3" shrinks to fit instead of covering more).
-	let fontSize = Math.round(size * 0.2);
-	ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
-	while (ctx.measureText(label).width > size * 0.34 && fontSize > 18) {
-		fontSize -= 2;
-		ctx.font = `700 ${fontSize}px Arial, Helvetica, sans-serif`;
-	}
-	const padX = fontSize * 0.35;
-	const boxW = ctx.measureText(label).width + padX * 2;
-	const boxH = fontSize * 1.3;
-	const x = (size - boxW) / 2;
-	const y = (size - boxH) / 2;
-	ctx.fillStyle = '#ffffff';
-	ctx.strokeStyle = '#262421';
-	ctx.lineWidth = Math.max(2, size / 120);
-	ctx.beginPath();
-	if (ctx.roundRect) ctx.roundRect(x, y, boxW, boxH, fontSize * 0.15); else ctx.rect(x, y, boxW, boxH);
-	ctx.fill();
-	ctx.stroke();
-	ctx.fillStyle = '#262421';
-	ctx.textAlign = 'center';
-	ctx.textBaseline = 'middle';
-	ctx.fillText(label, size / 2, size / 2 + fontSize * 0.05);
-	return canvas;
-}
+// Table QR with its number drawn into the code (table-cards.js).
+function drawTableQr(url, label, size, marginModules) { return SmartQr.drawTable(url, label, size, marginModules); }
 
 async function tableQrImageUrl(client, table) {
 	const url = tableGuestUrl(client, table);
@@ -1084,117 +1033,20 @@ function openPrintableTableQr(qrSrc, tableNumber) {
 	win.document.close();
 }
 
-// Printable table cards: A6 cards, four per A4 sheet, cut along the dashed
-// lines. Card texts follow the menu's main language (languages[0]), the
-// toolbar above the sheets follows the builder's language. A ServiceHub
-// client gets one "scan & order" card per table (its own link, number in the
-// code) plus one sheet of general menu cards for the entrance, bar or
-// window - a general card on a table would let guests view but not order.
-const TABLE_CARD_TEXT = {
-	de: { kicker: 'Unsere Speisekarte', title: 'Einfach scannen', how: 'Handykamera öffnen und scannen – ohne App', langs: 'In {n} Sprachen', table: 'Tisch', tableTitle: 'Scannen & bestellen', tableHow: 'Speisekarte ansehen, bestellen, Rechnung anfordern', foot: 'Digitale Speisekarte von Smart Menu Solutions' },
-	en: { kicker: 'Our menu', title: 'Just scan', how: 'Open your phone camera and scan – no app needed', langs: 'In {n} languages', table: 'Table', tableTitle: 'Scan & order', tableHow: 'View the menu, order, ask for the bill', foot: 'Digital menu by Smart Menu Solutions' },
-	it: { kicker: 'Il nostro menu', title: 'Basta scansionare', how: 'Aprite la fotocamera e scansionate – senza app', langs: 'In {n} lingue', table: 'Tavolo', tableTitle: 'Scansionate e ordinate', tableHow: 'Guardate il menu, ordinate, chiedete il conto', foot: 'Menu digitale di Smart Menu Solutions' },
-	el: { kicker: 'Το μενού μας', title: 'Απλώς σκανάρετε', how: 'Ανοίξτε την κάμερα του κινητού και σκανάρετε – χωρίς εφαρμογή', langs: 'Σε {n} γλώσσες', table: 'Τραπέζι', tableTitle: 'Σκανάρετε & παραγγείλετε', tableHow: 'Δείτε το μενού, παραγγείλετε, ζητήστε τον λογαριασμό', foot: 'Ψηφιακό μενού από τη Smart Menu Solutions' },
-	es: { kicker: 'Nuestra carta', title: 'Simplemente escanee', how: 'Abra la cámara del móvil y escanee – sin app', langs: 'En {n} idiomas', table: 'Mesa', tableTitle: 'Escanee y pida', tableHow: 'Vea la carta, pida, solicite la cuenta', foot: 'Carta digital de Smart Menu Solutions' },
-	fr: { kicker: 'Notre carte', title: 'Scannez simplement', how: "Ouvrez l'appareil photo et scannez – sans application", langs: 'En {n} langues', table: 'Table', tableTitle: 'Scannez & commandez', tableHow: "Consultez la carte, commandez, demandez l'addition", foot: 'Carte digitale par Smart Menu Solutions' },
-	nl: { kicker: 'Onze menukaart', title: 'Gewoon scannen', how: 'Open de camera van uw telefoon en scan – geen app nodig', langs: 'In {n} talen', table: 'Tafel', tableTitle: 'Scannen & bestellen', tableHow: 'Menukaart bekijken, bestellen, de rekening vragen', foot: 'Digitale menukaart van Smart Menu Solutions' },
-	pt: { kicker: 'O nosso menu', title: 'Basta digitalizar', how: 'Abra a câmara do telemóvel e digitalize – sem app', langs: 'Em {n} idiomas', table: 'Mesa', tableTitle: 'Digitalize e peça', tableHow: 'Veja o menu, faça o pedido, peça a conta', foot: 'Menu digital da Smart Menu Solutions' }
-};
-// Each language in its own name, so a guest spots theirs at a glance.
-const TABLE_CARD_LANGUAGE_NAMES = { de: 'Deutsch', en: 'English', it: 'Italiano', el: 'Ελληνικά', es: 'Español', fr: 'Français', nl: 'Nederlands', pt: 'Português' };
-// Same keys as menu.js HEADER_FONTS - the restaurant name in the menu's own header font.
-const TABLE_CARD_NAME_FONTS = { playfair: "'Playfair Display', Georgia, serif", montserrat: "'Montserrat', sans-serif", poppins: "'Poppins', sans-serif", dancing: "'Dancing Script', cursive", oswald: "'Oswald', sans-serif" };
-const TABLE_CARD_PHONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>';
-
-function tableCardHtml(client, text, qrSrc, tableNumber) {
-	const languages = (client.languages || []).filter((lang) => TABLE_CARD_LANGUAGE_NAMES[lang]);
-	const langLine = languages.length > 1
-		? `<p class="card__langs"><b>${escapeHtml(text.langs.replace('{n}', languages.length))}:</b> ${languages.map((lang) => TABLE_CARD_LANGUAGE_NAMES[lang]).join(' · ')}</p>`
-		: '';
-	const isTable = tableNumber !== undefined;
-	// "Tisch 12", but a named table ("Terrasse 1") stays as it is.
-	const tableLabel = isTable && /^\d+$/.test(String(tableNumber)) ? `${text.table} ${tableNumber}` : tableNumber;
-	return `<div class="card">
-		${client.logo_url ? `<img class="card__logo" src="${escapeAttr(client.logo_url)}" alt="">` : ''}
-		<p class="card__name">${escapeHtml(client.name)}</p>
-		<div class="card__rule"></div>
-		<p class="card__kicker">${escapeHtml(isTable ? tableLabel : text.kicker)}</p>
-		<p class="card__title">${escapeHtml(isTable ? text.tableTitle : text.title)}</p>
-		<div class="card__qr"><img src="${qrSrc}" alt=""><span></span></div>
-		<p class="card__how">${TABLE_CARD_PHONE_ICON}${escapeHtml(isTable ? text.tableHow : text.how)}</p>
-		${langLine}
-		<p class="card__foot">${escapeHtml(text.foot)}</p>
-	</div>`;
-}
-
+// Printable table cards (table-cards.js, shared with the owner app).
 function openTableCards(client) {
 	// Opened right inside the click, before any drawing - popup blockers only
 	// allow window.open during the user's gesture.
 	const win = window.open('', '_blank');
 	if (!win) { notify(strings().popupBlocked); return; }
-	const lang = (client.languages && client.languages[0]) || 'de';
-	const text = TABLE_CARD_TEXT[lang] || TABLE_CARD_TEXT.en;
-	const menuQr = qrDataUrl(menuUrl(client), 600, 'M', 0);
-	const tables = client.smartservice_hub_enabled ? tablesEmailRows(client) : [];
-	const cards = tables.map((table) => tableCardHtml(client, text, drawTableQr(tableGuestUrl(client, table), String(table.table_number), 600, 0).toDataURL('image/png'), table.table_number));
-	const sheets = [];
-	for (let i = 0; i < cards.length; i += 4) sheets.push(cards.slice(i, i + 4).join(''));
-	sheets.push(tableCardHtml(client, text, menuQr).repeat(4));
+	const tables = client.smartservice_hub_enabled
+		? tablesEmailRows(client).map((table) => ({ number: String(table.table_number), url: tableGuestUrl(client, table) }))
+		: [];
 	const ui = strings();
-	const summary = tables.length
-		? ui.tableCardsSummaryTables.replace('{tables}', tables.length).replace('{sheets}', sheets.length)
-		: ui.tableCardsSummaryMenu;
-	const asset = (path) => new URL(path, window.location.href).href;
-	const nameFont = TABLE_CARD_NAME_FONTS[client.header_font] || TABLE_CARD_NAME_FONTS.playfair;
-	win.document.write(`<!DOCTYPE html><html lang="${escapeAttr(lang)}"><head><meta charset="utf-8">
-		<title>${escapeHtml(ui.tableCardsTitle.replace('{name}', client.name))}</title>
-		<link rel="stylesheet" href="${asset('assets/fonts/fonts-menu-headers.css')}">
-		<link rel="stylesheet" href="${asset('assets/fonts/fonts-opensans.css')}">
-		<style>
-		*{box-sizing:border-box}
-		body{margin:0;background:#ece9e4;font-family:'Open Sans',Arial,sans-serif;color:#262421}
-		.toolbar{max-width:210mm;margin:0 auto;padding:24px 0 18px}
-		.toolbar h1{font:700 20px 'Poppins','Open Sans',sans-serif;margin:0 0 4px}
-		.toolbar p{margin:0 0 12px;color:#6f6a63;font-size:13px;line-height:1.5}
-		.toolbar button{font:600 14px 'Poppins','Open Sans',sans-serif;background:#f66a09;color:#fff;border:0;border-radius:999px;padding:10px 20px;cursor:pointer}
-		.sheet{width:210mm;height:297mm;margin:0 auto 24px;background:#fff;display:grid;grid-template-columns:105mm 105mm;grid-template-rows:148.5mm 148.5mm;position:relative;box-shadow:0 10px 30px -12px rgba(0,0,0,.35)}
-		.sheet::before,.sheet::after{content:"";position:absolute;z-index:1;border:0 dashed #c9c4bd}
-		.sheet::before{left:105mm;top:0;bottom:0;border-left-width:.3mm}
-		.sheet::after{top:148.5mm;left:0;right:0;border-top-width:.3mm}
-		.card{width:105mm;height:148.5mm;display:flex;flex-direction:column;align-items:center;text-align:center;padding:9mm 9mm 6mm;overflow:hidden}
-		.card__logo{height:19mm;width:auto;max-width:45mm;object-fit:contain}
-		.card__name{font-family:${nameFont};font-weight:600;font-size:19pt;line-height:1.1;margin:1.5mm 0 0}
-		.card__rule{width:12mm;height:.5mm;background:#262421;margin:3mm 0;border-radius:1mm}
-		.card__kicker{font:600 7pt 'Poppins','Open Sans',sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#6f6a63;margin:0}
-		.card__title{font:700 15pt 'Poppins','Open Sans',sans-serif;margin:.8mm 0 3mm}
-		.card__qr{position:relative;width:60mm;height:60mm;padding:2.8mm;flex-shrink:0}
-		.card__qr img{width:100%;height:100%;display:block;image-rendering:pixelated}
-		.card__qr::before,.card__qr::after,.card__qr span::before,.card__qr span::after{content:"";position:absolute;width:6mm;height:6mm;border:0 solid #262421}
-		.card__qr::before{top:0;left:0;border-top-width:.7mm;border-left-width:.7mm;border-top-left-radius:2mm}
-		.card__qr::after{top:0;right:0;border-top-width:.7mm;border-right-width:.7mm;border-top-right-radius:2mm}
-		.card__qr span::before{bottom:0;left:0;border-bottom-width:.7mm;border-left-width:.7mm;border-bottom-left-radius:2mm}
-		.card__qr span::after{bottom:0;right:0;border-bottom-width:.7mm;border-right-width:.7mm;border-bottom-right-radius:2mm}
-		.card__how{display:flex;align-items:center;justify-content:center;gap:1.6mm;font-size:7.6pt;margin:3.2mm 0 0}
-		.card__how svg{width:3.6mm;height:3.6mm;flex-shrink:0}
-		.card__langs{font-size:6.6pt;color:#6f6a63;margin:1.6mm 0 0;line-height:1.45}
-		.card__langs b{color:#262421;font-weight:600}
-		.card__foot{margin:auto 0 0;font-size:5.4pt;color:#a39d95;letter-spacing:.02em}
-		@media print{
-			@page{size:A4;margin:0}
-			body{background:#fff}
-			.toolbar{display:none}
-			.sheet{margin:0;box-shadow:none;break-after:page}
-			.sheet:last-child{break-after:auto}
-		}
-		</style></head><body>
-		<div class="toolbar">
-			<h1>${escapeHtml(ui.tableCardsTitle.replace('{name}', client.name))}</h1>
-			<p>${escapeHtml(summary)} ${escapeHtml(ui.tableCardsHint)}</p>
-			<button type="button" onclick="window.print()">${escapeHtml(ui.tableCardsPrint)}</button>
-		</div>
-		${sheets.map((sheet) => `<div class="sheet">${sheet}</div>`).join('')}
-		</body></html>`);
-	win.document.close();
+	SmartTableCards.write(win,
+		{ name: client.name, logoUrl: client.logo_url, headerFont: client.header_font, languages: client.languages, menuUrl: menuUrl(client) },
+		tables,
+		{ title: ui.tableCardsTitle, print: ui.tableCardsPrint, summaryTables: ui.tableCardsSummaryTables, summaryMenu: ui.tableCardsSummaryMenu, hint: ui.tableCardsHint });
 }
 
 function renderOnboardingTemplate(client) {
@@ -1570,6 +1422,30 @@ if ($('#copySetupLink')) $('#copySetupLink').addEventListener('click', async () 
 	}
 });
 
+// "Mein Smart Menu" owner app link (owner.html, 0035_owner_app.sql) - every
+// menu that existed then has one, a newer menu gets it on the first copy.
+async function ownerAppLinkFor(client) {
+	if (typeof supabaseClient === 'undefined') return '';
+	let { data } = await supabaseClient.from('owner_app_links').select('token').eq('menu_slug', client.slug).maybeSingle();
+	if (!data) ({ data } = await supabaseClient.from('owner_app_links').insert({ menu_slug: client.slug }).select('token').single());
+	if (!data?.token) return '';
+	const lang = subscriptionsBySlug[client.slug]?.lang;
+	return `${window.location.href.replace(/admin\.html.*$/, '')}owner.html?t=${data.token}&lang=${['en', 'it'].includes(lang) ? lang : 'de'}`;
+}
+
+if ($('#copyOwnerAppLink')) $('#copyOwnerAppLink').addEventListener('click', async () => {
+	const client = selectedClient();
+	if (!client) return;
+	const link = await ownerAppLinkFor(client);
+	if (!link) { notify(strings().ownerAppLinkFailed); return; }
+	try {
+		await navigator.clipboard.writeText(link);
+		notify(strings().ownerAppLinkCopied);
+	} catch {
+		window.prompt(strings().ownerAppLinkTitle, link);
+	}
+});
+
 // "1–8, 12, Terrasse 1" -> ['1', …, '8', '12', 'Terrasse 1']. Ranges only
 // for plain numbers and at most 200 tables, anything else stays as written.
 function parseTableList(text) {
@@ -1937,6 +1813,34 @@ Mit freundlichen Grüßen
 [+ HTML-Signatur]`
 	},
 	{
+		// Manual - sent once the menu is live, with the link from the QR panel
+		// -> "App-Link für Inhaber kopieren" (owner.html, 0035_owner_app.sql).
+		name: 'Mein Smart Menu: app link (manual)',
+		subject: 'Ihre App „Mein Smart Menu“ für [Menü-Name]',
+		body: `Hallo [Vorname Nachname],
+
+ab sofort haben Sie für [Menü-Name] Ihre eigene App „Mein Smart Menu“. Dort finden Sie alles an einem Ort:
+
+• Ihre Speisekarte und Ihren QR-Code
+• Tischkarten zum Ausdrucken – fertig mit Ihrem Logo und QR-Code
+• Wie oft Ihre Speisekarte aufgerufen wird und welche Gerichte am beliebtesten sind (mit Smart WeeklyReport™)
+• Ihr Paket, Ihre Zusatzmodule und die Verlängerung
+• Änderungswünsche für Ihre Speisekarte direkt an uns schicken
+
+Ihre App öffnen Sie über diesen persönlichen Link: [App-Link →]
+
+So legen Sie die App auf Ihren Startbildschirm:
+• Android (Chrome): Link öffnen und auf „App installieren“ tippen – oder Menü ⋮ → „Zum Startbildschirm hinzufügen“.
+• iPhone (Safari): Link öffnen, auf das Teilen-Symbol tippen und dann auf „Zum Home-Bildschirm“.
+
+Bitte geben Sie den Link nicht weiter – er ist nur für Sie bestimmt.
+
+Bei Fragen erreichen Sie uns jederzeit unter info@smartmenusolutions.com.
+
+Mit freundlichen Grüßen
+[+ HTML-Signatur]`
+	},
+	{
 		name: 'Renewal confirmation',
 		subject: 'Ihre Verlängerung bei Smart Menu Solutions',
 		body: `Hallo [Vorname Nachname],
@@ -2058,6 +1962,31 @@ We wish you every success with your new digital menu and thank you for your trus
 Best regards
 [+ HTML signature]`
 	},
+	'Mein Smart Menu: app link (manual)': {
+		subject: 'Your app "Mein Smart Menu" for [Menu name]',
+		body: `Hi [First name Last name],
+
+from now on you have your own app "Mein Smart Menu" for [Menu name]. Everything in one place:
+
+• Your menu and your QR code
+• Table cards to print – ready with your logo and QR code
+• How often your menu is opened and which dishes are the most popular (with Smart WeeklyReport™)
+• Your plan, your add-ons and the renewal
+• Send us changes for your menu directly
+
+Open your app with this personal link: [App link →]
+
+To put the app on your home screen:
+• Android (Chrome): open the link and tap "Install app" – or menu ⋮ → "Add to home screen".
+• iPhone (Safari): open the link, tap the share icon and then "Add to Home Screen".
+
+Please don't pass the link on – it is meant for you only.
+
+If you have any questions, reach us anytime at info@smartmenusolutions.com.
+
+Best regards
+[+ HTML signature]`
+	},
 	'Renewal confirmation': {
 		subject: 'Your renewal at Smart Menu Solutions',
 		body: `Hi [First name Last name],
@@ -2173,6 +2102,31 @@ Se non avete ancora prenotato Smart FoodMatch™, Smart WeeklyReport™ o Smart 
 Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
 
 Vi auguriamo tanto successo con il vostro nuovo menu digitale e vi ringraziamo per la vostra fiducia.
+
+Cordiali saluti
+[+ firma HTML]`
+	},
+	'Mein Smart Menu: app link (manual)': {
+		subject: 'La vostra app "Mein Smart Menu" per [Nome del menu]',
+		body: `Buongiorno [Nome Cognome],
+
+da oggi avete la vostra app "Mein Smart Menu" per [Nome del menu]. Tutto in un unico posto:
+
+• Il vostro menu e il vostro QR code
+• Segnatavolo da stampare – già pronti con il vostro logo e QR code
+• Quante volte viene aperto il vostro menu e quali piatti sono i più visti (con Smart WeeklyReport™)
+• Il vostro piano, i vostri add-on e il rinnovo
+• Inviarci direttamente le modifiche al vostro menu
+
+Aprite la vostra app con questo link personale: [Link all'app →]
+
+Per mettere l'app sulla schermata Home:
+• Android (Chrome): aprite il link e toccate "Installa app" – oppure menu ⋮ → "Aggiungi a schermata Home".
+• iPhone (Safari): aprite il link, toccate l'icona di condivisione e poi "Aggiungi alla schermata Home".
+
+Vi preghiamo di non inoltrare il link – è riservato a voi.
+
+Per qualsiasi domanda potete scriverci in qualsiasi momento a info@smartmenusolutions.com.
 
 Cordiali saluti
 [+ firma HTML]`

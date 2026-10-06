@@ -1,0 +1,16 @@
+{
+  "name": "Mein Smart Menu",
+  "short_name": "Mein Menü",
+  "description": "Smart Menu Solutions – your menu, QR code, table cards and plan in one place",
+  "id": "owner.html",
+  "start_url": "owner.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#262421",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
