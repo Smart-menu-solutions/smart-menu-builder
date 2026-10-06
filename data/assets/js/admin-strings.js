@@ -56,7 +56,7 @@ window.ADMIN_STRINGS = {
 		cancel: 'Abbrechen', saveTemplate: 'Vorlage speichern',
 
 		deleteClient: 'Kunde löschen', previewMenu: 'Menü-Vorschau ↗', saveChanges: 'Änderungen speichern',
-		operateClient: 'Kunde verwalten', deletionGuide: 'Kunde hat ein Abo? Anleitung zum Löschen ↗',
+		operateClient: 'Kunde verwalten', deletionGuide: 'Kunde hat ein Abo? Anleitung zum Löschen ↗', cancellationGuide: 'Kunde kündigt? Anleitung zum Kündigen ↗',
 		readyToPrint: 'Druckfertig', clientQrCode: 'QR-Code des Kunden', qrLive: 'LIVE',
 		qrImageAlt: 'QR-Code für die Speisekarte des ausgewählten Kunden', downloadQr: 'QR herunterladen', copyLink: 'Link kopieren',
 		printTableCards: 'Tischkarten drucken', tableCardsTitle: 'Tischkarten – {name}', tableCardsPrint: 'Drucken / als PDF speichern',
@@ -227,7 +227,7 @@ window.ADMIN_STRINGS = {
 		cancel: 'Cancel', saveTemplate: 'Save template',
 
 		deleteClient: 'Delete client', previewMenu: 'Preview menu ↗', saveChanges: 'Save changes',
-		operateClient: 'Operate Client', deletionGuide: 'Client has a subscription? Deletion guide ↗',
+		operateClient: 'Operate Client', deletionGuide: 'Client has a subscription? Deletion guide ↗', cancellationGuide: 'Client cancels? Cancellation guide ↗',
 		readyToPrint: 'Ready to print', clientQrCode: 'Client QR code', qrLive: 'LIVE',
 		qrImageAlt: 'QR code for the selected client\'s menu', downloadQr: 'Download QR', copyLink: 'Copy link',
 		printTableCards: 'Print table cards', tableCardsTitle: 'Table cards – {name}', tableCardsPrint: 'Print / save as PDF',
