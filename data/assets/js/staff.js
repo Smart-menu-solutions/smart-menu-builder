@@ -182,9 +182,21 @@ async function preparePush() {
 		pushRegistration = await Promise.race([navigator.serviceWorker.ready, new Promise((resolve) => setTimeout(resolve, 8000))]);
 		if (!pushRegistration) return;
 		const subscription = await pushRegistration.pushManager.getSubscription();
-		pushState = subscription && Notification.permission === 'granted' ? 'on' : 'off';
 		vapidPublicKey = (await (await fetch(pushEndpoint())).json()).publicKey || '';
+		// The browser has one subscription per site; whether it is switched on
+		// for THIS station (several can share one phone) only the server knows.
+		pushState = subscription && Notification.permission === 'granted' && await pushStatus(subscription) ? 'on' : 'off';
 	} catch { /* stays 'off' - a tap on the button tries again */ }
+}
+
+async function pushStatus(subscription) {
+	const response = await fetch(pushEndpoint(), {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ action: 'status', token, endpoint: subscription.endpoint })
+	});
+	const data = await response.json().catch(() => ({}));
+	return !!data.subscribed;
 }
 
 async function savePushSubscription(subscription, test) {
@@ -227,8 +239,10 @@ async function disablePush() {
 	const registration = pushRegistration || await navigator.serviceWorker.ready;
 	const subscription = await registration.pushManager.getSubscription();
 	if (subscription) {
-		await fetch(pushEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unsubscribe', token, endpoint: subscription.endpoint }) }).catch(() => {});
-		await subscription.unsubscribe();
+		const response = await fetch(pushEndpoint(), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'unsubscribe', token, endpoint: subscription.endpoint }) }).catch(() => null);
+		const data = response ? await response.json().catch(() => ({})) : {};
+		// Another station on this phone still uses the subscription - keep it.
+		if (!data.remaining) await subscription.unsubscribe();
 	}
 	pushState = 'off';
 }

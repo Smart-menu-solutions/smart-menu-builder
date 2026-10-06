@@ -260,10 +260,11 @@ Deno.serve(async (request) => {
 		const subscription = validSubscription(body.subscription);
 		if (!subscription) return json({ error: 'Invalid push subscription.' }, 400);
 		const lang = LANGUAGES.includes(String(body.lang)) ? String(body.lang) : 'de';
-		// One row per device (endpoint): switching links or languages just updates it.
+		// One row per device AND staff link (0037), so one phone can serve e.g.
+		// bar and cashier; switching languages just updates this link's row.
 		const { error } = await supabase.from('push_subscriptions').upsert({
 			...subscription, access_id: access.id, access_token: token, menu_slug: access.menuSlug, role: access.role, lang, updated_at: new Date().toISOString()
-		}, { onConflict: 'endpoint' });
+		}, { onConflict: 'endpoint,access_id' });
 		if (error) return json({ error: error.message }, 500);
 		// A first message right away, so whoever switched it on sees that it works.
 		const text = TEXT[lang];
@@ -271,9 +272,21 @@ Deno.serve(async (request) => {
 		return json({ success: true, test });
 	}
 
+	// Is this device switched on for this staff link? (The browser only knows
+	// it has a subscription - maybe for another station on the same phone.)
+	if (body.action === 'status') {
+		const { data } = await supabase.from('push_subscriptions').select('endpoint').eq('endpoint', String(body.endpoint || '')).eq('access_id', access.id).maybeSingle();
+		return json({ subscribed: !!data });
+	}
+
+	// Switches off only this station. remaining = how many other stations
+	// this device still gets pushes for - staff.js only drops the browser's
+	// subscription itself when that is 0.
 	if (body.action === 'unsubscribe') {
-		await supabase.from('push_subscriptions').delete().eq('endpoint', String(body.endpoint || '')).eq('access_id', access.id);
-		return json({ success: true });
+		const endpoint = String(body.endpoint || '');
+		await supabase.from('push_subscriptions').delete().eq('endpoint', endpoint).eq('access_id', access.id);
+		const { count } = await supabase.from('push_subscriptions').select('endpoint', { count: 'exact', head: true }).eq('endpoint', endpoint);
+		return json({ success: true, remaining: count ?? 0 });
 	}
 
 	return json({ error: 'Unknown action.' }, 400);
