@@ -59,6 +59,11 @@ window.ADMIN_STRINGS = {
 		operateClient: 'Kunde verwalten', deletionGuide: 'Kunde hat ein Abo? Anleitung zum Löschen ↗',
 		readyToPrint: 'Druckfertig', clientQrCode: 'QR-Code des Kunden', qrLive: 'LIVE',
 		qrImageAlt: 'QR-Code für die Speisekarte des ausgewählten Kunden', downloadQr: 'QR herunterladen', copyLink: 'Link kopieren',
+		printTableCards: 'Tischkarten drucken', tableCardsTitle: 'Tischkarten – {name}', tableCardsPrint: 'Drucken / als PDF speichern',
+		tableCardsSummaryTables: '{tables} Tische mit „Scannen & bestellen“, dazu ein Blatt „Einfach scannen“ für Eingang, Bar oder Fenster – {sheets} Blätter A4.',
+		tableCardsSummaryMenu: 'Ein Blatt A4 mit 4 Karten „Einfach scannen“.',
+		tableCardsHint: 'Entlang der gestrichelten Linien schneiden, am besten dickeres Papier (ab 250 g/m²). Im Druckdialog Skalierung 100 % wählen.',
+		popupBlocked: 'Neues Fenster wurde blockiert – bitte Pop-ups für diese Seite erlauben.',
 		qrHelper: 'Scannen öffnet die digitale Live-Speisekarte dieses Kunden. Speichern Sie den QR-Code für Tischaufsteller, Schaufenster oder Belege.',
 
 		automation: 'Automatisierung', recentActivity: 'Letzte Aktivität',
@@ -223,6 +228,11 @@ window.ADMIN_STRINGS = {
 		operateClient: 'Operate Client', deletionGuide: 'Client has a subscription? Deletion guide ↗',
 		readyToPrint: 'Ready to print', clientQrCode: 'Client QR code', qrLive: 'LIVE',
 		qrImageAlt: 'QR code for the selected client\'s menu', downloadQr: 'Download QR', copyLink: 'Copy link',
+		printTableCards: 'Print table cards', tableCardsTitle: 'Table cards – {name}', tableCardsPrint: 'Print / save as PDF',
+		tableCardsSummaryTables: '{tables} tables with "Scan & order", plus one sheet of "Just scan" cards for the entrance, bar or window – {sheets} A4 sheets.',
+		tableCardsSummaryMenu: 'One A4 sheet with 4 "Just scan" cards.',
+		tableCardsHint: 'Cut along the dashed lines, ideally on thicker paper (250 g/m² or more). Choose 100% scale in the print dialog.',
+		popupBlocked: 'The new window was blocked – please allow pop-ups for this page.',
 		qrHelper: 'Scan to open this client’s live digital menu. Save the QR on table cards, windows, or receipts.',
 
 		automation: 'Automation', recentActivity: 'Recent activity',

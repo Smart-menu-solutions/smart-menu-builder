@@ -205,3 +205,4 @@
 .customer-input-text{margin:0;white-space:pre-wrap;font-size:13px;color:var(--ink);max-height:220px;overflow-y:auto;justify-self:stretch}
 .customer-input-status{font-size:12px;color:var(--muted)}
 .customer-input-box[hidden]{display:none}
+.qr-actions .qr-actions-wide{grid-column:1/-1}
