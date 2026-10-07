@@ -826,7 +826,9 @@ function render(data) {
 	menuState = data.menu || menuState;
 	// An extra link the owner named, e.g. "Beach Bar" (see
 	// 0023_multiple_staff_access.sql) - shown instead of the role's name.
-	if (data.label !== undefined) accessLabel = data.label || '';
+	// The website demo's links are named "Website-Demo" for the builder;
+	// visitors see the station's own name in their language.
+	if (data.label !== undefined) accessLabel = isDemo ? '' : (data.label || '');
 	if (data.activity !== undefined) activityState = Array.isArray(data.activity) ? data.activity : [];
 	if (data.summary !== undefined) summaryState = data.summary || null;
 	if (data.name) {
