@@ -39,12 +39,14 @@ const TOMTOM_MAX_POINTS = 16;
 const TOMTOM_MAX_RADIUS = 8000;
 const TOMTOM_WINDOW_KM = 12;
 const ENRICH_CONCURRENCY = 3;
-const SITE_URL = 'https://smartmenusolutions.com/';
-// The €2.99 Smart Discovery order page - German leads get the German page,
-// every other language the English one (the site only exists in EN + DE).
-// ?ref=lead: a fresh URL for Instagram/WhatsApp, whose link previews were
-// cached with the logo before the pages had an og:image.
-const DISCOVERY_URL = { de: 'https://smartmenusolutions.com/de/discovery.html?ref=lead', other: 'https://smartmenusolutions.com/discovery.html?ref=lead' };
+// The website in the lead's language - it exists in EN, DE and IT, every
+// other language gets the English pages (also for {demo} and {discovery}).
+// ?ref=: a fresh URL for Instagram/WhatsApp, whose link previews stay cached
+// with an older og:image otherwise.
+const SITE_LANGUAGES = ['de', 'it'];
+function siteBase(lang) {
+	return `https://smartmenusolutions.com/${SITE_LANGUAGES.includes(lang) ? `${lang}/` : ''}`;
+}
 
 // ISO 3166-1 alpha-2 code, display name, which message template to use, and
 // the international calling code (used to fix up locally-formatted numbers
@@ -101,17 +103,21 @@ const OTHER_CITY = '__other';
 const FOLLOWUP_DAYS = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// {name} = the lead's business name, {site} = SITE_URL, {discovery} = the €2.99 Smart Discovery page (DISCOVERY_URL) - see fillTemplate().
+// {name} = the lead's business name, {site} = the homepage, {demo} = its live
+// demo (order at El Greco table 12, watch the kitchen), {discovery} = the
+// €2.99 Smart Discovery page - all in the lead's language, see fillTemplate().
+// Greek texts don't mention the ordering system (Smart ServiceHub™) or the
+// demo: not offered in Greece until the Greek order-slip question is settled.
 // We set up and update the customer's menu for them, so never word these as
 // if the customer edits it themselves.
 const MESSAGE_TEMPLATES = {
-	de: 'Hallo {name} 👋\nKurze Frage: Wie oft müsst ihr eure Speisekarte neu drucken, wenn sich Preise oder Gerichte ändern?\nMit unserer digitalen QR-Speisekarte fällt das weg: Ihr schickt uns die Änderung, wir aktualisieren eure Karte, ohne Neudruck. Ab 119 € im Jahr, ohne Einrichtungsgebühr.\nAuf Wunsch bestellen eure Gäste auch direkt am Tisch (Smart ServiceHub™).\nNeugierig? Testet es mit Smart Discovery: 7 Tage für nur 2,99 €, und seht selbst, wie viele Gäste eure Speisekarte öffnen. Die 7 Tage starten erst, wenn ihr euren QR-Code habt: {discovery}\nHier könnt ihr euch alles ansehen: {site}\nViele Grüße, euer Smart Menu Solutions Team',
-	en: 'Hi {name} 👋\nQuick question: how often do you have to reprint your menu when prices or dishes change?\nWith our digital QR menu that\'s no longer needed: you send us the change, we update your menu, no reprinting. From €119 a year, no setup fee.\nIf you like, your guests can also order right from the table (Smart ServiceHub™).\nCurious? Try it with Smart Discovery: 7 days for just €2.99, and see how many guests open your menu. The 7 days only start once you have your QR code: {discovery}\nHave a look at everything here: {site}\nBest regards, your Smart Menu Solutions team',
-	el: 'Γεια σας {name} 👋\nΜια γρήγορη ερώτηση: Πόσο συχνά χρειάζεται να ξανατυπώνετε το μενού σας όταν αλλάζουν τιμές ή πιάτα;\nΜε το ψηφιακό μας μενού QR αυτό δεν χρειάζεται πια: μας στέλνετε την αλλαγή και εμείς ενημερώνουμε το μενού σας, χωρίς νέα εκτύπωση. Από 119 € τον χρόνο, χωρίς κόστος εγκατάστασης.\nΑν θέλετε, οι πελάτες σας μπορούν επίσης να παραγγέλνουν απευθείας από το τραπέζι (Smart ServiceHub™).\nΣας κινεί την περιέργεια; Δοκιμάστε το με το Smart Discovery: 7 ημέρες με μόνο 2,99 €, και δείτε πόσοι πελάτες ανοίγουν το μενού σας. Οι 7 ημέρες ξεκινούν μόλις λάβετε τον κωδικό QR σας: {discovery}\nΔείτε τα όλα εδώ: {site}\nΦιλικά, η ομάδα της Smart Menu Solutions',
-	it: 'Ciao {name} 👋\nUna domanda veloce: quante volte dovete ristampare il menu quando cambiano prezzi o piatti?\nCon il nostro menu digitale QR non serve più: ci inviate la modifica e noi aggiorniamo il vostro menu, senza ristampare. Da 119 € all\'anno, senza costi di attivazione.\nSe volete, i vostri ospiti possono anche ordinare direttamente dal tavolo (Smart ServiceHub™).\nCuriosi? Provatelo con Smart Discovery: 7 giorni a soli 2,99 €, e scoprite quanti ospiti aprono il vostro menu. I 7 giorni partono solo quando ricevete il vostro codice QR: {discovery}\nTrovate tutto qui: {site}\nUn saluto, il team di Smart Menu Solutions',
-	es: 'Hola {name} 👋\nUna pregunta rápida: ¿cada cuánto tenéis que reimprimir la carta cuando cambian precios o platos?\nCon nuestra carta digital QR eso ya no hace falta: nos enviáis el cambio y nosotros actualizamos vuestra carta, sin reimprimir. Desde 119 € al año, sin coste de alta.\nSi queréis, vuestros clientes también pueden pedir directamente desde la mesa (Smart ServiceHub™).\n¿Os pica la curiosidad? Probadlo con Smart Discovery: 7 días por solo 2,99 €, y ved cuántos clientes abren vuestra carta. Los 7 días empiezan cuando recibís vuestro código QR: {discovery}\nAquí lo tenéis todo: {site}\nUn saludo, el equipo de Smart Menu Solutions',
-	fr: 'Bonjour {name} 👋\nPetite question : à quelle fréquence devez-vous réimprimer votre carte quand les prix ou les plats changent ?\nAvec notre carte numérique QR, ce n\'est plus nécessaire : vous nous envoyez la modification et nous mettons votre carte à jour, sans réimpression. À partir de 119 € par an, sans frais d\'installation.\nSi vous le souhaitez, vos clients peuvent aussi commander directement depuis la table (Smart ServiceHub™).\nCurieux ? Essayez-la avec Smart Discovery : 7 jours pour seulement 2,99 €, et découvrez combien de clients ouvrent votre carte. Les 7 jours ne commencent qu\'à la réception de votre code QR : {discovery}\nTout est ici : {site}\nBien cordialement, l\'équipe Smart Menu Solutions',
-	pt: 'Olá {name} 👋\nUma pergunta rápida: com que frequência têm de reimprimir o menu quando os preços ou os pratos mudam?\nCom o nosso menu digital QR isso deixa de ser preciso: enviam-nos a alteração e nós atualizamos o vosso menu, sem reimpressão. Desde 119 € por ano, sem taxa de instalação.\nSe quiserem, os vossos clientes também podem pedir diretamente da mesa (Smart ServiceHub™).\nCuriosos? Experimentem o Smart Discovery: 7 dias por apenas 2,99 €, e vejam quantos clientes abrem o vosso menu. Os 7 dias só começam quando receberem o vosso código QR: {discovery}\nVejam tudo aqui: {site}\nCumprimentos, a equipa da Smart Menu Solutions'
+	de: 'Hallo {name} 👋\nKurze Frage: Wie oft müsst ihr eure Speisekarte neu drucken, wenn sich Preise oder Gerichte ändern?\nMit unserer digitalen QR-Speisekarte fällt das weg: Ihr schickt uns die Änderung, wir aktualisieren eure Karte, ohne Neudruck. Ab 119 € im Jahr, ohne Einrichtungsgebühr.\nAuf Wunsch bestellen eure Gäste auch direkt am Tisch – die Bestellung erscheint sofort in Küche und Bar (Smart ServiceHub™).\nProbiert es live aus: Bestellt als Gast und seht zu, wie es in der Küche ankommt: {demo}\nOder testet eure eigene Karte mit Smart Discovery: 7 Tage für nur 2,99 €. Die 7 Tage starten erst, wenn ihr euren QR-Code habt: {discovery}\nViele Grüße, euer Smart Menu Solutions Team',
+	en: 'Hi {name} 👋\nQuick question: how often do you have to reprint your menu when prices or dishes change?\nWith our digital QR menu that\'s no longer needed: you send us the change, we update your menu, no reprinting. From €119 a year, no setup fee.\nIf you like, your guests can also order right from the table – the order appears instantly in the kitchen and at the bar (Smart ServiceHub™).\nTry it live: order as a guest and watch it arrive in the kitchen: {demo}\nOr try your own menu with Smart Discovery: 7 days for just €2.99. The 7 days only start once you have your QR code: {discovery}\nBest regards, your Smart Menu Solutions team',
+	el: 'Γεια σας {name} 👋\nΜια γρήγορη ερώτηση: Πόσο συχνά χρειάζεται να ξανατυπώνετε το μενού σας όταν αλλάζουν τιμές ή πιάτα;\nΜε το ψηφιακό μας μενού QR αυτό δεν χρειάζεται πια: μας στέλνετε την αλλαγή και εμείς ενημερώνουμε το μενού σας, χωρίς νέα εκτύπωση. Από 119 € τον χρόνο, χωρίς κόστος εγκατάστασης.\nΣας κινεί την περιέργεια; Δοκιμάστε το με το Smart Discovery: 7 ημέρες με μόνο 2,99 €, και δείτε πόσοι πελάτες ανοίγουν το μενού σας. Οι 7 ημέρες ξεκινούν μόλις λάβετε τον κωδικό QR σας: {discovery}\nΔείτε τα όλα εδώ: {site}\nΦιλικά, η ομάδα της Smart Menu Solutions',
+	it: 'Ciao {name} 👋\nUna domanda veloce: quante volte dovete ristampare il menu quando cambiano prezzi o piatti?\nCon il nostro menu digitale QR non serve più: ci inviate la modifica e noi aggiorniamo il vostro menu, senza ristampare. Da 119 € all\'anno, senza costi di attivazione.\nSe volete, i vostri ospiti possono anche ordinare direttamente dal tavolo: l\'ordine arriva subito in cucina e al bar (Smart ServiceHub™).\nProvatelo dal vivo: ordinate come ospiti e guardate l\'ordine arrivare in cucina: {demo}\nOppure provate il vostro menu con Smart Discovery: 7 giorni a soli 2,99 €. I 7 giorni partono solo quando ricevete il vostro codice QR: {discovery}\nUn saluto, il team di Smart Menu Solutions',
+	es: 'Hola {name} 👋\nUna pregunta rápida: ¿cada cuánto tenéis que reimprimir la carta cuando cambian precios o platos?\nCon nuestra carta digital QR eso ya no hace falta: nos enviáis el cambio y nosotros actualizamos vuestra carta, sin reimprimir. Desde 119 € al año, sin coste de alta.\nSi queréis, vuestros clientes también pueden pedir directamente desde la mesa: el pedido aparece al instante en la cocina y en la barra (Smart ServiceHub™).\nProbadlo en directo: pedid como clientes y ved cómo llega el pedido a la cocina: {demo}\nO probad vuestra propia carta con Smart Discovery: 7 días por solo 2,99 €. Los 7 días empiezan cuando recibís vuestro código QR: {discovery}\nUn saludo, el equipo de Smart Menu Solutions',
+	fr: 'Bonjour {name} 👋\nPetite question : à quelle fréquence devez-vous réimprimer votre carte quand les prix ou les plats changent ?\nAvec notre carte numérique QR, ce n\'est plus nécessaire : vous nous envoyez la modification et nous mettons votre carte à jour, sans réimpression. À partir de 119 € par an, sans frais d\'installation.\nSi vous le souhaitez, vos clients peuvent aussi commander directement depuis la table : la commande s\'affiche aussitôt en cuisine et au bar (Smart ServiceHub™).\nEssayez en direct : commandez comme un client et regardez la commande arriver en cuisine : {demo}\nOu testez votre propre carte avec Smart Discovery : 7 jours pour seulement 2,99 €. Les 7 jours ne commencent qu\'à la réception de votre code QR : {discovery}\nBien cordialement, l\'équipe Smart Menu Solutions',
+	pt: 'Olá {name} 👋\nUma pergunta rápida: com que frequência têm de reimprimir o menu quando os preços ou os pratos mudam?\nCom o nosso menu digital QR isso deixa de ser preciso: enviam-nos a alteração e nós atualizamos o vosso menu, sem reimpressão. Desde 119 € por ano, sem taxa de instalação.\nSe quiserem, os vossos clientes também podem pedir diretamente da mesa: o pedido aparece logo na cozinha e no bar (Smart ServiceHub™).\nExperimentem ao vivo: peçam como clientes e vejam o pedido chegar à cozinha: {demo}\nOu testem o vosso próprio menu com Smart Discovery: 7 dias por apenas 2,99 €. Os 7 dias só começam quando receberem o vosso código QR: {discovery}\nCumprimentos, a equipa da Smart Menu Solutions'
 };
 
 const FINAL_TEMPLATES = {
@@ -224,8 +230,11 @@ function fillTemplate(action, lead) {
 	const template = action.templates[lead.lang] || action.templates[currentCountry.lang] || action.templates.en;
 	const name = String(lead.name || '').trim();
 	// Function replacers, so a "$" in a business name is inserted literally.
-	const discoveryUrl = (action.templates[lead.lang] ? lead.lang : currentCountry.lang) === 'de' ? DISCOVERY_URL.de : DISCOVERY_URL.other;
-	return template.replace(name ? '{name}' : ' {name}', () => name).replace('{site}', () => SITE_URL).replace('{discovery}', () => discoveryUrl);
+	const base = siteBase(action.templates[lead.lang] ? lead.lang : currentCountry.lang);
+	return template.replace(name ? '{name}' : ' {name}', () => name)
+		.replace('{site}', () => `${base}?ref=lead`)
+		.replace('{demo}', () => `${base}?ref=demo#live-demo`)
+		.replace('{discovery}', () => `${base}discovery.html?ref=lead`);
 }
 
 // Every lead belongs to the list (= the country/city search) it was found
