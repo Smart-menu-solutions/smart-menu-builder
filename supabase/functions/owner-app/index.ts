@@ -1,4 +1,4 @@
-// Data for the "Mein Smart Menu" owner app (owner.html?t=<token>). Same trust
+// Data for the "SmartPilot" owner app (owner.html?t=<token>). Same trust
 // model as get-stats / renewal: the uuid token in the link is the only
 // credential, no login. The token lives in owner_app_links, never on the
 // public menus row (see 0035_owner_app.sql).
@@ -24,7 +24,10 @@ const CORS_HEADERS = {
 const TOKEN_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SITE_ORIGIN = 'https://smartmenusolutions.com';
 const MENU_BASE = 'https://smart-menu-solutions.github.io/smart-menu-builder/';
-const LANGUAGES = ['de', 'en', 'it'];
+// The app's languages; the website pages behind its links (renewal, add-ons,
+// stats) only exist in SITE_LANGUAGES, the others get English there.
+const LANGUAGES = ['de', 'en', 'el', 'it', 'es', 'fr', 'nl', 'pt'];
+const SITE_LANGUAGES = ['de', 'en', 'it'];
 const DAYS = 7;
 
 type ViewRow = { day: string; metric_type: string; label: string; view_count: number };
@@ -105,6 +108,7 @@ Deno.serve(async (request) => {
 
 	const requested = url.searchParams.get('lang') || '';
 	const lang = LANGUAGES.includes(requested) ? requested : (LANGUAGES.includes(subscription?.lang) ? subscription!.lang : 'de');
+	const siteLang = SITE_LANGUAGES.includes(lang) ? lang : 'en';
 	const languages: string[] = Array.isArray(menu.languages) && menu.languages.length ? menu.languages : ['de'];
 	const menuUrl = `${MENU_BASE}menu.html?client=${encodeURIComponent(menu.slug)}&lang=${encodeURIComponent(languages[0])}`;
 
@@ -153,9 +157,9 @@ Deno.serve(async (request) => {
 			discoveryStartedOn: subscription.discovery_started_on
 		} : null,
 		links: {
-			renewal: subscription ? `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}&lang=${lang}` : null,
-			addons: canBuyAddons ? `${SITE_ORIGIN}/addons.html?token=${subscription!.addon_token}&lang=${lang}` : null,
-			stats: subscription && menu.analytics_reports_enabled ? `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${lang}` : null
+			renewal: subscription ? `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}&lang=${siteLang}` : null,
+			addons: canBuyAddons ? `${SITE_ORIGIN}/addons.html?token=${subscription!.addon_token}&lang=${siteLang}` : null,
+			stats: subscription && menu.analytics_reports_enabled ? `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${siteLang}` : null
 		},
 		tables,
 		stats

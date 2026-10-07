@@ -600,6 +600,22 @@ function staffAccessName(row, lang) {
 	return row.label || roleLabels[row.role] || row.role.charAt(0).toUpperCase() + row.role.slice(1);
 }
 
+// The two how-to lines under a staff QR card (qr-card.js).
+function staffQrText(lang) {
+	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
+	return { scan: strings.qrScan, personal: strings.qrPersonal };
+}
+
+// staff-qr.html shows a station's QR card in the browser - what the
+// onboarding email's "QR code" button opens, so the owner can scan it from
+// the PC screen with the station's device. Everything rides in the #hash,
+// which never reaches a server.
+function staffQrPageUrl(client, row, lang) {
+	const base = window.location.href.replace(/admin\.html.*$/, '');
+	const hash = new URLSearchParams({ role: row.role, t: row.token, lang, n: staffAccessName(row, lang), r: client.name });
+	return `${base}staff-qr.html#${hash}`;
+}
+
 // Every link of the client, or - before any exist - one placeholder row per
 // role (token null) so the onboarding template still lists all four roles.
 function staffAccessRowsForTemplate(client) {
@@ -635,9 +651,16 @@ function onboardingTemplateHtml(client, lang) {
 	const strings = window.STAFF_STRINGS?.[lang] || window.STAFF_STRINGS?.de || {};
 	const heading = (strings.onboardingHeading || 'Smart ServiceHub™ – {name}').replace('{name}', client.name);
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
+	// Two buttons per station instead of the long link itself: open the link,
+	// or show its QR code (staff-qr.html) to scan from the screen. The
+	// plain-text version keeps the links.
+	const buttonStyle = (background) => `display:inline-block;background:${background};color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;line-height:1;padding:10px 16px;border-radius:8px;white-space:nowrap`;
 	const staffRows = staffAccessRowsForTemplate(client).map((row) => {
-		const url = row.token ? staffAccessUrl(row) : '';
-		return `<tr><td style="padding:0 0 6px 0"><strong>${escapeHtml(staffAccessName(row, lang))}:</strong> ${url ? `<a href="${escapeAttr(url)}">${escapeHtml(url)}</a>` : '-'}</td></tr>`;
+		const name = `<td style="padding:0 14px 8px 0;font-size:14px;vertical-align:middle"><strong>${escapeHtml(staffAccessName(row, lang))}</strong></td>`;
+		if (!row.token) return `<tr>${name}<td style="padding:0 0 8px 0" colspan="2">-</td></tr>`;
+		const link = `<a href="${escapeAttr(staffAccessUrl(row))}" style="${buttonStyle('#f66a09')}">${escapeHtml(strings.onboardingLink || 'Open link')}</a>`;
+		const qr = `<a href="${escapeAttr(staffQrPageUrl(client, row, lang))}" style="${buttonStyle('#262421')}">${escapeHtml(strings.onboardingQr || 'QR code')}</a>`;
+		return `<tr>${name}<td style="padding:0 8px 8px 0;vertical-align:middle">${link}</td><td style="padding:0 0 8px 0;vertical-align:middle">${qr}</td></tr>`;
 	}).join('');
 	return `<div style="font-family:Arial,Helvetica,sans-serif">
 		<p style="font-weight:700;font-size:15px;margin:0 0 16px">${escapeHtml(heading)}</p>
@@ -1449,19 +1472,15 @@ if ($('#copyOwnerAppLink')) $('#copyOwnerAppLink').addEventListener('click', asy
 	}
 });
 
-// Links as printable QR cards (PNG) to hand over in person: the owner scans
-// SmartPilot, each staff device scans its own station, and installs it as an
-// app on the spot. Texts in the customer's language. Drawn locally like
-// every QR here - these links are personal and never go to a QR service.
+// Links as printable QR cards (PNG, qr-card.js) to hand over in person: the
+// owner scans SmartPilot, each staff device scans its own station, and
+// installs it as an app on the spot. Texts in the customer's language - the
+// staff cards' texts live in staff-strings.js (qrScan / qrPersonal), shared
+// with staff-qr.html.
 const OWNER_QR_TEXT = {
 	de: { scan: 'Mit der Handy-Kamera scannen und SmartPilot installieren', personal: 'Persönlicher Link – bitte nicht weitergeben' },
 	en: { scan: 'Scan with your phone camera and install SmartPilot', personal: 'Personal link – please do not share it' },
 	it: { scan: 'Scansionate con la fotocamera e installate SmartPilot', personal: 'Link personale – non condividetelo' }
-};
-const STAFF_QR_TEXT = {
-	de: { scan: 'Scannen, als App installieren, Benachrichtigungen aktivieren', personal: 'Nur für das Personal – nicht öffentlich aushängen' },
-	en: { scan: 'Scan, install as an app, turn on notifications', personal: 'Staff only – do not display publicly' },
-	it: { scan: 'Scansionate, installate come app, attivate le notifiche', personal: 'Solo per il personale – non esporre al pubblico' }
 };
 
 function customerLang(client) {
@@ -1480,53 +1499,12 @@ function downloadBlob(blob, filename) {
 	URL.revokeObjectURL(blobUrl);
 }
 
-function loadImage(src) {
-	return new Promise((resolve) => {
-		const image = new Image();
-		image.onload = () => resolve(image);
-		image.onerror = () => resolve(null);
-		image.src = src;
-	});
-}
-
-// Largest font size (down to 60% of the wanted one) that fits maxWidth.
-function fillFittedText(ctx, text, x, y, maxWidth, size, weight, color) {
-	let current = size;
-	do {
-		ctx.font = `${weight} ${current}px "Open Sans", Arial, sans-serif`;
-		current -= 2;
-	} while (ctx.measureText(text).width > maxWidth && current > size * 0.6);
-	ctx.fillStyle = color;
-	ctx.fillText(text, x, y, maxWidth);
-}
-
-// Logo, an optional small orange line, title, subtitle, the QR code and two
-// lines of how-to underneath.
-async function qrCardBlob({ eyebrow, title, subtitle, link, text }) {
-	const canvas = document.createElement('canvas');
-	canvas.width = 1000;
-	canvas.height = 1360;
-	const ctx = canvas.getContext('2d');
-	ctx.fillStyle = '#ffffff';
-	ctx.fillRect(0, 0, canvas.width, canvas.height);
-	const icon = await loadImage('assets/icons/icon-192.png');
-	if (icon) ctx.drawImage(icon, 440, 50, 120, 120);
-	ctx.textAlign = 'center';
-	if (eyebrow) fillFittedText(ctx, eyebrow.toUpperCase(), 500, 222, 900, 26, 'bold', '#f66a09');
-	fillFittedText(ctx, title, 500, 292, 900, 66, 'bold', '#262421');
-	fillFittedText(ctx, subtitle, 500, 350, 900, 38, 'normal', '#6f6a63');
-	ctx.drawImage(SmartQr.draw(link, 760, 'M', 4), 120, 392);
-	fillFittedText(ctx, text.scan, 500, 1222, 900, 34, 'bold', '#262421');
-	fillFittedText(ctx, text.personal, 500, 1280, 900, 27, 'normal', '#9b958d');
-	return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-}
-
 if ($('#downloadOwnerAppQr')) $('#downloadOwnerAppQr').addEventListener('click', async () => {
 	const client = selectedClient();
 	if (!client) return;
 	const link = await ownerAppLinkFor(client);
 	if (!link) { notify(strings().ownerAppLinkFailed); return; }
-	const blob = await qrCardBlob({ title: 'SmartPilot', subtitle: client.name, link, text: OWNER_QR_TEXT[customerLang(client)] });
+	const blob = await SmartQrCard.blob({ title: 'SmartPilot', subtitle: client.name, link, text: OWNER_QR_TEXT[customerLang(client)] });
 	if (!blob) { notify(strings().ownerAppLinkFailed); return; }
 	downloadBlob(blob, `smartpilot-${client.slug}.png`);
 });
@@ -1536,7 +1514,7 @@ if ($('#downloadOwnerAppQr')) $('#downloadOwnerAppQr').addEventListener('click',
 // on push notifications.
 async function downloadStaffQr(client, row) {
 	const lang = customerLang(client);
-	const blob = await qrCardBlob({ eyebrow: 'Smart ServiceHub™', title: staffAccessName(row, lang), subtitle: client.name, link: staffAccessUrl(row), text: STAFF_QR_TEXT[lang] });
+	const blob = await SmartQrCard.blob({ eyebrow: 'Smart ServiceHub™', title: staffAccessName(row, lang), subtitle: client.name, link: staffAccessUrl(row), text: staffQrText(lang) });
 	if (!blob) return;
 	const station = String(row.label || row.role).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || row.role;
 	downloadBlob(blob, `servicehub-${client.slug}-${station}.png`);

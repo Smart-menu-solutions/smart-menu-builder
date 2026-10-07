@@ -86,7 +86,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Dieser Link ist unvollständig.', linkInvalid: 'Dieser Link ist nicht mehr gültig.', actionFailed: 'Aktion fehlgeschlagen.',
 		tablesEmailLinkText: 'Link zum Tisch', tablesEmailHeading: 'Tisch-QR-Codes für {name}', tablesEmailHint: 'Jeder QR-Code gehört zu genau einem Tisch – bitte ausdrucken und auf den passenden Tisch stellen. Gäste scannen ihn und können bestellen, sobald der Tisch im Service Hub aktiviert ist.',
 		onboardingHeading: 'Smart ServiceHub™ – Zugangsdaten für {name}', staffHeading: 'Personal-Zugänge',
-		onboardingPushHint: 'Tipp: Den Link auf dem Handy öffnen und oben auf „Benachrichtigungen aktivieren“ tippen – dann meldet sich das Handy bei jeder neuen Bestellung, auch bei ausgeschaltetem Bildschirm. iPhone: die Seite vorher über Teilen → „Zum Home-Bildschirm“ hinzufügen und von dort öffnen.'
+		onboardingPushHint: 'Tipp: Den Link auf dem Handy öffnen und oben auf „Benachrichtigungen aktivieren“ tippen – dann meldet sich das Handy bei jeder neuen Bestellung, auch bei ausgeschaltetem Bildschirm. iPhone: die Seite vorher über Teilen → „Zum Home-Bildschirm“ hinzufügen und von dort öffnen.', onboardingLink: 'Link öffnen', onboardingQr: 'QR-Code',
+		qrScan: 'Scannen, als App installieren, Benachrichtigungen aktivieren', qrPersonal: 'Nur für das Personal – nicht öffentlich aushängen',
+		qrPageHint: 'Mit dem Handy oder Tablet der Station scannen – oder das Bild herunterladen und ausdrucken.', qrDownload: 'Bild herunterladen',
+		installTitle: 'Als App installieren', installText: 'Immer griffbereit auf dem Startbildschirm.', installButton: 'Installieren',
+		installIos: 'Unten auf das Teilen-Symbol tippen und dann auf „Zum Home-Bildschirm“.'
 	},
 	en: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Kitchen', bar: 'Bar', cashier: 'Cashier' },
@@ -168,7 +172,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'This link is incomplete.', linkInvalid: 'This link is no longer valid.', actionFailed: 'Action failed.',
 		tablesEmailLinkText: 'Table link', tablesEmailHeading: 'Table QR codes for {name}', tablesEmailHint: 'Each QR code belongs to exactly one table – please print it and place it on the matching table. Guests scan it and can order as soon as the table is activated in the Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – access details for {name}', staffHeading: 'Staff access',
-		onboardingPushHint: 'Tip: open the link on the phone and tap “Turn on notifications” at the top – the phone then alerts you to every new order, even with the screen off. iPhone: first add the page via Share → “Add to Home Screen” and open it from there.'
+		onboardingPushHint: 'Tip: open the link on the phone and tap “Turn on notifications” at the top – the phone then alerts you to every new order, even with the screen off. iPhone: first add the page via Share → “Add to Home Screen” and open it from there.', onboardingLink: 'Open link', onboardingQr: 'QR code',
+		qrScan: 'Scan, install as an app, turn on notifications', qrPersonal: 'Staff only – do not display publicly',
+		qrPageHint: 'Scan it with the station’s phone or tablet – or download the image and print it.', qrDownload: 'Download image',
+		installTitle: 'Install as an app', installText: 'Always at hand on your home screen.', installButton: 'Install',
+		installIos: 'Tap the share icon at the bottom, then “Add to Home Screen”.'
 	},
 	el: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Κουζίνα', bar: 'Μπαρ', cashier: 'Ταμείο' },
@@ -250,7 +258,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Αυτός ο σύνδεσμος είναι ελλιπής.', linkInvalid: 'Αυτός ο σύνδεσμος δεν ισχύει πια.', actionFailed: 'Η ενέργεια απέτυχε.',
 		tablesEmailLinkText: 'Σύνδεσμος τραπεζιού', tablesEmailHeading: 'QR codes τραπεζιών για {name}', tablesEmailHint: 'Κάθε QR code ανήκει σε ένα μόνο τραπέζι – εκτυπώστε το και τοποθετήστε το στο αντίστοιχο τραπέζι. Οι πελάτες το σκανάρουν και μπορούν να παραγγείλουν μόλις ενεργοποιηθεί το τραπέζι στο Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – στοιχεία πρόσβασης για {name}', staffHeading: 'Πρόσβαση προσωπικού',
-		onboardingPushHint: 'Συμβουλή: ανοίξτε τον σύνδεσμο στο κινητό και πατήστε «Ενεργοποίηση ειδοποιήσεων» επάνω – έτσι το κινητό ειδοποιεί για κάθε νέα παραγγελία, ακόμη και με σβηστή οθόνη. iPhone: προσθέστε πρώτα τη σελίδα μέσω Κοινοποίηση → «Προσθήκη στην οθόνη Αφετηρίας» και ανοίξτε την από εκεί.'
+		onboardingPushHint: 'Συμβουλή: ανοίξτε τον σύνδεσμο στο κινητό και πατήστε «Ενεργοποίηση ειδοποιήσεων» επάνω – έτσι το κινητό ειδοποιεί για κάθε νέα παραγγελία, ακόμη και με σβηστή οθόνη. iPhone: προσθέστε πρώτα τη σελίδα μέσω Κοινοποίηση → «Προσθήκη στην οθόνη Αφετηρίας» και ανοίξτε την από εκεί.', onboardingLink: 'Άνοιγμα συνδέσμου', onboardingQr: 'Κωδικός QR',
+		qrScan: 'Σκανάρετε, εγκαταστήστε ως εφαρμογή, ενεργοποιήστε τις ειδοποιήσεις', qrPersonal: 'Μόνο για το προσωπικό – μην το αναρτάτε δημόσια',
+		qrPageHint: 'Σκανάρετε με το κινητό ή το tablet του σταθμού – ή κατεβάστε την εικόνα και εκτυπώστε την.', qrDownload: 'Λήψη εικόνας',
+		installTitle: 'Εγκατάσταση ως εφαρμογή', installText: 'Πάντα διαθέσιμη στην αρχική οθόνη.', installButton: 'Εγκατάσταση',
+		installIos: 'Πατήστε κάτω το εικονίδιο κοινοποίησης και μετά «Προσθήκη στην οθόνη Αφετηρίας».'
 	},
 	it: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Cucina', bar: 'Bar', cashier: 'Cassa' },
@@ -332,7 +344,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Questo link è incompleto.', linkInvalid: 'Questo link non è più valido.', actionFailed: 'Azione non riuscita.',
 		tablesEmailLinkText: 'Link del tavolo', tablesEmailHeading: 'QR code dei tavoli per {name}', tablesEmailHint: 'Ogni QR code appartiene a un solo tavolo: stampalo e mettilo sul tavolo corrispondente. Gli ospiti lo scansionano e possono ordinare non appena il tavolo è attivato nel Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – dati di accesso per {name}', staffHeading: 'Accesso per il personale',
-		onboardingPushHint: 'Suggerimento: apri il link sul telefono e tocca «Attiva notifiche» in alto: il telefono ti avvisa a ogni nuovo ordine, anche a schermo spento. iPhone: aggiungi prima la pagina con Condividi → «Aggiungi alla schermata Home» e aprila da lì.'
+		onboardingPushHint: 'Suggerimento: apri il link sul telefono e tocca «Attiva notifiche» in alto: il telefono ti avvisa a ogni nuovo ordine, anche a schermo spento. iPhone: aggiungi prima la pagina con Condividi → «Aggiungi alla schermata Home» e aprila da lì.', onboardingLink: 'Apri link', onboardingQr: 'Codice QR',
+		qrScan: 'Scansionate, installate come app, attivate le notifiche', qrPersonal: 'Solo per il personale – non esporre al pubblico',
+		qrPageHint: 'Scansionatelo con il telefono o il tablet della postazione, oppure scaricate l’immagine e stampatela.', qrDownload: 'Scarica immagine',
+		installTitle: 'Installa come app', installText: 'Sempre a portata di mano sulla schermata Home.', installButton: 'Installa',
+		installIos: 'Tocca l’icona di condivisione in basso e poi «Aggiungi alla schermata Home».'
 	},
 	es: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Cocina', bar: 'Bar', cashier: 'Caja' },
@@ -414,7 +430,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Este enlace está incompleto.', linkInvalid: 'Este enlace ya no es válido.', actionFailed: 'La acción falló.',
 		tablesEmailLinkText: 'Enlace de la mesa', tablesEmailHeading: 'Códigos QR de las mesas para {name}', tablesEmailHint: 'Cada código QR pertenece a una sola mesa: imprímelo y colócalo en la mesa correspondiente. Los clientes lo escanean y pueden pedir en cuanto la mesa se active en el Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – datos de acceso para {name}', staffHeading: 'Acceso del personal',
-		onboardingPushHint: 'Consejo: abre el enlace en el móvil y toca «Activar notificaciones» arriba: el móvil te avisará de cada nuevo pedido, incluso con la pantalla apagada. iPhone: añade antes la página con Compartir → «Añadir a pantalla de inicio» y ábrela desde allí.'
+		onboardingPushHint: 'Consejo: abre el enlace en el móvil y toca «Activar notificaciones» arriba: el móvil te avisará de cada nuevo pedido, incluso con la pantalla apagada. iPhone: añade antes la página con Compartir → «Añadir a pantalla de inicio» y ábrela desde allí.', onboardingLink: 'Abrir enlace', onboardingQr: 'Código QR',
+		qrScan: 'Escanee, instale como app, active las notificaciones', qrPersonal: 'Solo para el personal – no lo exponga al público',
+		qrPageHint: 'Escanéelo con el móvil o la tableta del puesto, o descargue la imagen e imprímala.', qrDownload: 'Descargar imagen',
+		installTitle: 'Instalar como app', installText: 'Siempre a mano en tu pantalla de inicio.', installButton: 'Instalar',
+		installIos: 'Toca abajo el icono de compartir y luego «Añadir a pantalla de inicio».'
 	},
 	fr: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Cuisine', bar: 'Bar', cashier: 'Caisse' },
@@ -496,7 +516,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Ce lien est incomplet.', linkInvalid: "Ce lien n'est plus valide.", actionFailed: "L'action a échoué.",
 		tablesEmailLinkText: 'Lien de la table', tablesEmailHeading: 'QR codes des tables pour {name}', tablesEmailHint: 'Chaque QR code correspond à une seule table : imprimez-le et placez-le sur la bonne table. Les clients le scannent et peuvent commander dès que la table est activée dans le Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – informations d’accès pour {name}', staffHeading: 'Accès du personnel',
-		onboardingPushHint: 'Astuce : ouvrez le lien sur le téléphone et touchez « Activer les notifications » en haut – le téléphone vous prévient alors à chaque nouvelle commande, même écran éteint. iPhone : ajoutez d’abord la page via Partager → « Sur l’écran d’accueil » et ouvrez-la depuis l’écran d’accueil.'
+		onboardingPushHint: 'Astuce : ouvrez le lien sur le téléphone et touchez « Activer les notifications » en haut – le téléphone vous prévient alors à chaque nouvelle commande, même écran éteint. iPhone : ajoutez d’abord la page via Partager → « Sur l’écran d’accueil » et ouvrez-la depuis l’écran d’accueil.', onboardingLink: 'Ouvrir le lien', onboardingQr: 'QR code',
+		qrScan: 'Scannez, installez comme application, activez les notifications', qrPersonal: 'Réservé au personnel – ne pas afficher publiquement',
+		qrPageHint: 'Scannez-le avec le téléphone ou la tablette du poste, ou téléchargez l’image et imprimez-la.', qrDownload: 'Télécharger l’image',
+		installTitle: 'Installer comme application', installText: 'Toujours à portée de main sur l’écran d’accueil.', installButton: 'Installer',
+		installIos: 'Touchez en bas l’icône de partage, puis « Sur l’écran d’accueil ».'
 	},
 	nl: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Keuken', bar: 'Bar', cashier: 'Kassa' },
@@ -578,7 +602,11 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Deze link is onvolledig.', linkInvalid: 'Deze link is niet meer geldig.', actionFailed: 'De actie is mislukt.',
 		tablesEmailLinkText: 'Link van de tafel', tablesEmailHeading: 'Tafel-QR-codes voor {name}', tablesEmailHint: 'Elke QR-code hoort bij één tafel: print hem en zet hem op de juiste tafel. Gasten scannen hem en kunnen bestellen zodra de tafel in de Service Hub is geactiveerd.',
 		onboardingHeading: 'Smart ServiceHub™ – toegangsgegevens voor {name}', staffHeading: 'Toegang voor personeel',
-		onboardingPushHint: 'Tip: open de link op de telefoon en tik bovenaan op ‘Meldingen inschakelen’ – dan meldt de telefoon elke nieuwe bestelling, ook met het scherm uit. iPhone: zet de pagina eerst via Deel → ‘Zet op beginscherm’ en open hem van daaruit.'
+		onboardingPushHint: 'Tip: open de link op de telefoon en tik bovenaan op ‘Meldingen inschakelen’ – dan meldt de telefoon elke nieuwe bestelling, ook met het scherm uit. iPhone: zet de pagina eerst via Deel → ‘Zet op beginscherm’ en open hem van daaruit.', onboardingLink: 'Link openen', onboardingQr: 'QR-code',
+		qrScan: 'Scannen, als app installeren, meldingen inschakelen', qrPersonal: 'Alleen voor personeel – niet openbaar ophangen',
+		qrPageHint: 'Scan hem met de telefoon of tablet van het station – of download de afbeelding en print hem.', qrDownload: 'Afbeelding downloaden',
+		installTitle: 'Als app installeren', installText: 'Altijd bij de hand op je beginscherm.', installButton: 'Installeren',
+		installIos: 'Tik onderaan op het deelsymbool en daarna op ‘Zet op beginscherm’.'
 	},
 	pt: {
 		roleLabels: { waiter: 'Service Hub', kitchen: 'Cozinha', bar: 'Bar', cashier: 'Caixa' },
@@ -660,6 +688,10 @@ window.STAFF_STRINGS = {
 		linkIncomplete: 'Este link está incompleto.', linkInvalid: 'Este link já não é válido.', actionFailed: 'A ação falhou.',
 		tablesEmailLinkText: 'Link da mesa', tablesEmailHeading: 'Códigos QR das mesas de {name}', tablesEmailHint: 'Cada código QR pertence a uma única mesa: imprima-o e coloque-o na mesa certa. Os clientes leem-no e podem pedir assim que a mesa for ativada no Service Hub.',
 		onboardingHeading: 'Smart ServiceHub™ – dados de acesso para {name}', staffHeading: 'Acesso do pessoal',
-		onboardingPushHint: 'Dica: abra o link no telemóvel e toque em «Ativar notificações» no topo – o telemóvel avisa a cada novo pedido, mesmo com o ecrã desligado. iPhone: adicione primeiro a página em Partilhar → «Adicionar ao ecrã principal» e abra-a a partir daí.'
+		onboardingPushHint: 'Dica: abra o link no telemóvel e toque em «Ativar notificações» no topo – o telemóvel avisa a cada novo pedido, mesmo com o ecrã desligado. iPhone: adicione primeiro a página em Partilhar → «Adicionar ao ecrã principal» e abra-a a partir daí.', onboardingLink: 'Abrir link', onboardingQr: 'Código QR',
+		qrScan: 'Digitalize, instale como app, ative as notificações', qrPersonal: 'Só para o pessoal – não afixar em público',
+		qrPageHint: 'Digitalize-o com o telemóvel ou tablet do posto – ou descarregue a imagem e imprima-a.', qrDownload: 'Descarregar imagem',
+		installTitle: 'Instalar como app', installText: 'Sempre à mão no ecrã principal.', installButton: 'Instalar',
+		installIos: 'Toque em baixo no ícone de partilha e depois em «Adicionar ao ecrã principal».'
 	}
 };

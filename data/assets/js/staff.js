@@ -271,6 +271,35 @@ function pushMarkup() {
 	return `<button type="button" class="sh-nav-btn ${on ? '' : 'is-cta'}" data-push-toggle aria-pressed="${on}" ${pushBusy ? 'disabled' : ''}>${icon('bell', 18)}<span>${escapeHtml(on ? strings().pushOn : strings().pushEnable)}</span></button>`;
 }
 
+// "Als App installieren" banner on top, like SmartPilot's (owner.js):
+// Chrome/Edge/Android get their own install dialog behind the button,
+// iPhone/iPad the hint how to add the page to the Home Screen. Gone once
+// installed, or closed with × - remembered per station on this device, so a
+// phone that closed it for the kitchen still offers the bar.
+const INSTALL_DISMISSED_KEY = `smartmenu.staff.installDismissed.${ROLE}`;
+let installPrompt = null;
+let hasRendered = false;
+
+function installDismissed() {
+	try { return localStorage.getItem(INSTALL_DISMISSED_KEY) === '1'; } catch { return false; }
+}
+
+function installMarkup() {
+	if (isInstalledApp || installDismissed() || (!isAppleMobile && !installPrompt)) return '';
+	const action = isAppleMobile ? '' : `<button type="button" class="sh-install-btn" data-install>${escapeHtml(strings().installButton)}</button>`;
+	return `<div class="sh-install"><img src="assets/icons/icon-192.png" alt=""><p><b>${escapeHtml(strings().installTitle)}</b>${escapeHtml(isAppleMobile ? strings().installIos : strings().installText)}</p>${action}<button type="button" class="sh-install-close" data-install-close aria-label="×">×</button></div>`;
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+	event.preventDefault();
+	installPrompt = event;
+	if (hasRendered) rerender();
+});
+window.addEventListener('appinstalled', () => {
+	installPrompt = null;
+	if (hasRendered) rerender();
+});
+
 // item.name/product_name is a source-language snapshot (see
 // 0015_smartservice_hub.sql) - looked up by that source text, same as
 // menu.js's itemTranslation()/categoryName(), so it works even though
@@ -798,10 +827,11 @@ function render(data) {
 		isHub ? hubPopupMarkup(tables.find((table) => table.tableId === openHubTable)) : '',
 		totalsPopupMarkup(), openOrdersPopupMarkup(), historyPopupMarkup()
 	].join('');
-	app.innerHTML = `<div class="sh-layout ${isHub ? 'is-hub' : ''}">
+	app.innerHTML = `${installMarkup()}<div class="sh-layout ${isHub ? 'is-hub' : ''}">
 		${sidebarMarkup()}
 		<main class="sh-main">${mainMarkup(tables)}</main>
 	</div>${popups}`;
+	hasRendered = true;
 	wireActions();
 }
 
@@ -853,6 +883,24 @@ async function onAppClick(event) {
 	// Called straight from the tap, before any await - see preparePush().
 	if (event.target.closest('[data-push-toggle]')) {
 		togglePush();
+		return;
+	}
+
+	// prompt() also only works right from the tap; the event is good for one
+	// dialog only.
+	if (event.target.closest('[data-install]')) {
+		const prompt = installPrompt;
+		installPrompt = null;
+		if (prompt) {
+			prompt.prompt();
+			await prompt.userChoice.catch(() => null);
+		}
+		rerender();
+		return;
+	}
+	if (event.target.closest('[data-install-close]')) {
+		try { localStorage.setItem(INSTALL_DISMISSED_KEY, '1'); } catch { /* shows again next visit */ }
+		rerender();
 		return;
 	}
 

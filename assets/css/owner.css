@@ -63,5 +63,19 @@ button{font:inherit}
 .o-install .o-btn{padding:8px 14px;font-size:13px;flex-shrink:0}
 .o-install-close{background:none;border:0;color:#bcb8b1;font-size:20px;line-height:1;padding:4px;cursor:pointer;align-self:flex-start}
 
-.o-foot{text-align:center;color:var(--muted);font-size:12px;margin-top:22px;line-height:1.7}
+/* Rounded squares, all 8 on one row - they shrink on narrow phones. */
+.o-langs{display:flex;justify-content:center;gap:5px;margin-top:22px}
+.o-langs button{flex:1 1 0;min-width:0;max-width:44px;aspect-ratio:1;border:1px solid var(--line);background:#fff;color:var(--grey);border-radius:10px;padding:0;font-size:12.5px;font-weight:700;letter-spacing:.03em;cursor:pointer}
+.o-langs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+
+.o-foot{text-align:center;color:var(--muted);font-size:12px;margin-top:14px;line-height:1.7}
 .o-foot a{color:var(--grey)}
+
+/* The menu inside the app (no browser tab, no toolbar line) */
+body.o-viewing{overflow:hidden}
+.o-viewer{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;background:#fff}
+.o-viewer-bar{display:flex;align-items:center;gap:10px;background:var(--ink);color:#fff;padding:calc(8px + env(safe-area-inset-top)) 8px 8px 16px;flex-shrink:0}
+.o-viewer-bar b{flex:1;font:700 15px 'Poppins','Open Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.o-viewer-bar button{background:none;border:0;color:#fff;font-size:26px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer}
+.o-viewer-bar button:active{background:rgba(255,255,255,.12)}
+.o-viewer iframe{flex:1;width:100%;border:0;display:block}
