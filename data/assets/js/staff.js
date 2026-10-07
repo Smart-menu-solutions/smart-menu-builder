@@ -156,6 +156,10 @@ function chimeForNewOrders(tables) {
 // it right in the browser; iPhone/iPad only in the app added to the Home
 // Screen (Apple's rule), so Safari itself just gets the hint how to get there.
 const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// The public live demo on smartmenusolutions.com (El Greco's "Website-Demo"
+// links carry ?demo=1): no push and no install offer there - a visitor
+// shouldn't end up with every other visitor's test orders on their phone.
+const isDemo = new URLSearchParams(location.search).get('demo') === '1';
 const isInstalledApp = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window && window.isSecureContext;
 // 'unsupported' | 'install-first' | 'blocked' | 'off' | 'on'
@@ -263,7 +267,7 @@ function refreshPushLanguage() {
 }
 
 function pushMarkup() {
-	if (pushState === 'unsupported') return '';
+	if (isDemo || pushState === 'unsupported') return '';
 	if (pushState === 'install-first' || pushState === 'blocked') {
 		return `<p class="sh-push-hint">${icon('bell', 18)}<span>${escapeHtml(pushState === 'blocked' ? strings().pushBlocked : strings().pushInstallFirst)}</span></p>`;
 	}
@@ -285,7 +289,7 @@ function installDismissed() {
 }
 
 function installMarkup() {
-	if (isInstalledApp || installDismissed() || (!isAppleMobile && !installPrompt)) return '';
+	if (isDemo || isInstalledApp || installDismissed() || (!isAppleMobile && !installPrompt)) return '';
 	const action = isAppleMobile ? '' : `<button type="button" class="sh-install-btn" data-install>${escapeHtml(strings().installButton)}</button>`;
 	return `<div class="sh-install"><img src="assets/icons/icon-192.png" alt=""><p><b>${escapeHtml(strings().installTitle)}</b>${escapeHtml(isAppleMobile ? strings().installIos : strings().installText)}</p>${action}<button type="button" class="sh-install-close" data-install-close aria-label="×">×</button></div>`;
 }
@@ -307,7 +311,11 @@ window.addEventListener('appinstalled', () => {
 function translateName(sourceName) {
 	return translationsState?.[currentLang]?.items?.[sourceName]?.name || sourceName;
 }
+// ?lang= (the website's demo links) opens the screen in the visitor's
+// language; a real staff link has none and keeps the language saved here.
 let currentLang = (() => {
+	const fromLink = new URLSearchParams(location.search).get('lang');
+	if (fromLink) return fromLink;
 	try { return localStorage.getItem(LANG_STORAGE_KEY) || 'de'; } catch { return 'de'; }
 })();
 
@@ -323,6 +331,13 @@ function strings() {
 
 function formatMoney(cents) {
 	return `${((cents || 0) / 100).toFixed(2)} €`;
+}
+
+// Counts in staff-strings.js are [one, other] pairs ("1 Rechnung" /
+// "2 Rechnungen"); a plain string still works.
+function countText(value, n) {
+	const text = Array.isArray(value) ? value[n === 1 ? 0 : 1] : (value || '');
+	return text.replace('{n}', n);
 }
 
 // Start of the local day - the server counts "today" from here, so a
@@ -487,7 +502,7 @@ function cardMarkup(table) {
 	const total = withPrice ? `<span class="staff-card-total">${formatMoney(table.totalCents)}</span>` : '';
 	const rows = sortItems(table.items).map((item) => itemRowMarkup(item, withPrice, isTicketRole)).join('');
 	const openCount = table.items.filter((item) => !item.dispatched).length;
-	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(strings().statusOpen.replace('{n}', openCount))}</span>` : '';
+	const badge = isTicketRole && openCount ? `<span class="staff-card-badge">${escapeHtml(countText(strings().statusOpen, openCount))}</span>` : '';
 	// cashier: order lines on the left, "For the till" next to them
 	const till = posSummaryMarkup(table);
 	return `<div class="staff-card ${till ? 'is-till' : ''} ${table.billRequested ? 'is-bill-requested' : ''} ${freshBillTables.has(table.tableId) ? 'is-fresh-bill' : ''} ${freshOrderTables.has(table.tableId) ? 'is-fresh-order' : ''}" data-table-id="${table.tableId}">
@@ -624,7 +639,7 @@ function activityText(event) {
 	switch (event.type) {
 		case 'opened': return strings().evOpened;
 		case 'order': return (event.source === 'GUEST' ? strings().evOrderGuest : strings().evOrderStaff.replace('{who}', strings().roleLabels?.[event.source === 'CASHIER' ? 'cashier' : event.source === 'BAR' ? 'bar' : 'waiter'] || event.source)).replace('{items}', itemList);
-		case 'ready': return (event.station === 'BAR' ? strings().evReadyBar : strings().evReadyKitchen).replace('{n}', event.count);
+		case 'ready': return countText(event.station === 'BAR' ? strings().evReadyBar : strings().evReadyKitchen, event.count);
 		case 'bill': return strings().evBill;
 		case 'closed': return strings().evClosed; // no amount - the hub may be visible to guests
 		default: return '';
@@ -646,10 +661,10 @@ function activityListMarkup(events) {
 function stationStatusMarkup(tables) {
 	const openItems = (station) => tables.reduce((sum, table) => sum + (table.items || []).filter((item) => item.station === station && !item.dispatched).reduce((n, item) => n + item.quantity, 0), 0);
 	const rows = [
-		{ key: 'kitchen', value: strings().statusOpen.replace('{n}', openItems('KITCHEN')) },
-		{ key: 'bar', value: strings().statusOpen.replace('{n}', openItems('BAR')) },
-		{ key: 'hub', label: strings().roleLabels?.waiter, value: strings().statusActiveTables.replace('{n}', tables.filter((table) => table.status !== 'FREE').length) },
-		{ key: 'cashier', value: strings().statusBills.replace('{n}', tables.filter((table) => table.billRequested).length) }
+		{ key: 'kitchen', value: countText(strings().statusOpen, openItems('KITCHEN')) },
+		{ key: 'bar', value: countText(strings().statusOpen, openItems('BAR')) },
+		{ key: 'hub', label: strings().roleLabels?.waiter, value: countText(strings().statusActiveTables, tables.filter((table) => table.status !== 'FREE').length) },
+		{ key: 'cashier', value: countText(strings().statusBills, tables.filter((table) => table.billRequested).length) }
 	];
 	return `<ul class="sh-status">${rows.map((row) => `<li>
 		<span class="sh-status-icon">${icon(row.key, 18)}</span>
@@ -801,6 +816,12 @@ function mainMarkup(tables) {
 	</section>`;
 }
 
+// staff-access sorts table_number as text ("10" before "2") - show the
+// tables the way a floor is numbered, same compare as owner-app's table list.
+function byTableNumber(a, b) {
+	return String(a.tableNumber).localeCompare(String(b.tableNumber), undefined, { numeric: true });
+}
+
 function render(data) {
 	menuState = data.menu || menuState;
 	// An extra link the owner named, e.g. "Beach Bar" (see
@@ -822,7 +843,7 @@ function render(data) {
 	if (!languagesState.includes(currentLang)) currentLang = languagesState[0];
 	document.documentElement.lang = currentLang;
 	if (data.translations) translationsState = data.translations;
-	const tables = data.tables || [];
+	const tables = [...(data.tables || [])].sort(byTableNumber);
 	const popups = [
 		isHub ? hubPopupMarkup(tables.find((table) => table.tableId === openHubTable)) : '',
 		totalsPopupMarkup(), openOrdersPopupMarkup(), historyPopupMarkup()
@@ -996,7 +1017,7 @@ async function refresh() {
 	const response = await fetch(viewUrl());
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
-	lastTables = data.tables || [];
+	lastTables = [...(data.tables || [])].sort(byTableNumber);
 	chimeForNewReadyItems(lastTables);
 	chimeForNewBills(lastTables);
 	chimeForNewOrders(lastTables);
@@ -1060,13 +1081,13 @@ async function init() {
 	const response = await fetch(viewUrl());
 	const data = await response.json().catch(() => ({}));
 	if (!response.ok) { app.innerHTML = `<p class="staff-empty">${escapeHtml(data.error || strings().linkInvalid)}</p>`; return; }
-	lastTables = data.tables || [];
+	lastTables = [...(data.tables || [])].sort(byTableNumber);
 	chimeForNewReadyItems(lastTables);
 	chimeForNewBills(lastTables);
 	chimeForNewOrders(lastTables);
 	render(data);
 	subscribeRealtime(data.channel);
-	preparePush().then(rerender);
+	if (!isDemo) preparePush().then(rerender);
 }
 
 // No connection (e.g. the installed app opened offline from its cached
