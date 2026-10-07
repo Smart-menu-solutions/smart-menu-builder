@@ -653,16 +653,18 @@ function onboardingTemplateHtml(client, lang) {
 	const sectionLabelStyle = 'font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#737373;margin:0 0 8px';
 	// Two buttons per station instead of the long link itself: open the link,
 	// or show its QR code (staff-qr.html) to scan from the screen. The
-	// plain-text version keeps the links. Colored text + border on a light
-	// background, never white text: Outlook drops the background of pasted
-	// links, which left white-on-white (invisible) buttons - this way the
-	// worst case is a plain colored link.
-	const buttonStyle = (color, background) => `display:inline-block;background-color:${background};border:2px solid ${color};color:${color};text-decoration:none;font-weight:700;font-size:13px;line-height:16px;padding:7px 14px;border-radius:8px;white-space:nowrap`;
+	// plain-text version keeps the links. Same look as the builder's own
+	// outline buttons. Pasted into Outlook, styles on the link itself got lost
+	// (background) or doubled (border), so the frame sits on a table cell
+	// around a plain orange link - the usual email "bulletproof button".
+	// border-collapse:separate inline, or the preview's table rule would
+	// square the corners.
+	const button = (url, label) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate"><tr><td style="border:1px solid #f66a09;border-radius:6px;background-color:#ffffff;padding:7px 14px;white-space:nowrap"><a href="${escapeAttr(url)}" style="color:#f66a09;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:13px;line-height:16px;text-decoration:none"><span style="color:#f66a09;text-decoration:none">${escapeHtml(label)}</span></a></td></tr></table>`;
 	const staffRows = staffAccessRowsForTemplate(client).map((row) => {
 		const name = `<td style="padding:0 14px 8px 0;font-size:14px;vertical-align:middle"><strong>${escapeHtml(staffAccessName(row, lang))}</strong></td>`;
 		if (!row.token) return `<tr>${name}<td style="padding:0 0 8px 0" colspan="2">-</td></tr>`;
-		const link = `<a href="${escapeAttr(staffAccessUrl(row))}" style="${buttonStyle('#f66a09', '#fff1e4')}">${escapeHtml(strings.onboardingLink || 'Open link')}</a>`;
-		const qr = `<a href="${escapeAttr(staffQrPageUrl(client, row, lang))}" style="${buttonStyle('#262421', '#f4f3f1')}">${escapeHtml(strings.onboardingQr || 'QR code')}</a>`;
+		const link = button(staffAccessUrl(row), strings.onboardingLink || 'Open link');
+		const qr = button(staffQrPageUrl(client, row, lang), strings.onboardingQr || 'QR code');
 		return `<tr>${name}<td style="padding:0 8px 8px 0;vertical-align:middle">${link}</td><td style="padding:0 0 8px 0;vertical-align:middle">${qr}</td></tr>`;
 	}).join('');
 	return `<div style="font-family:Arial,Helvetica,sans-serif">
