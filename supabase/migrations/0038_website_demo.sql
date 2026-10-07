@@ -13,9 +13,16 @@
 -- the cron job rather than a function: nothing new that the anon or
 -- authenticated roles could call through the API.
 
-insert into public.restaurant_access (menu_slug, role, token, label) values
+-- Safe to run twice: restaurant_access.token has no unique index, and two
+-- rows with one token make staff-access reject the link (it happened on the
+-- first apply - the duplicates were deleted again).
+insert into public.restaurant_access (menu_slug, role, token, label)
+select demo.menu_slug, demo.role, demo.token::uuid, demo.label
+from (values
   ('el-greco', 'kitchen', '798b1138-400e-404b-b7e5-ad36b64158ed', 'Website-Demo'),
-  ('el-greco', 'bar', '73780e40-23d2-475a-b122-3117a12c1c59', 'Website-Demo');
+  ('el-greco', 'bar', '73780e40-23d2-475a-b122-3117a12c1c59', 'Website-Demo')
+) as demo(menu_slug, role, token, label)
+where not exists (select 1 from public.restaurant_access existing where existing.token = demo.token::uuid);
 
 select cron.schedule(
   'reset-website-demo',
