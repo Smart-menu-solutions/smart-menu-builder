@@ -438,7 +438,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			console.error('Renewal checkout completed without subscriptionId in metadata', session.id);
 			return;
 		}
-		const { data: existing } = await supabase.from('subscriptions').select('id, plan, menu_slug, addon_token').eq('id', subscriptionId).maybeSingle();
+		const { data: existing } = await supabase.from('subscriptions').select('id, plan, menu_slug, addon_token, stripe_subscription_id').eq('id', subscriptionId).maybeSingle();
 		if (!existing) {
 			console.error('Renewal checkout references unknown subscription', subscriptionId);
 			return;
@@ -453,6 +453,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			lang,
 			updated_at: new Date().toISOString()
 		}).eq('id', subscriptionId);
+		// The renewal checkout started a NEW Stripe subscription. The one it
+		// replaces (failed payment, still being retried by Stripe) has to end,
+		// or it would be charged again next to the new one.
+		const previousStripeSubscription = existing.stripe_subscription_id as string | null;
+		if (previousStripeSubscription && previousStripeSubscription !== session.subscription) {
+			await endReplacedSubscription(previousStripeSubscription, subscriptionId);
+		}
 		// Paying via the renewal link is how a deactivated menu comes back online.
 		// Coming from Smart Discovery, the add-ons it let the customer try are
 		// replaced by exactly the ones bought in the upgrade checkout (renewal
@@ -576,6 +583,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 			? sendDiscoveryConfirmation(subscription.id, email, contactName, lang, uploadUrl(order?.upload_token, lang), `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${lang}`)
 			: sendCustomerConfirmation(subscription.id, 'initial', email, contactName, plan, subscription.addon_token, lang, uploadUrl(order?.upload_token, lang))
 	]);
+}
+
+// Ends the Stripe subscription a renewal checkout replaced: its open (failed)
+// invoices are voided so Stripe stops retrying them, then it is cancelled.
+// Our row already points at the new subscription, so the
+// customer.subscription.deleted event for the old one changes nothing here.
+async function endReplacedSubscription(stripeSubscriptionId: string, subscriptionId: string) {
+	try {
+		const open = await stripe.invoices.list({ subscription: stripeSubscriptionId, status: 'open', limit: 20 });
+		for (const invoice of open.data) await stripe.invoices.voidInvoice(invoice.id);
+		const previous = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+		if (previous.status !== 'canceled') await stripe.subscriptions.cancel(stripeSubscriptionId);
+	} catch (error) {
+		console.error('Could not end the replaced Stripe subscription', stripeSubscriptionId, error);
+		await sendNotification(subscriptionId, 'Altes Stripe-Abo nach Verlängerung bitte von Hand beenden', {
+			'Subscription-ID': subscriptionId,
+			'Altes Stripe-Abo': stripeSubscriptionId
+		});
+	}
 }
 
 // Renewal invoices only — the very first invoice of a subscription is already

@@ -49,7 +49,7 @@ async function handleLookup(url: URL) {
 
 	const { data: subscription, error } = await supabase
 		.from('subscriptions')
-		.select('id, plan, status, menu_slug, customer_id')
+		.select('id, plan, status, menu_slug, customer_id, stripe_subscription_id, current_period_end')
 		.eq('renewal_token', token)
 		.maybeSingle();
 	if (error || !subscription) return json({ error: 'This renewal link is no longer valid.' }, 404);
@@ -70,8 +70,19 @@ async function handleLookup(url: URL) {
 		phone: customer.phone || '',
 		plan: subscription.plan,
 		status: subscription.status,
-		menuSlug: subscription.menu_slug
+		menuSlug: subscription.menu_slug,
+		// renewal.html shows "nothing to do" instead of the form then.
+		autoRenews: renewsAutomatically(subscription),
+		periodEnd: subscription.current_period_end
 	});
+}
+
+// A running yearly plan with a Stripe subscription renews by itself. Paying
+// here as well would start a second subscription next to it - charged again
+// every year - so this page is only for expired, deactivated or cancelled
+// plans, Smart Discovery and plans we set up by hand.
+function renewsAutomatically(subscription: { plan: string; status: string; stripe_subscription_id: string | null }): boolean {
+	return subscription.plan !== 'discovery' && subscription.status === 'active' && !!subscription.stripe_subscription_id;
 }
 
 async function handleCreateCheckout(request: Request) {
@@ -95,10 +106,13 @@ async function handleCreateCheckout(request: Request) {
 
 		const { data: subscription, error } = await supabase
 			.from('subscriptions')
-			.select('id, plan')
+			.select('id, plan, status, stripe_subscription_id')
 			.eq('renewal_token', token)
 			.maybeSingle();
 		if (error || !subscription) return json({ error: 'This renewal link is no longer valid.' }, 404);
+		if (renewsAutomatically(subscription)) {
+			return json({ error: 'Your subscription is active and renews automatically - there is nothing to renew right now.', autoRenews: true }, 409);
+		}
 
 		// Upgrading from Smart Discovery: its €2.99 comes off the first year and
 		// the customer picks which of the add-ons they tried to keep - same line

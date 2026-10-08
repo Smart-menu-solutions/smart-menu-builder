@@ -1,4 +1,10 @@
+import Stripe from 'npm:stripe@16.5.0';
 import { createClient } from 'npm:@supabase/supabase-js@2';
+
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
+	apiVersion: '2024-06-20',
+	httpClient: Stripe.createFetchHttpClient()
+});
 
 const supabase = createClient(
 	Deno.env.get('SUPABASE_URL') ?? '',
@@ -302,6 +308,126 @@ async function runDiscoveryPasses(today: string) {
 	return counts;
 }
 
+// Reminder before a yearly plan renews by itself: once per plan year, 30 days
+// ahead, with the amount from Stripe's upcoming invoice. Plans cancelled for
+// the end of the period get none; a failed Stripe lookup is simply tried
+// again the next day.
+const RENEWAL_REMINDER_DAYS = 30;
+const RENEWAL_REMINDER_KIND = 'Kundenmail: Verlängerungs-Erinnerung';
+const PLAN_LABELS: Record<string, string> = { start: 'Smart Start', pro: 'Smart Pro', premium: 'Smart Premium' };
+
+function formatAmount(cents: number, lang: string): string {
+	const amount = (cents / 100).toFixed(2);
+	return lang === 'en' ? `€${amount}` : `${amount.replace('.', ',')} €`;
+}
+
+function formatDay(isoDay: string, lang: string): string {
+	const [year, month, day] = isoDay.slice(0, 10).split('-');
+	return lang === 'de' ? `${day}.${month}.${year}` : `${day}/${month}/${year}`;
+}
+
+function renewalReminderSubject(lang: string, date: string): string {
+	return lang === 'it' ? `Il vostro abbonamento si rinnova il ${date}` : lang === 'en' ? `Your subscription renews on ${date}` : `Ihr Abo verlängert sich am ${date}`;
+}
+
+function renewalReminderHtml(lang: string, contactName: string, menuName: string, plan: string, date: string, amount: string, upgradeUrl: string | null, addonsUrl: string): string {
+	const name = escapeHtml(contactName || '');
+	const menu = escapeHtml(menuName || '');
+	const label = PLAN_LABELS[plan] ?? plan;
+	if (lang === 'it') return `
+		<p>Buongiorno ${name},</p>
+		<p>il vostro piano <strong>${label}</strong> per <strong>${menu}</strong> si rinnova automaticamente per un altro anno il <strong>${date}</strong>. Addebiteremo allora <strong>${amount}</strong> sul vostro metodo di pagamento salvato.</p>
+		<p>Non dovete fare nulla: il vostro menu resta online senza interruzioni.</p>
+		<p>Volete cambiare qualcosa prima?</p>
+		<ul>
+			${upgradeUrl ? `<li><a href="${upgradeUrl}">Passare a un piano più grande</a></li>` : ''}
+			<li><a href="${addonsUrl}">Aggiungere degli add-on</a></li>
+		</ul>
+		<p>Se non desiderate rinnovare, rispondete a questa e-mail prima del ${date}.</p>
+		<p>Cordiali saluti</p>
+		${EMAIL_SIGNATURE}
+	`;
+	if (lang === 'en') return `
+		<p>Hi ${name},</p>
+		<p>your <strong>${label}</strong> plan for <strong>${menu}</strong> renews automatically for another year on <strong>${date}</strong>. We'll then charge <strong>${amount}</strong> to your saved payment method.</p>
+		<p>There's nothing you need to do – your menu stays online without interruption.</p>
+		<p>Would you like to change something first?</p>
+		<ul>
+			${upgradeUrl ? `<li><a href="${upgradeUrl}">Move to a bigger plan</a></li>` : ''}
+			<li><a href="${addonsUrl}">Add add-ons</a></li>
+		</ul>
+		<p>If you don't want to renew, please reply to this email before ${date}.</p>
+		<p>Best regards</p>
+		${EMAIL_SIGNATURE}
+	`;
+	return `
+		<p>Hallo ${name},</p>
+		<p>Ihr Tarif <strong>${label}</strong> für <strong>${menu}</strong> verlängert sich am <strong>${date}</strong> automatisch um ein weiteres Jahr. Abgebucht werden dann <strong>${amount}</strong> von Ihrer hinterlegten Zahlungsmethode.</p>
+		<p>Sie müssen nichts tun – Ihre Speisekarte bleibt ohne Unterbrechung online.</p>
+		<p>Möchten Sie vorher etwas ändern?</p>
+		<ul>
+			${upgradeUrl ? `<li><a href="${upgradeUrl}">In einen größeren Tarif wechseln</a></li>` : ''}
+			<li><a href="${addonsUrl}">Zusatzmodule hinzufügen</a></li>
+		</ul>
+		<p>Wenn Sie nicht verlängern möchten, antworten Sie bitte vor dem ${date} auf diese E-Mail.</p>
+		<p>Mit freundlichen Grüßen</p>
+		${EMAIL_SIGNATURE}
+	`;
+}
+
+async function runRenewalReminders(today: string) {
+	let reminded = 0;
+	const { data: due, error } = await supabase
+		.from('subscriptions')
+		.select('id, plan, lang, current_period_end, stripe_subscription_id, addon_token, customers(contact_name, email), menus(name)')
+		.eq('status', 'active')
+		.in('plan', ['start', 'pro', 'premium'])
+		.not('stripe_subscription_id', 'is', null)
+		.gt('current_period_end', today)
+		.lte('current_period_end', addDaysIso(today, RENEWAL_REMINDER_DAYS));
+	if (error) {
+		console.error('Failed to query subscriptions due for a renewal reminder', error);
+		return reminded;
+	}
+
+	for (const subscription of due ?? []) {
+		const customer = subscription.customers as { contact_name: string; email: string } | null;
+		const menu = subscription.menus as { name: string } | null;
+		if (!customer?.email || !EMAIL_PATTERN.test(customer.email)) continue;
+		const periodEnd = String(subscription.current_period_end).slice(0, 10);
+
+		// Once per plan year.
+		const { data: sent } = await supabase
+			.from('notifications_log')
+			.select('id')
+			.eq('subscription_id', subscription.id)
+			.eq('kind', RENEWAL_REMINDER_KIND)
+			.gte('created_at', `${addDaysIso(periodEnd, -(RENEWAL_REMINDER_DAYS + 5))}T00:00:00Z`)
+			.limit(1);
+		if (sent?.length) continue;
+
+		let amountCents: number;
+		try {
+			const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id);
+			if (stripeSubscription.status !== 'active' || stripeSubscription.cancel_at_period_end) continue;
+			const upcoming = await stripe.invoices.retrieveUpcoming({ subscription: subscription.stripe_subscription_id });
+			amountCents = upcoming.amount_due;
+		} catch (stripeError) {
+			console.error('Renewal reminder: Stripe lookup failed', subscription.id, stripeError);
+			continue;
+		}
+
+		const lang = normalizeLang(subscription.lang);
+		const date = formatDay(periodEnd, lang);
+		const upgradeUrl = subscription.plan === 'premium' ? null : `${SITE_ORIGIN}/upgrade.html?token=${subscription.addon_token}&lang=${lang}`;
+		const addonsUrl = `${SITE_ORIGIN}/addons.html?token=${subscription.addon_token}&lang=${lang}`;
+		await sendEmail(customer.email, subscription.id, RENEWAL_REMINDER_KIND, renewalReminderSubject(lang, date),
+			renewalReminderHtml(lang, customer.contact_name, menu?.name ?? '', subscription.plan, date, formatAmount(amountCents, lang), upgradeUrl, addonsUrl));
+		reminded += 1;
+	}
+	return reminded;
+}
+
 // Daily job (triggered by Supabase Cron): the 7-day grace period after
 // expiry is enforced here — invoice.payment_failed (in stripe-webhook)
 // already moved these subscriptions to status "expired" with a
@@ -348,8 +474,9 @@ Deno.serve(async (request) => {
 	}
 
 	const discovery = await runDiscoveryPasses(today);
+	const reminders = await runRenewalReminders(today);
 
-	return new Response(JSON.stringify({ checked: true, deactivated: (toDeactivate ?? []).length, discovery }), {
+	return new Response(JSON.stringify({ checked: true, deactivated: (toDeactivate ?? []).length, discovery, reminders }), {
 		status: 200,
 		headers: { 'Content-Type': 'application/json' }
 	});

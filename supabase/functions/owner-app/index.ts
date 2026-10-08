@@ -4,9 +4,10 @@
 // public menus row (see 0035_owner_app.sql).
 //
 // Returns the menu basics, the latest subscription, the owner's renewal /
-// add-on / stats links, the table links for printing table cards and - only
-// with Smart WeeklyReport booked, which is what that add-on sells - the last
-// 7 days of menu views and the most viewed dishes.
+// upgrade / add-on / stats links, the ServiceHub tables & till numbers link,
+// the table links for printing table cards and - only with Smart
+// WeeklyReport booked, which is what that add-on sells - the last 7 days of
+// menu views and the most viewed dishes.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
@@ -91,7 +92,7 @@ Deno.serve(async (request) => {
 
 	const { data: menu } = await supabase
 		.from('menus')
-		.select('slug, name, logo_url, header_font, languages, is_published, translations, analytics_reports_enabled, smart_food_match_enabled, smartservice_hub_enabled, photo_addon_enabled')
+		.select('slug, name, logo_url, header_font, languages, is_published, translations, analytics_reports_enabled, smart_food_match_enabled, smartservice_hub_enabled, photo_addon_enabled, setup_token')
 		.eq('slug', link.menu_slug)
 		.maybeSingle();
 	if (!menu) return json({ error: 'This link is no longer valid.' }, 404);
@@ -100,7 +101,7 @@ Deno.serve(async (request) => {
 	// Discovery updates it, a menu set up by hand in the builder has none.
 	const { data: subscription } = await supabase
 		.from('subscriptions')
-		.select('plan, status, lang, current_period_end, discovery_started_on, renewal_token, addon_token, stats_token')
+		.select('plan, status, lang, current_period_end, discovery_started_on, renewal_token, addon_token, stats_token, stripe_subscription_id')
 		.eq('menu_slug', menu.slug)
 		.order('created_at', { ascending: false })
 		.limit(1)
@@ -135,6 +136,13 @@ Deno.serve(async (request) => {
 
 	// Add-ons can only be bought onto a running yearly plan.
 	const canBuyAddons = subscription?.status === 'active' && subscription.plan !== 'discovery';
+	// A running plan with a Stripe subscription renews by itself - offering
+	// "renew" there would start a second subscription (see renewal). The link
+	// is for Smart Discovery (its upgrade) and for plans that have run out.
+	const needsRenewal = !!subscription && (subscription.plan === 'discovery' || subscription.status !== 'active');
+	// Start and Pro can move up during the year (upgrade-plan charges the
+	// pro-rated difference); a plan set up by hand without Stripe can't.
+	const canUpgrade = canBuyAddons && (subscription!.plan === 'start' || subscription!.plan === 'pro') && !!subscription!.stripe_subscription_id;
 	return json({
 		lang,
 		name: menu.name,
@@ -157,9 +165,13 @@ Deno.serve(async (request) => {
 			discoveryStartedOn: subscription.discovery_started_on
 		} : null,
 		links: {
-			renewal: subscription ? `${SITE_ORIGIN}/renewal.html?token=${subscription.renewal_token}&lang=${siteLang}` : null,
+			renewal: needsRenewal ? `${SITE_ORIGIN}/renewal.html?token=${subscription!.renewal_token}&lang=${siteLang}` : null,
+			upgrade: canUpgrade ? `${SITE_ORIGIN}/upgrade.html?token=${subscription!.addon_token}&lang=${siteLang}` : null,
 			addons: canBuyAddons ? `${SITE_ORIGIN}/addons.html?token=${subscription!.addon_token}&lang=${siteLang}` : null,
-			stats: subscription && menu.analytics_reports_enabled ? `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${siteLang}` : null
+			stats: subscription && menu.analytics_reports_enabled ? `${SITE_ORIGIN}/stats.html?token=${subscription.stats_token}&lang=${siteLang}` : null,
+			// The owner's own link to add tables and till numbers (the same page we
+			// send by email) - new tables can go straight onto table cards.
+			servicehub: menu.smartservice_hub_enabled && menu.setup_token ? `${SITE_ORIGIN}/servicehub-setup.html?token=${menu.setup_token}&lang=${siteLang}` : null
 		},
 		tables,
 		stats

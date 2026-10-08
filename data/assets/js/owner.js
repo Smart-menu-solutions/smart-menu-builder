@@ -30,7 +30,7 @@
 			plan: 'Ihr Paket', activeUntil: 'aktiv bis {date}', expiredOn: 'abgelaufen am {date} – bitte verlängern', inactive: 'nicht aktiv',
 			discoveryWaiting: 'startet, sobald Ihre Speisekarte online ist', discoveryDay: 'Tag {n} von 7 · offline ab {date}', discoveryEnded: 'beendet am {date}',
 			addons: 'Zusatzmodule',
-			openMenu: 'Speisekarte öffnen', qr: 'QR-Code', tableCards: 'Tischkarten', change: 'Änderung schicken', addonsTile: 'Zusatzmodule', renew: 'Verlängern', upgrade: 'Upgrade',
+			openMenu: 'Speisekarte öffnen', qr: 'QR-Code', tableCards: 'Tischkarten', tablesTile: 'Tische & Kassennummern', change: 'Änderung schicken', addonsTile: 'Zusatzmodule', renew: 'Verlängern', upgrade: 'Upgrade',
 			changeSubject: 'Änderung Speisekarte – {name}', changeBody: 'Hallo Smart Menu Solutions Team,\n\nbitte ändern Sie in unserer Speisekarte Folgendes:\n\n',
 			questions: 'Fragen? {contact}', privacy: 'Datenschutz', privacyPath: '/de/privacy-policy.html',
 			popupBlocked: 'Bitte erlauben Sie Pop-ups für diese Seite.', language: 'Sprache', close: 'Schließen',
@@ -50,7 +50,7 @@
 			plan: 'Your plan', activeUntil: 'active until {date}', expiredOn: 'expired on {date} – please renew', inactive: 'not active',
 			discoveryWaiting: 'starts once your menu is online', discoveryDay: 'Day {n} of 7 · offline from {date}', discoveryEnded: 'ended on {date}',
 			addons: 'Add-ons',
-			openMenu: 'Open menu', qr: 'QR code', tableCards: 'Table cards', change: 'Send a change', addonsTile: 'Add-ons', renew: 'Renew', upgrade: 'Upgrade',
+			openMenu: 'Open menu', qr: 'QR code', tableCards: 'Table cards', tablesTile: 'Tables & till numbers', change: 'Send a change', addonsTile: 'Add-ons', renew: 'Renew', upgrade: 'Upgrade',
 			changeSubject: 'Menu change – {name}', changeBody: 'Hello Smart Menu Solutions team,\n\nplease change the following in our menu:\n\n',
 			questions: 'Questions? {contact}', privacy: 'Privacy', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Please allow pop-ups for this page.', language: 'Language', close: 'Close',
@@ -70,7 +70,7 @@
 			plan: 'Il vostro piano', activeUntil: 'attivo fino al {date}', expiredOn: 'scaduto il {date} – rinnovate', inactive: 'non attivo',
 			discoveryWaiting: 'inizia quando il vostro menu è online', discoveryDay: 'Giorno {n} di 7 · offline dal {date}', discoveryEnded: 'terminato il {date}',
 			addons: 'Add-on',
-			openMenu: 'Apri il menu', qr: 'QR code', tableCards: 'Segnatavolo', change: 'Invia una modifica', addonsTile: 'Add-on', renew: 'Rinnova', upgrade: 'Upgrade',
+			openMenu: 'Apri il menu', qr: 'QR code', tableCards: 'Segnatavolo', tablesTile: 'Tavoli e numeri di cassa', change: 'Invia una modifica', addonsTile: 'Add-on', renew: 'Rinnova', upgrade: 'Upgrade',
 			changeSubject: 'Modifica menu – {name}', changeBody: 'Buongiorno Smart Menu Solutions Team,\n\nvi preghiamo di modificare nel nostro menu:\n\n',
 			questions: 'Domande? {contact}', privacy: 'Privacy', privacyPath: '/it/privacy-policy.html',
 			popupBlocked: 'Consentite i pop-up per questa pagina.', language: 'Lingua', close: 'Chiudi',
@@ -90,7 +90,7 @@
 			plan: 'Το πακέτο σας', activeUntil: 'ενεργό έως {date}', expiredOn: 'έληξε στις {date} – ανανεώστε το', inactive: 'ανενεργό',
 			discoveryWaiting: 'ξεκινά μόλις το μενού σας είναι online', discoveryDay: 'Ημέρα {n} από 7 · offline από {date}', discoveryEnded: 'έληξε στις {date}',
 			addons: 'Πρόσθετα',
-			openMenu: 'Άνοιγμα μενού', qr: 'QR code', tableCards: 'Κάρτες τραπεζιού', change: 'Αποστολή αλλαγής', addonsTile: 'Πρόσθετα', renew: 'Ανανέωση', upgrade: 'Αναβάθμιση',
+			openMenu: 'Άνοιγμα μενού', qr: 'QR code', tableCards: 'Κάρτες τραπεζιού', tablesTile: 'Τραπέζια & κωδικοί ταμείου', change: 'Αποστολή αλλαγής', addonsTile: 'Πρόσθετα', renew: 'Ανανέωση', upgrade: 'Αναβάθμιση',
 			changeSubject: 'Αλλαγή μενού – {name}', changeBody: 'Γεια σας, ομάδα Smart Menu Solutions,\n\nπαρακαλούμε αλλάξτε τα εξής στο μενού μας:\n\n',
 			questions: 'Ερωτήσεις; {contact}', privacy: 'Απόρρητο', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Επιτρέψτε τα αναδυόμενα παράθυρα για αυτή τη σελίδα.', language: 'Γλώσσα', close: 'Κλείσιμο',
@@ -110,7 +110,7 @@
 			plan: 'Su plan', activeUntil: 'activo hasta el {date}', expiredOn: 'caducó el {date} – renuévelo', inactive: 'no activo',
 			discoveryWaiting: 'empieza en cuanto su carta esté online', discoveryDay: 'Día {n} de 7 · offline desde el {date}', discoveryEnded: 'finalizó el {date}',
 			addons: 'Complementos',
-			openMenu: 'Abrir la carta', qr: 'Código QR', tableCards: 'Tarjetas de mesa', change: 'Enviar un cambio', addonsTile: 'Complementos', renew: 'Renovar', upgrade: 'Mejorar plan',
+			openMenu: 'Abrir la carta', qr: 'Código QR', tableCards: 'Tarjetas de mesa', tablesTile: 'Mesas y números de caja', change: 'Enviar un cambio', addonsTile: 'Complementos', renew: 'Renovar', upgrade: 'Mejorar plan',
 			changeSubject: 'Cambio en la carta – {name}', changeBody: 'Hola, equipo de Smart Menu Solutions:\n\npor favor, cambien lo siguiente en nuestra carta:\n\n',
 			questions: '¿Preguntas? {contact}', privacy: 'Privacidad', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Permita las ventanas emergentes para esta página.', language: 'Idioma', close: 'Cerrar',
@@ -130,7 +130,7 @@
 			plan: 'Votre formule', activeUntil: 'active jusqu\'au {date}', expiredOn: 'expirée le {date} – veuillez renouveler', inactive: 'non active',
 			discoveryWaiting: 'commence dès que votre carte est en ligne', discoveryDay: 'Jour {n} sur 7 · hors ligne à partir du {date}', discoveryEnded: 'terminée le {date}',
 			addons: 'Modules complémentaires',
-			openMenu: 'Ouvrir la carte', qr: 'QR code', tableCards: 'Chevalets de table', change: 'Envoyer une modification', addonsTile: 'Modules', renew: 'Renouveler', upgrade: 'Mettre à niveau',
+			openMenu: 'Ouvrir la carte', qr: 'QR code', tableCards: 'Chevalets de table', tablesTile: 'Tables et numéros de caisse', change: 'Envoyer une modification', addonsTile: 'Modules', renew: 'Renouveler', upgrade: 'Mettre à niveau',
 			changeSubject: 'Modification de la carte – {name}', changeBody: 'Bonjour l\'équipe Smart Menu Solutions,\n\nmerci de modifier les points suivants dans notre carte :\n\n',
 			questions: 'Des questions ? {contact}', privacy: 'Confidentialité', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Veuillez autoriser les fenêtres pop-up pour cette page.', language: 'Langue', close: 'Fermer',
@@ -150,7 +150,7 @@
 			plan: 'Uw pakket', activeUntil: 'actief tot {date}', expiredOn: 'verlopen op {date} – verleng a.u.b.', inactive: 'niet actief',
 			discoveryWaiting: 'start zodra uw menukaart online staat', discoveryDay: 'Dag {n} van 7 · offline vanaf {date}', discoveryEnded: 'beëindigd op {date}',
 			addons: 'Uitbreidingen',
-			openMenu: 'Menukaart openen', qr: 'QR-code', tableCards: 'Tafelkaarten', change: 'Wijziging sturen', addonsTile: 'Uitbreidingen', renew: 'Verlengen', upgrade: 'Upgraden',
+			openMenu: 'Menukaart openen', qr: 'QR-code', tableCards: 'Tafelkaarten', tablesTile: 'Tafels & kassanummers', change: 'Wijziging sturen', addonsTile: 'Uitbreidingen', renew: 'Verlengen', upgrade: 'Upgraden',
 			changeSubject: 'Wijziging menukaart – {name}', changeBody: 'Hallo Smart Menu Solutions-team,\n\nwilt u het volgende in onze menukaart wijzigen:\n\n',
 			questions: 'Vragen? {contact}', privacy: 'Privacy', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Sta pop-ups toe voor deze pagina.', language: 'Taal', close: 'Sluiten',
@@ -170,7 +170,7 @@
 			plan: 'O seu plano', activeUntil: 'ativo até {date}', expiredOn: 'expirou a {date} – renove, por favor', inactive: 'inativo',
 			discoveryWaiting: 'começa assim que o seu menu estiver online', discoveryDay: 'Dia {n} de 7 · offline a partir de {date}', discoveryEnded: 'terminou a {date}',
 			addons: 'Extras',
-			openMenu: 'Abrir menu', qr: 'Código QR', tableCards: 'Cartões de mesa', change: 'Enviar alteração', addonsTile: 'Extras', renew: 'Renovar', upgrade: 'Upgrade',
+			openMenu: 'Abrir menu', qr: 'Código QR', tableCards: 'Cartões de mesa', tablesTile: 'Mesas e números de caixa', change: 'Enviar alteração', addonsTile: 'Extras', renew: 'Renovar', upgrade: 'Upgrade',
 			changeSubject: 'Alteração do menu – {name}', changeBody: 'Olá, equipa Smart Menu Solutions,\n\npor favor alterem o seguinte no nosso menu:\n\n',
 			questions: 'Dúvidas? {contact}', privacy: 'Privacidade', privacyPath: '/privacy-policy.html',
 			popupBlocked: 'Permita janelas pop-up para esta página.', language: 'Idioma', close: 'Fechar',
@@ -184,6 +184,7 @@
 		cards: '<path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 14h10v7H7z"/>',
 		change: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
 		addons: '<path d="M12 3v18M3 12h18"/>',
+		tables: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10M15 10v10"/>',
 		renew: '<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>'
 	};
 
@@ -347,7 +348,25 @@
 		return `<section class="o-card">
 			<div class="o-plan"><div><h2>${escapeHtml(text.plan)}</h2><b>${escapeHtml(PLAN_NAMES[sub.plan] || sub.plan)}</b></div><span>${detail}</span></div>
 			<div class="o-chips" aria-label="${escapeHtml(text.addons)}">${addons}</div>
+			${planActionHtml(sub, text)}
 		</section>`;
+	}
+
+	// The plan's next step sits on its own card: Smart Discovery and a plan
+	// that has run out go to renewal.html, a running Start / Pro plan to the
+	// upgrade. A running plan renews by itself, so it gets no "renew".
+	function planActionHtml(sub, text) {
+		const { renewal, upgrade } = data.links;
+		let href = '';
+		let label = '';
+		if (renewal && (sub.plan === 'discovery' || sub.status !== 'active')) {
+			href = renewal;
+			label = sub.plan === 'discovery' ? text.upgrade : text.renew;
+		} else if (upgrade) {
+			href = upgrade;
+			label = text.upgrade;
+		}
+		return href ? `<a class="o-btn o-plan-action" href="${escapeHtml(href)}">${escapeHtml(label)}</a>` : '';
 	}
 
 	function tilesHtml() {
@@ -355,11 +374,13 @@
 		const tiles = [
 			`<button type="button" class="o-tile" id="openMenu">${icon('menu')}${escapeHtml(text.openMenu)}</button>`,
 			`<button type="button" class="o-tile" id="downloadQr">${icon('qr')}${escapeHtml(text.qr)}</button>`,
-			`<button type="button" class="o-tile" id="tableCards">${icon('cards')}${escapeHtml(text.tableCards)}</button>`,
-			`<a class="o-tile" href="mailto:${CONTACT}?subject=${encodeURIComponent(text.changeSubject.replace('{name}', data.name))}&body=${encodeURIComponent(text.changeBody)}">${icon('change')}${escapeHtml(text.change)}</a>`
+			`<button type="button" class="o-tile" id="tableCards">${icon('cards')}${escapeHtml(text.tableCards)}</button>`
 		];
+		// Smart ServiceHub™: the owner adds tables and till numbers themselves;
+		// new tables are on the table cards right away.
+		if (data.links.servicehub) tiles.push(`<a class="o-tile" href="${escapeHtml(data.links.servicehub)}">${icon('tables')}${escapeHtml(text.tablesTile)}</a>`);
+		tiles.push(`<a class="o-tile" href="mailto:${CONTACT}?subject=${encodeURIComponent(text.changeSubject.replace('{name}', data.name))}&body=${encodeURIComponent(text.changeBody)}">${icon('change')}${escapeHtml(text.change)}</a>`);
 		if (data.links.addons) tiles.push(`<a class="o-tile" href="${escapeHtml(data.links.addons)}">${icon('addons')}${escapeHtml(text.addonsTile)}</a>`);
-		if (data.links.renewal) tiles.push(`<a class="o-tile" href="${escapeHtml(data.links.renewal)}">${icon('renew')}${escapeHtml(data.subscription?.plan === 'discovery' ? text.upgrade : text.renew)}</a>`);
 		return `<nav class="o-tiles">${tiles.join('')}</nav>`;
 	}
 
