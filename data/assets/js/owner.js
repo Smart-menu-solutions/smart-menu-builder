@@ -421,8 +421,8 @@
 		app.innerHTML = `
 			${installHtml()}
 			<header class="o-head">${head}<div><h1>${escapeHtml(text.appName)}</h1><p>${escapeHtml(data.name)}</p></div><span class="o-status${data.isPublished ? '' : ' o-status--off'}">${escapeHtml(data.isPublished ? text.online : text.notOnline)}</span></header>
-			${statsHtml()}
 			${planHtml()}
+			${statsHtml()}
 			${tilesHtml()}
 			${langsHtml()}
 			<footer class="o-foot">${escapeHtml(text.questions).replace('{contact}', `<a href="mailto:${CONTACT}">${CONTACT}</a>`)}<br><a href="${SITE}${text.privacyPath}" target="_blank" rel="noopener">${escapeHtml(text.privacy)}</a></footer>`;
