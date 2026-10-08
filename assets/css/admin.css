@@ -213,7 +213,10 @@
 .brand-smart{color:var(--orange)}
 /* Long lists scroll inside their panel instead of growing endlessly (user):
    exactly 3 activity messages (3 x 67px rows + 2 gaps), 4 tables and 2 rows of pictures are visible. */
-#activityList,#smartServiceHubTableNumbers,#photoLibraryGrid{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+#activityList,#smartServiceHubTableNumbers,#photoLibraryGrid,#categoryEditor{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
 #activityList{max-height:205px}
 #smartServiceHubTableNumbers{max-height:290px}
 #photoLibraryGrid{max-height:240px}
+/* Sections & dishes scroll too: the window is as tall as a section with 4
+   dishes, photos and till numbers (El Greco "Vorspeisen", measured 691px). */
+#categoryEditor{max-height:691px}
