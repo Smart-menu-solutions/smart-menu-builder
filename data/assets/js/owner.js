@@ -17,7 +17,7 @@
 
 	const TEXT = {
 		de: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Wird geladen …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Wird geladen …',
 			invalidTitle: 'Link nicht gültig', invalid: 'Bitte wenden Sie sich an {contact}.',
 			offlineTitle: 'Keine Verbindung', offline: 'Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', retry: 'Erneut versuchen',
 			online: '● Online', notOnline: '● Offline',
@@ -37,7 +37,7 @@
 			cards: { title: 'Tischkarten – {name}', print: 'Drucken / als PDF speichern', summaryTables: '{tables} Tische mit „Scannen & bestellen“, dazu ein Blatt „Einfach scannen“ für Eingang, Bar oder Fenster – {sheets} Blätter A4.', summaryMenu: 'Ein Blatt A4 mit 4 Karten „Einfach scannen“.', hint: 'Entlang der gestrichelten Linien schneiden, am besten dickeres Papier (ab 250 g/m²). Im Druckdialog Skalierung 100 % wählen.' }
 		},
 		en: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Loading …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Loading …',
 			invalidTitle: 'Link not valid', invalid: 'Please contact {contact}.',
 			offlineTitle: 'No connection', offline: 'Please check your internet connection and try again.', retry: 'Try again',
 			online: '● Online', notOnline: '● Offline',
@@ -57,7 +57,7 @@
 			cards: { title: 'Table cards – {name}', print: 'Print / save as PDF', summaryTables: '{tables} tables with "Scan & order", plus one sheet of "Just scan" cards for the entrance, bar or window – {sheets} A4 sheets.', summaryMenu: 'One A4 sheet with 4 "Just scan" cards.', hint: 'Cut along the dashed lines, ideally on thicker paper (250 g/m² or more). Choose 100% scale in the print dialog.' }
 		},
 		it: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Caricamento …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Caricamento …',
 			invalidTitle: 'Link non valido', invalid: 'Contattateci a {contact}.',
 			offlineTitle: 'Nessuna connessione', offline: 'Controllate la connessione a internet e riprovate.', retry: 'Riprova',
 			online: '● Online', notOnline: '● Offline',
@@ -77,7 +77,7 @@
 			cards: { title: 'Segnatavolo – {name}', print: 'Stampa / salva come PDF', summaryTables: '{tables} tavoli con "Scansionate e ordinate", più un foglio "Basta scansionare" per ingresso, bar o vetrina – {sheets} fogli A4.', summaryMenu: 'Un foglio A4 con 4 segnatavolo "Basta scansionare".', hint: 'Tagliate lungo le linee tratteggiate, meglio su carta più spessa (da 250 g/m²). Nella finestra di stampa scegliete scala 100 %.' }
 		},
 		el: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Φόρτωση …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Φόρτωση …',
 			invalidTitle: 'Μη έγκυρος σύνδεσμος', invalid: 'Επικοινωνήστε μαζί μας στο {contact}.',
 			offlineTitle: 'Χωρίς σύνδεση', offline: 'Ελέγξτε τη σύνδεσή σας στο διαδίκτυο και δοκιμάστε ξανά.', retry: 'Δοκιμάστε ξανά',
 			online: '● Online', notOnline: '● Offline',
@@ -97,7 +97,7 @@
 			cards: { title: 'Κάρτες τραπεζιού – {name}', print: 'Εκτύπωση / αποθήκευση ως PDF', summaryTables: '{tables} τραπέζια με «Σκανάρετε & παραγγείλετε», και ένα φύλλο «Απλώς σκανάρετε» για είσοδο, μπαρ ή βιτρίνα – {sheets} φύλλα A4.', summaryMenu: 'Ένα φύλλο A4 με 4 κάρτες «Απλώς σκανάρετε».', hint: 'Κόψτε κατά μήκος των διακεκομμένων γραμμών, ιδανικά σε πιο χοντρό χαρτί (από 250 g/m²). Στο παράθυρο εκτύπωσης επιλέξτε κλίμακα 100 %.' }
 		},
 		es: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Cargando …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Cargando …',
 			invalidTitle: 'Enlace no válido', invalid: 'Póngase en contacto con {contact}.',
 			offlineTitle: 'Sin conexión', offline: 'Compruebe su conexión a internet e inténtelo de nuevo.', retry: 'Reintentar',
 			online: '● Online', notOnline: '● Offline',
@@ -117,7 +117,7 @@
 			cards: { title: 'Tarjetas de mesa – {name}', print: 'Imprimir / guardar como PDF', summaryTables: '{tables} mesas con «Escanee y pida», más una hoja «Simplemente escanee» para la entrada, la barra o el escaparate – {sheets} hojas A4.', summaryMenu: 'Una hoja A4 con 4 tarjetas «Simplemente escanee».', hint: 'Corte por las líneas discontinuas, mejor en papel grueso (desde 250 g/m²). En el diálogo de impresión elija escala 100 %.' }
 		},
 		fr: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Chargement …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Chargement …',
 			invalidTitle: 'Lien non valide', invalid: 'Veuillez nous contacter à {contact}.',
 			offlineTitle: 'Pas de connexion', offline: 'Vérifiez votre connexion internet et réessayez.', retry: 'Réessayer',
 			online: '● En ligne', notOnline: '● Hors ligne',
@@ -137,7 +137,7 @@
 			cards: { title: 'Chevalets de table – {name}', print: 'Imprimer / enregistrer en PDF', summaryTables: '{tables} tables avec « Scannez & commandez », plus une feuille « Scannez simplement » pour l\'entrée, le bar ou la vitrine – {sheets} feuilles A4.', summaryMenu: 'Une feuille A4 avec 4 cartes « Scannez simplement ».', hint: 'Découpez le long des pointillés, idéalement sur du papier épais (250 g/m² ou plus). Dans la fenêtre d\'impression, choisissez l\'échelle 100 %.' }
 		},
 		nl: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'Laden …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'Laden …',
 			invalidTitle: 'Link niet geldig', invalid: 'Neem contact met ons op via {contact}.',
 			offlineTitle: 'Geen verbinding', offline: 'Controleer uw internetverbinding en probeer het opnieuw.', retry: 'Opnieuw proberen',
 			online: '● Online', notOnline: '● Offline',
@@ -157,7 +157,7 @@
 			cards: { title: 'Tafelkaarten – {name}', print: 'Afdrukken / opslaan als pdf', summaryTables: '{tables} tafels met "Scannen & bestellen", plus één vel "Gewoon scannen" voor de ingang, de bar of het raam – {sheets} vellen A4.', summaryMenu: 'Eén vel A4 met 4 kaarten "Gewoon scannen".', hint: 'Knip langs de stippellijnen, liefst op dikker papier (vanaf 250 g/m²). Kies in het afdrukvenster schaal 100 %.' }
 		},
 		pt: {
-			appName: 'SmartPilot', shortName: 'SmartPilot', loading: 'A carregar …',
+			appName: 'SmartPilot™', shortName: 'SmartPilot™', loading: 'A carregar …',
 			invalidTitle: 'Link inválido', invalid: 'Contacte-nos através de {contact}.',
 			offlineTitle: 'Sem ligação', offline: 'Verifique a sua ligação à internet e tente novamente.', retry: 'Tentar novamente',
 			online: '● Online', notOnline: '● Offline',

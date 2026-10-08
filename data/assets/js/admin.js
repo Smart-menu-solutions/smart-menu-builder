@@ -1483,9 +1483,9 @@ if ($('#copyOwnerAppLink')) $('#copyOwnerAppLink').addEventListener('click', asy
 // staff cards' texts live in staff-strings.js (qrScan / qrPersonal), shared
 // with staff-qr.html.
 const OWNER_QR_TEXT = {
-	de: { scan: 'Mit der Handy-Kamera scannen und SmartPilot installieren', personal: 'Persönlicher Link – bitte nicht weitergeben' },
-	en: { scan: 'Scan with your phone camera and install SmartPilot', personal: 'Personal link – please do not share it' },
-	it: { scan: 'Scansionate con la fotocamera e installate SmartPilot', personal: 'Link personale – non condividetelo' }
+	de: { scan: 'Mit der Handy-Kamera scannen und SmartPilot™ installieren', personal: 'Persönlicher Link – bitte nicht weitergeben' },
+	en: { scan: 'Scan with your phone camera and install SmartPilot™', personal: 'Personal link – please do not share it' },
+	it: { scan: 'Scansionate con la fotocamera e installate SmartPilot™', personal: 'Link personale – non condividetelo' }
 };
 
 function customerLang(client) {
@@ -1509,7 +1509,7 @@ if ($('#downloadOwnerAppQr')) $('#downloadOwnerAppQr').addEventListener('click',
 	if (!client) return;
 	const link = await ownerAppLinkFor(client);
 	if (!link) { notify(strings().ownerAppLinkFailed); return; }
-	const blob = await SmartQrCard.blob({ title: 'SmartPilot', subtitle: client.name, link, text: OWNER_QR_TEXT[customerLang(client)] });
+	const blob = await SmartQrCard.blob({ title: 'SmartPilot™', subtitle: client.name, link, text: OWNER_QR_TEXT[customerLang(client)] });
 	if (!blob) { notify(strings().ownerAppLinkFailed); return; }
 	downloadBlob(blob, `smartpilot-${client.slug}.png`);
 });
@@ -1901,11 +1901,11 @@ Mit freundlichen Grüßen
 	{
 		// Manual - sent once the menu is live, with the link from the QR panel
 		// -> "App-Link für Inhaber kopieren" (owner.html, 0035_owner_app.sql).
-		name: 'SmartPilot: app link (manual)',
-		subject: 'Ihre App „SmartPilot“ für [Menü-Name]',
+		name: 'SmartPilot™: app link (manual)',
+		subject: 'Ihre App „SmartPilot™“ für [Menü-Name]',
 		body: `Hallo [Vorname Nachname],
 
-ab sofort haben Sie für [Menü-Name] Ihre eigene App „SmartPilot“. Dort finden Sie alles an einem Ort:
+ab sofort haben Sie für [Menü-Name] Ihre eigene App „SmartPilot™“. Dort finden Sie alles an einem Ort:
 
 • Ihre Speisekarte und Ihren QR-Code
 • Tischkarten zum Ausdrucken – fertig mit Ihrem Logo und QR-Code
@@ -2048,11 +2048,11 @@ We wish you every success with your new digital menu and thank you for your trus
 Best regards
 [+ HTML signature]`
 	},
-	'SmartPilot: app link (manual)': {
-		subject: 'Your app "SmartPilot" for [Menu name]',
+	'SmartPilot™: app link (manual)': {
+		subject: 'Your app "SmartPilot™" for [Menu name]',
 		body: `Hi [First name Last name],
 
-from now on you have your own app "SmartPilot" for [Menu name]. Everything in one place:
+from now on you have your own app "SmartPilot™" for [Menu name]. Everything in one place:
 
 • Your menu and your QR code
 • Table cards to print – ready with your logo and QR code
@@ -2192,11 +2192,11 @@ Vi auguriamo tanto successo con il vostro nuovo menu digitale e vi ringraziamo p
 Cordiali saluti
 [+ firma HTML]`
 	},
-	'SmartPilot: app link (manual)': {
-		subject: 'La vostra app "SmartPilot" per [Nome del menu]',
+	'SmartPilot™: app link (manual)': {
+		subject: 'La vostra app "SmartPilot™" per [Nome del menu]',
 		body: `Buongiorno [Nome Cognome],
 
-da oggi avete la vostra app "SmartPilot" per [Nome del menu]. Tutto in un unico posto:
+da oggi avete la vostra app "SmartPilot™" per [Nome del menu]. Tutto in un unico posto:
 
 • Il vostro menu e il vostro QR code
 • Segnatavolo da stampare – già pronti con il vostro logo e QR code
