@@ -212,8 +212,8 @@
 .brand-logo{width:40px;height:40px;flex-shrink:0;object-fit:contain}
 .brand-smart{color:var(--orange)}
 /* Long lists scroll inside their panel instead of growing endlessly (user):
-   about 3 activity messages, 4 tables and 2 rows of pictures are visible. */
+   exactly 3 activity messages (3 x 67px rows + 2 gaps), 4 tables and 2 rows of pictures are visible. */
 #activityList,#smartServiceHubTableNumbers,#photoLibraryGrid{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
-#activityList{max-height:230px}
+#activityList{max-height:205px}
 #smartServiceHubTableNumbers{max-height:290px}
 #photoLibraryGrid{max-height:240px}
