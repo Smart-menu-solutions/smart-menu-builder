@@ -13,7 +13,7 @@
 <script src="data/assets/js/vendor/pdf.min.js?v=3.11.174"></script>
 <script src="data/assets/js/vendor/tesseract.min.js?v=5.1.1"></script>
 <link rel="stylesheet" href="assets/fonts/fonts-admin.css">
-<link rel="stylesheet" href="assets/css/admin.css?v=owner-app-1">
+<link rel="stylesheet" href="assets/css/admin.css?v=builder-ui-1">
 <link rel="manifest" href="manifest-admin.webmanifest">
 <meta name="theme-color" content="#262421">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -23,7 +23,7 @@
 </head>
 <body>
 <aside class="sidebar">
-    <a class="brand" href="index.html"><span class="brand-mark">S</span><span>Smart Menu Builder</span></a>
+    <a class="brand" href="index.html"><img class="brand-logo" src="assets/images/logo-white.png" alt="" width="40" height="40"><span><span class="brand-smart">Smart</span> Menu Builder</span></a>
     <p class="eyebrow" data-i18n="navWorkspace">Workspace</p>
     <nav>
         <!-- .nav-link span is the icon slot (fixed 20px, 18px type), so each
@@ -40,7 +40,7 @@
 </aside>
 
 <main class="main" id="dashboard">
-    <header class="topbar"><div><p class="eyebrow" id="topbarDate">Monday, September 7</p><h1 data-i18n="topbarTitle">Your menu workspace</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="template-lang" role="group" data-i18n-aria-label="adminLanguageAria" aria-label="Interface language"><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="de">DE</button><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="en">EN</button></div><button class="button button-ghost" type="button" onclick="logout()" data-i18n="logOut">Log out</button><button class="button button-primary" id="addClientTop" data-i18n="addClient">＋ Add client</button></div></header>
+    <header class="topbar"><div><p class="eyebrow" id="topbarDate">Monday, September 7</p><h1 data-i18n="topbarTitle">Your menu workspace</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="template-lang" role="group" data-i18n-aria-label="adminLanguageAria" aria-label="Interface language"><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="de">DE</button><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="en">EN</button><button class="button button-ghost template-lang-btn" type="button" data-admin-lang="el">EL</button></div><button class="button button-ghost" type="button" onclick="logout()" data-i18n="logOut">Log out</button><button class="button button-primary" id="addClientTop" data-i18n="addClient">＋ Add client</button></div></header>
     <section class="stats" data-i18n-aria-label="statsAria" aria-label="Workspace summary">
         <article class="stat-card"><span class="stat-icon coral">◉</span><div><p data-i18n="statActiveClients">Active clients</p><strong id="clientCount">0</strong></div></article>
         <article class="stat-card"><span class="stat-icon teal">☷</span><div><p data-i18n="statMenuSections">Menu sections</p><strong id="sectionCount">0</strong></div></article>
@@ -226,11 +226,11 @@
 </div>
 <script src="data/assets/js/translation-fallbacks.js"></script>
 <script src="data/assets/js/staff-strings.js?v=plural-1"></script>
-<script src="data/assets/js/admin-strings.js?v=owner-app-6"></script>
+<script src="data/assets/js/admin-strings.js?v=builder-ui-1"></script>
 <script src="data/assets/js/vendor/qrcode.js?v=1.5.2"></script>
 <script src="data/assets/js/table-cards.js?v=owner-app-1"></script>
 <script src="data/assets/js/qr-card.js?v=1"></script>
-<script src="data/assets/js/admin.js?v=owner-app-9"></script>
+<script src="data/assets/js/admin.js?v=builder-ui-1"></script>
 <script src="data/assets/js/pwa.js?v=7" defer></script>
 </body>
 </html>

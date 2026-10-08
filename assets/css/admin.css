@@ -206,3 +206,14 @@
 .customer-input-status{font-size:12px;color:var(--muted)}
 .customer-input-box[hidden]{display:none}
 .qr-actions .qr-actions-wide{grid-column:1/-1}
+
+/* Sidebar logo (2026-10-08): the real fork-S logo (white fork for the dark
+   sidebar) instead of the orange "S" circle, "Smart" orange like the site. */
+.brand-logo{width:40px;height:40px;flex-shrink:0;object-fit:contain}
+.brand-smart{color:var(--orange)}
+/* Long lists scroll inside their panel instead of growing endlessly (user):
+   about 3 activity messages, 4 tables and 2 rows of pictures are visible. */
+#activityList,#smartServiceHubTableNumbers,#photoLibraryGrid{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:6px}
+#activityList{max-height:230px}
+#smartServiceHubTableNumbers{max-height:290px}
+#photoLibraryGrid{max-height:240px}

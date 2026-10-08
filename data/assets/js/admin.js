@@ -30,7 +30,7 @@ function strings() {
 // Dates follow the dashboard language, not the browser's own locale, so the
 // topbar date and the activity timestamps read the same way as the rest of
 // the page.
-function dateLocale() { return currentLang === 'de' ? 'de-DE' : 'en-GB'; }
+function dateLocale() { return { de: 'de-DE', el: 'el-GR' }[currentLang] || 'en-GB'; }
 function subscriptionStatusLabel(status) { return strings().subscriptionStatus?.[status] || status; }
 // menu.js renders the live menu's language switcher buttons in exactly the
 // order client.languages lists them, so this order is directly what a
@@ -1554,7 +1554,7 @@ function renderCustomerOrderInput(client) {
 		const submission = setupSubmissionBySlug[client.slug];
 		box.hidden = !submission;
 		if (submission) {
-			const when = new Date(submission.created_at).toLocaleString(currentLang === 'de' ? 'de-DE' : 'en-GB', { dateStyle: 'short', timeStyle: 'short' });
+			const when = new Date(submission.created_at).toLocaleString(dateLocale(), { dateStyle: 'short', timeStyle: 'short' });
 			const count = Object.values(submission.numbers || {}).filter(Boolean).length;
 			const created = submission.tables_created || [];
 			$('#setupSubmissionTitle').textContent = strings().setupReceived.replace('{date}', when);
