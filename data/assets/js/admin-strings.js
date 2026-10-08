@@ -29,9 +29,9 @@ window.ADMIN_STRINGS = {
 		menuHeaderStyle: 'Kopfbereich der Speisekarte', chooseFromPictures: 'Aus Bildern wählen', uploadNew: 'Neu hochladen', removeButton: 'Entfernen',
 		headerFont: 'Schriftart im Kopfbereich', fontDefault: 'Standard (Open Sans)', headerTextColor: 'Textfarbe im Kopfbereich',
 
-		importMenuPdf: 'Speisekarte als PDF importieren',
-		importMenuPdfHint: 'Laden Sie ein Kunden-PDF hoch, um einen Menü-Entwurf zu erstellen. Prüfen Sie den erkannten Text vor dem Speichern.',
-		importPdfButton: 'PDF importieren', exportJson: 'JSON exportieren', importJson: 'JSON importieren',
+		importMenuPdf: 'Speisekarte als PDF oder Foto importieren',
+		importMenuPdfHint: 'Laden Sie das PDF oder ein Foto der Speisekarte hoch, um einen Menü-Entwurf zu erstellen. Fotos und gescannte PDFs liest die Texterkennung in der Ausgangssprache (Tab „Sprachen“) und auf Englisch. Prüfen Sie den erkannten Text vor dem Speichern.',
+		importPdfButton: 'Importieren', exportJson: 'JSON exportieren', importJson: 'JSON importieren',
 		menuContent: 'Menü-Inhalt', sectionsAndDishes: 'Bereiche & Gerichte', addSection: '＋ Bereich hinzufügen',
 
 		menuLanguages: 'Menü-Sprachen',
@@ -77,7 +77,7 @@ window.ADMIN_STRINGS = {
 		noClientsNeedRenewal: 'Aktuell braucht kein Kunde eine Verlängerung.', noClientsFound: 'Keine Kunden gefunden.',
 		subscriptionLocked: 'Das Abo dieses Kunden ist {status}. Die Bearbeitung ist gesperrt, bis der Kunde verlängert.', renewalLink: 'Verlängerungs-Link',
 
-		choosePdfFirst: 'Wählen Sie zuerst ein PDF aus', readingPdf: 'PDF wird gelesen …',
+		choosePdfFirst: 'Wählen Sie zuerst ein PDF oder Foto aus', readingPdf: 'Datei wird gelesen …',
 		importReplaceConfirm: 'Die Speisekarte von „{name}“ wird komplett ersetzt.\n\nIst das der richtige Kunde?',
 		customerTablesHeading: 'Vom Kunden bei der Bestellung angegeben', createCustomerTables: 'Diese Tische anlegen',
 		createTablesConfirm: '{n} Tische für „{name}“ anlegen?\n\n{list}', customerTablesAllThere: 'Diese Tische sind schon alle angelegt.', customerTablesCreated: '{n} Tische angelegt',
@@ -86,10 +86,10 @@ window.ADMIN_STRINGS = {
 		setupLinkCopied: 'Link kopiert – jetzt an den Kunden schicken', setupApplied: 'Kassennummern vom Kunden eingetragen: {names}',
 		setupReceived: 'Vom Kunden eingegangen – {date}', setupNumbersApplied: '{n} Kassennummern eingetragen und gespeichert.', setupNumbersPending: '{n} Kassennummern – werden beim nächsten Laden des Builders eingetragen.',
 		setupTablesCreated: '{n} Tische angelegt: {list}', setupNoNewTables: 'Keine neuen Tische.',
-		pdfReaderFailed: 'Der PDF-Leser konnte nicht geladen werden.', noTextLayerOcr: 'Keine Textebene gefunden. OCR läuft …',
-		ocrReaderFailed: 'Der OCR-Leser konnte nicht geladen werden.', pdfNoText: 'In diesem PDF wurde kein lesbarer Text gefunden.',
+		pdfReaderFailed: 'Der PDF-Leser konnte nicht geladen werden.', noTextLayerOcr: 'Keine Textebene gefunden. OCR läuft …', ocrRunning: 'Texterkennung läuft ({langs}) – das kann eine Minute dauern …',
+		ocrReaderFailed: 'Der OCR-Leser konnte nicht geladen werden.', pdfNoText: 'In dieser Datei wurde kein lesbarer Text gefunden.',
 		importCappedDiscovery: 'Smart Discovery: nur die ersten {limit} von {total} Gerichten übernommen.',
-		pdfImported: '{n} Seite(n) importiert. Prüfen Sie den Entwurf vor dem Speichern.', pdfReadFailed: 'PDF konnte nicht gelesen werden: {error}',
+		pdfImported: '{n} Seite(n) importiert. Prüfen Sie den Entwurf vor dem Speichern.', pdfReadFailed: 'Die Datei konnte nicht gelesen werden: {error}',
 		cloudStorageUnavailable: 'Der Cloud-Speicher ist nicht verfügbar.', imageUploadFailed: 'Bild-Upload fehlgeschlagen: {error}',
 		couldNotSaveMenus: 'Menüs konnten nicht gespeichert werden: {error}', cloudSyncUnavailable: 'Cloud-Sync nicht verfügbar; lokale Kundendaten bleiben erhalten',
 
@@ -200,9 +200,9 @@ window.ADMIN_STRINGS = {
 		menuHeaderStyle: 'Menu header style', chooseFromPictures: 'Choose from Pictures', uploadNew: 'Upload new', removeButton: 'Remove',
 		headerFont: 'Header font', fontDefault: 'Default (Open Sans)', headerTextColor: 'Header text color',
 
-		importMenuPdf: 'Import menu PDF',
-		importMenuPdfHint: 'Upload a customer PDF to create a draft menu. Check the extracted text before saving.',
-		importPdfButton: 'Import PDF', exportJson: 'Export JSON', importJson: 'Import JSON',
+		importMenuPdf: 'Import menu PDF or photo',
+		importMenuPdfHint: 'Upload the menu PDF or a photo of it to create a draft menu. Photos and scanned PDFs are read by text recognition in the source language (Languages tab) and in English. Check the extracted text before saving.',
+		importPdfButton: 'Import', exportJson: 'Export JSON', importJson: 'Import JSON',
 		menuContent: 'Menu content', sectionsAndDishes: 'Sections & dishes', addSection: '＋ Add section',
 
 		menuLanguages: 'Menu languages',
@@ -248,7 +248,7 @@ window.ADMIN_STRINGS = {
 		noClientsNeedRenewal: 'No clients currently need renewal.', noClientsFound: 'No clients found.',
 		subscriptionLocked: 'This client\'s subscription is {status}. Editing is locked until they renew.', renewalLink: 'Renewal link',
 
-		choosePdfFirst: 'Choose a PDF first', readingPdf: 'Reading PDF…',
+		choosePdfFirst: 'Choose a PDF or photo first', readingPdf: 'Reading the file…',
 		importReplaceConfirm: 'The whole menu of “{name}” will be replaced.\n\nIs this the right customer?',
 		customerTablesHeading: 'From the customer\'s order', createCustomerTables: 'Create these tables',
 		createTablesConfirm: 'Create {n} tables for “{name}”?\n\n{list}', customerTablesAllThere: 'All these tables exist already.', customerTablesCreated: '{n} tables created',
@@ -257,10 +257,10 @@ window.ADMIN_STRINGS = {
 		setupLinkCopied: 'Link copied - now send it to the customer', setupApplied: 'Till numbers from the customer filled in: {names}',
 		setupReceived: 'Received from the customer - {date}', setupNumbersApplied: '{n} till numbers filled in and saved.', setupNumbersPending: '{n} till numbers - filled in the next time the builder loads.',
 		setupTablesCreated: '{n} tables created: {list}', setupNoNewTables: 'No new tables.',
-		pdfReaderFailed: 'PDF reader could not be loaded.', noTextLayerOcr: 'No text layer found. Running OCR…',
-		ocrReaderFailed: 'OCR reader could not be loaded.', pdfNoText: 'No readable text found in this PDF.',
+		pdfReaderFailed: 'PDF reader could not be loaded.', noTextLayerOcr: 'No text layer found. Running OCR…', ocrRunning: 'Text recognition running ({langs}) – this can take a minute…',
+		ocrReaderFailed: 'OCR reader could not be loaded.', pdfNoText: 'No readable text found in this file.',
 		importCappedDiscovery: 'Smart Discovery: kept only the first {limit} of {total} dishes.',
-		pdfImported: 'Imported {n} page(s). Check the draft before saving.', pdfReadFailed: 'PDF could not be read: {error}',
+		pdfImported: 'Imported {n} page(s). Check the draft before saving.', pdfReadFailed: 'The file could not be read: {error}',
 		cloudStorageUnavailable: 'Cloud storage is not available.', imageUploadFailed: 'Image upload failed: {error}',
 		couldNotSaveMenus: 'Could not save menus: {error}', cloudSyncUnavailable: 'Cloud sync unavailable; local customer data kept',
 
@@ -373,9 +373,9 @@ window.ADMIN_STRINGS.el = Object.assign({}, window.ADMIN_STRINGS.en, {
 	menuHeaderStyle: 'Στυλ κεφαλίδας μενού', chooseFromPictures: 'Επιλογή από τις Εικόνες', uploadNew: 'Νέα μεταφόρτωση', removeButton: 'Αφαίρεση',
 	headerFont: 'Γραμματοσειρά κεφαλίδας', fontDefault: 'Προεπιλογή (Open Sans)', headerTextColor: 'Χρώμα κειμένου κεφαλίδας',
 
-	importMenuPdf: 'Εισαγωγή μενού από PDF',
-	importMenuPdfHint: 'Ανεβάστε ένα PDF του πελάτη για να δημιουργηθεί πρόχειρο μενού. Ελέγξτε το κείμενο που εξήχθη πριν από την αποθήκευση.',
-	importPdfButton: 'Εισαγωγή PDF', exportJson: 'Εξαγωγή JSON', importJson: 'Εισαγωγή JSON',
+	importMenuPdf: 'Εισαγωγή μενού από PDF ή φωτογραφία',
+	importMenuPdfHint: 'Ανεβάστε το PDF ή μια φωτογραφία του μενού για να δημιουργηθεί πρόχειρο μενού. Τις φωτογραφίες και τα σκαναρισμένα PDF τα διαβάζει η αναγνώριση κειμένου στη γλώσσα προέλευσης (καρτέλα Γλώσσες) και στα αγγλικά. Ελέγξτε το κείμενο που εξήχθη πριν από την αποθήκευση.',
+	importPdfButton: 'Εισαγωγή', exportJson: 'Εξαγωγή JSON', importJson: 'Εισαγωγή JSON',
 	menuContent: 'Περιεχόμενο μενού', sectionsAndDishes: 'Ενότητες & πιάτα', addSection: '＋ Προσθήκη ενότητας',
 
 	menuLanguages: 'Γλώσσες μενού',
@@ -421,7 +421,7 @@ window.ADMIN_STRINGS.el = Object.assign({}, window.ADMIN_STRINGS.en, {
 	noClientsNeedRenewal: 'Κανένας πελάτης δεν χρειάζεται ανανέωση αυτή τη στιγμή.', noClientsFound: 'Δεν βρέθηκαν πελάτες.',
 	subscriptionLocked: 'Συνδρομή αυτού του πελάτη: {status}. Η επεξεργασία είναι κλειδωμένη μέχρι να ανανεώσει.', renewalLink: 'Σύνδεσμος ανανέωσης',
 
-	choosePdfFirst: 'Επιλέξτε πρώτα ένα PDF', readingPdf: 'Ανάγνωση PDF…',
+	choosePdfFirst: 'Επιλέξτε πρώτα ένα PDF ή μια φωτογραφία', readingPdf: 'Ανάγνωση αρχείου…',
 	importReplaceConfirm: 'Ολόκληρο το μενού του «{name}» θα αντικατασταθεί.\n\nΕίναι ο σωστός πελάτης;',
 	customerTablesHeading: 'Από την παραγγελία του πελάτη', createCustomerTables: 'Δημιουργία αυτών των τραπεζιών',
 	createTablesConfirm: 'Να δημιουργηθούν {n} τραπέζια για «{name}»;\n\n{list}', customerTablesAllThere: 'Όλα αυτά τα τραπέζια υπάρχουν ήδη.', customerTablesCreated: 'Δημιουργήθηκαν {n} τραπέζια',
@@ -430,10 +430,10 @@ window.ADMIN_STRINGS.el = Object.assign({}, window.ADMIN_STRINGS.en, {
 	setupLinkCopied: 'Ο σύνδεσμος αντιγράφηκε – στείλτε τον τώρα στον πελάτη', setupApplied: 'Συμπληρώθηκαν οι κωδικοί ταμείου από τον πελάτη: {names}',
 	setupReceived: 'Ελήφθη από τον πελάτη – {date}', setupNumbersApplied: 'Συμπληρώθηκαν και αποθηκεύτηκαν {n} κωδικοί ταμείου.', setupNumbersPending: '{n} κωδικοί ταμείου – συμπληρώνονται την επόμενη φορά που θα φορτώσει ο builder.',
 	setupTablesCreated: 'Δημιουργήθηκαν {n} τραπέζια: {list}', setupNoNewTables: 'Κανένα νέο τραπέζι.',
-	pdfReaderFailed: 'Δεν ήταν δυνατή η φόρτωση του αναγνώστη PDF.', noTextLayerOcr: 'Δεν βρέθηκε επίπεδο κειμένου. Εκτελείται OCR…',
-	ocrReaderFailed: 'Δεν ήταν δυνατή η φόρτωση του OCR.', pdfNoText: 'Δεν βρέθηκε αναγνώσιμο κείμενο σε αυτό το PDF.',
+	pdfReaderFailed: 'Δεν ήταν δυνατή η φόρτωση του αναγνώστη PDF.', noTextLayerOcr: 'Δεν βρέθηκε επίπεδο κειμένου. Εκτελείται OCR…', ocrRunning: 'Αναγνώριση κειμένου σε εξέλιξη ({langs}) – μπορεί να διαρκέσει ένα λεπτό…',
+	ocrReaderFailed: 'Δεν ήταν δυνατή η φόρτωση του OCR.', pdfNoText: 'Δεν βρέθηκε αναγνώσιμο κείμενο σε αυτό το αρχείο.',
 	importCappedDiscovery: 'Smart Discovery: κρατήθηκαν μόνο τα πρώτα {limit} από {total} πιάτα.',
-	pdfImported: 'Εισήχθησαν {n} σελίδα(-ες). Ελέγξτε το πρόχειρο πριν από την αποθήκευση.', pdfReadFailed: 'Δεν ήταν δυνατή η ανάγνωση του PDF: {error}',
+	pdfImported: 'Εισήχθησαν {n} σελίδα(-ες). Ελέγξτε το πρόχειρο πριν από την αποθήκευση.', pdfReadFailed: 'Δεν ήταν δυνατή η ανάγνωση του αρχείου: {error}',
 	cloudStorageUnavailable: 'Ο χώρος αποθήκευσης cloud δεν είναι διαθέσιμος.', imageUploadFailed: 'Η μεταφόρτωση της εικόνας απέτυχε: {error}',
 	couldNotSaveMenus: 'Δεν ήταν δυνατή η αποθήκευση των μενού: {error}', cloudSyncUnavailable: 'Ο συγχρονισμός cloud δεν είναι διαθέσιμος· τα τοπικά δεδομένα πελατών διατηρήθηκαν',
 

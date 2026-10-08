@@ -270,96 +270,171 @@ function parsePdfText(text) {
 	const categoryByName = new Map();
 	let category = null;
 	const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-	const pricePattern = /(?:\d+[.,]\d{2}\s*(?:€|EUR|\$|USD|£|GBP)?|(?:€|EUR|\$|USD|£|GBP)\s*\d+[.,]\d{2})\s*$/i;
-	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getränke|kalte\s+getränke|frühstück\s*(?:&|und)\s+snacks?|kuchen\s*(?:&|und)\s+desserts?|spezialitäten|vorspeisen|hauptgerichte|hauptspeisen|nachspeisen|salate|snacks?|beilagen|suppen|pizza|pasta|burger|desserts?|starters?|mains?|sides?|soups?|salads?|hot\s+drinks?|cold\s+drinks?|breakfast\s*(?:&|and)\s+snacks?)$/i;
+	// "6,90 €", "€ 6.90", "6.90", "6,-" and, next to a currency sign, "6 €".
+	// "EUR" only as a word of its own: "Liqueur 4,50" is not "Liqu" for 4,50.
+	const pricePattern = /(?:\d+(?:[.,]\d{2}|[.,][-–]{1,2})\s*(?:€|\$|£|(?<![a-z])(?:eur|usd|gbp)(?![a-z]))?|\d+\s*(?:€|\$|£|(?<![a-z])(?:eur|usd|gbp)(?![a-z]))|(?:€|\$|£|(?<![a-z])(?:eur|usd|gbp)(?![a-z]))\s*\d+(?:[.,]\d{2}|[.,][-–]{1,2})?)\s*$/i;
+	const priceValue = (value) => {
+		const [, units, cents] = value.match(/(\d+)(?:[.,](\d{2}))?/);
+		return `${units}.${cents || '00'}`;
+	};
+	// "— Vorspeisen —" and "Vorspeisen:" are the section "Vorspeisen".
+	const sectionName = (line) => line.replace(/^[\s~*•·◦▪=_—–\-:|#»«]+|[\s~*•·◦▪=_—–\-:|#»«]+$/g, '');
+	// Section names in all 8 menu languages, compared in lower case and without
+	// accents ("ΟΡΕΚΤΙΚΑ", "Ορεκτικά", "Entrées"), also as one half of
+	// "Ορεκτικά / Starters".
+	const fold = (value) => sectionName(value).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+	const knownCategoryPattern = /^(hei(?:ß|ss)e?\s+getranke|kalte\s+getranke|alkoholfreie\s+getranke|getranke|fruhstuck(?:\s*(?:&|und)\s+snacks?)?|kuchen\s*(?:&|und)\s+desserts?|spezialitaten|vorspeisen|hauptgerichte|hauptspeisen|nachspeisen|nachtisch|salate|snacks?|beilagen|suppen|kleine\s+gerichte|kindergerichte|weine|biere|pizza|pasta|burger|desserts?|starters?|appetizers?|mains?|main\s+(?:courses?|dishes)|sides?|side\s+dishes|soups?|salads?|drinks|beverages|hot\s+drinks?|cold\s+drinks?|soft\s+drinks|wines|beers|breakfast(?:\s*(?:&|and)\s+snacks?)?|antipasti|primi(?:\s+piatti)?|secondi(?:\s+piatti)?|contorni|insalate|zuppe|dolci|bevande|vini|birre|pizze|colazione|entrantes|primeros(?:\s+platos)?|segundos(?:\s+platos)?|platos\s+principales|ensaladas|sopas|postres|bebidas|vinos|cervezas|tapas|raciones|desayunos?|entrees|plats(?:\s+principaux)?|salades|soupes|boissons|vins|bieres|fromages|accompagnements|voorgerechten|hoofdgerechten|nagerechten|bijgerechten|soepen|dranken|wijnen|bieren|ontbijt|entradas|pratos\s+principais|sobremesas|saladas|vinhos|cervejas|petiscos|acompanhamentos|ορεκτικα|κυριως(?:\s+πιατα)?|σαλατες|σουπες|επιδορπια|γλυκα|ποτα|αναψυκτικα|κρασια|μπυρες|θαλασσινα|ψαρια|ψητα|κρεατικα|ζυμαρικα|πιτσες|μεζεδες|συνοδευτικα|τυρια|καφεδες|ροφηματα|πρωινο)$/;
+	const isKnownCategory = (line) => fold(line).split(/\s*[/|]\s*/).some((part) => knownCategoryPattern.test(part));
 	const headerLinePattern = /^(produkt|preis|price|artikel|bezeichnung|men[uü]|item|name|beschreibung|description|qty|anzahl|product)(\s*(preis|price))?$/i;
-	const looksLikeCategory = (line) => line.length <= 42 && !headerLinePattern.test(line) && (knownCategoryPattern.test(line) || (/^[A-ZÄÖÜ][^.!?]{2,41}$/.test(line) && !/\d/.test(line)));
+	// Any capital letter counts (Greek and accented ones too), not only A-Z.
+	const looksLikeCategory = (line) => line.length <= 42 && !headerLinePattern.test(line) && (isKnownCategory(line) || (/^\p{Lu}[^.!?]{2,41}$/u.test(sectionName(line)) && !/\d/.test(line)));
 	const cleanName = (value) => value
-		.replace(/^[\s•*\-–—▪◦]+/, '')
-		.replace(/[.·‧… ]{2,}$/, '')
-		.replace(/[\s•*\-–—]+$/, '')
+		.replace(/^[\s•*\-–—▪◦|]+/, '')
+		.replace(/[.·‧…_ ]{2,}$/, '')
+		.replace(/[\s•*\-–—|]+$/, '')
 		.trim();
 	const isPriceOnly = (line) => {
 		const match = line.match(pricePattern);
 		return Boolean(match) && !cleanName(line.slice(0, match.index));
 	};
+	// Like cleanName, but a description's own full stop stays: "Basilikum. 8.50".
+	const textBeforePrice = (line) => line.slice(0, line.match(pricePattern).index).replace(/[\s\-–—|]+$/, '').replace(/\s*[.·‧…_]{2,}$/, '').trim();
 	const numberedItemPattern = /^\d+[.)]\s+\S/;
-	const looksLikeDescription = (line) => /,\s|\s(mit|und|with|and|con)\s|^(mit|with|con)\s/i.test(line) || /^[a-zäöüß]/.test(line);
+	const looksLikeDescription = (line) => /,\s|\s(mit|und|with|and|con|avec|met|com|με|και)\s|^(mit|with|con|avec|met|com|με)\s/iu.test(line) || /^\p{Ll}/u.test(line);
+	// Stronger signs, good enough even for the text in front of a price: a dish
+	// name hardly ever ends in a full stop or comma, starts in lower case or
+	// lists several things at length.
+	const clearlyDescription = (line) => /[.,;:]$/.test(line) || /^\p{Ll}/u.test(line) || (line.length > 42 && (line.match(/,/g) || []).length >= 2);
+	// "Geröstetes Brot mit frischen Tomaten," / "Basilikum …": a line that
+	// breaks off mid-sentence goes on in the next one.
+	const endsMidSentence = (line) => /[,;:&+]$|\s(mit|und|oder|with|and|or|con|e|ed|y|o|avec|et|ou|met|en|of|com|με|και|ή)$/iu.test(line);
+	// Wrapped lines join with a space; "Toma-" / "ten" was one word split at the
+	// line end, "Ciabatta-" / "Brot" keeps its dash.
+	const joinLines = (parts) => parts.reduce((joined, part) => {
+		if (!joined) return part;
+		if (/\p{L}-$/u.test(joined)) return /^\p{Ll}/u.test(part) ? joined.slice(0, -1) + part : joined + part;
+		return `${joined} ${part}`;
+	}, '');
+	// "Bruschetta Classica - Geröstetes Ciabatta-Brot …" on one line: a dash
+	// with spaces around it separates name and description.
+	const splitNameDescription = (value) => {
+		const [name, ...description] = cleanName(value).split(/\s+[-–—]\s+/);
+		return { name: cleanName(name), description: description.join(' – ') };
+	};
+	// Three common layouts: "1. Item name – 6,90 €" with the description on
+	// the following line(s); the name, the description (one line or several)
+	// and the price each on a line of their own; and the same with the price
+	// at the end of the last description line. Lines without a price wait in
+	// `pending` until the next price decides what they are: a price on its own
+	// line makes them a new dish (first line = name, rest = description), a
+	// "name – price" line makes them the description of the dish before.
+	let lastItem = null;
+	// Whether lastItem had its price on its name line: the lines below it are
+	// then its description, and the next line with a price is the next dish.
+	let lastItemInline = false;
+	let pending = [];
+	let dishEnd = -1;
+	// The line with the price of a dish named by the line at `index`:
+	// "Bruschetta Classica", then description lines, then "6.90" on a line of
+	// its own or at the end of the last description line. -1 when the lines
+	// below do not read like a description.
+	const dishEndAt = (index) => {
+		for (let ahead = index + 1; ahead < Math.min(lines.length, index + 10); ahead += 1) {
+			const line = lines[ahead];
+			const continues = ahead > index + 1 && endsMidSentence(lines[ahead - 1]);
+			if (isPriceOnly(line)) return ahead;
+			// Dots leading to the price ("Moussaka ........ 13,90") mark a dish name.
+			if (pricePattern.test(line)) return !lastItemInline && !/[.·‧_]{3,}/.test(line) && (continues || clearlyDescription(textBeforePrice(line))) ? ahead : -1;
+			if (headerLinePattern.test(line) || isKnownCategory(line) || numberedItemPattern.test(line)) return -1;
+			if (!continues && !looksLikeDescription(line) && !clearlyDescription(line)) return -1;
+		}
+		return -1;
+	};
 	// A capitalised line without digits can be a section ("Getränke") but
-	// just as well a dish name or its description. It counts as a section
-	// unless a price on a line of its own follows within the next two lines
-	// (then it is the start of a dish) - except when the very next line is
-	// clearly a dish of its own (numbered, or with its price on the line).
+	// just as well a dish name or its description. It is a section unless a
+	// dish starts with it: a price right below ("Tiramisu" / "6,90" - even
+	// "Pizza" / "8,90"), or description lines and then the price.
 	const isSectionAt = (index) => {
 		const line = lines[index];
 		if (!looksLikeCategory(line)) return false;
-		if (knownCategoryPattern.test(line)) return true;
+		const next = lines[index + 1] || '';
+		if (isPriceOnly(next)) return false;
+		if (isKnownCategory(line)) return true;
 		// Right under a "name – price" line, "Joghurt, Gurke und Knoblauch" or
 		// "mit Pommes" is that dish's description, not a new section.
 		const previous = lines[index - 1] || '';
-		if (/,\s|^(mit|with|con|avec)\s/i.test(line) && pricePattern.test(previous) && !isPriceOnly(previous)) return false;
-		const next = lines[index + 1] || '';
-		if (numberedItemPattern.test(next) || (pricePattern.test(next) && !isPriceOnly(next))) return true;
-		// "Tiramisu" directly above "€6,90" is that dish.
-		if (isPriceOnly(next)) return false;
-		// Name, description, price - or section, dish, price? The middle line
-		// decides: a description reads like one ("mit …", commas, lower case).
-		if (isPriceOnly(lines[index + 2] || '')) return !looksLikeDescription(next);
-		return true;
+		if (/,\s|^(mit|with|con|avec|met|com|με)\s/iu.test(line) && pricePattern.test(previous) && !isPriceOnly(previous)) return false;
+		if (numberedItemPattern.test(next)) return true;
+		return dishEndAt(index) < 0;
 	};
-	// Two common PDF layouts: "1. Item name – 6,90 €" with the description on
-	// the following line(s), and (Word/Canva menus) the name, the description
-	// and the price each on a line of their own. Lines without a price wait in
-	// `pending` until the next price decides what they are: a price on its own
-	// line makes them a new dish (first line = name, rest = description),
-	// anything else makes them the description of the dish before.
-	let lastItem = null;
-	let pending = [];
 	const ensureCategory = () => {
 		if (!category) { category = { name: 'Imported menu', items: [] }; categoryByName.set(category.name, category); categories.push(category); }
 	};
 	const flushAsDescription = () => {
-		if (lastItem && pending.length) lastItem.description = [lastItem.description, ...pending].filter(Boolean).join(' ');
+		if (lastItem && pending.length) lastItem.description = joinLines([lastItem.description, ...pending].filter(Boolean));
 		pending = [];
+	};
+	const addItem = (nameLine, descriptionLines, price, inline) => {
+		ensureCategory();
+		const { name, description } = splitNameDescription(nameLine);
+		lastItem = { id: crypto.randomUUID(), name, description: joinLines([description, ...descriptionLines].filter(Boolean)), price };
+		lastItemInline = inline;
+		category.items.push(lastItem);
 	};
 	lines.forEach((line, index) => {
 		const match = line.match(pricePattern);
 		if (!match) {
 			// Column headers ("Produkt Preis") are never content.
 			if (headerLinePattern.test(line)) return;
+			// A description line of the dish that starts further up.
+			if (index < dishEnd) {
+				pending.push(line);
+				return;
+			}
 			if (isSectionAt(index)) {
 				flushAsDescription();
 				lastItem = null;
-				const existing = categoryByName.get(line);
+				lastItemInline = false;
+				const name = sectionName(line);
+				const existing = categoryByName.get(name);
 				if (existing) {
 					category = existing;
 				} else {
-					category = { name: line, items: [] };
-					categoryByName.set(line, category);
+					category = { name, items: [] };
+					categoryByName.set(name, category);
 					categories.push(category);
 				}
 				return;
 			}
+			const end = dishEndAt(index);
+			if (end > index) {
+				// A dish starts here. Waiting lines describe the dish above when that
+				// one had its price on its name line, or when they read like text and
+				// this dish has description lines of its own; a name-like waiting
+				// line ("Pizza 4 Stagioni") may still be this dish's real name.
+				if (lastItemInline || (end > index + 1 && pending.every((waiting) => looksLikeDescription(waiting) || clearlyDescription(waiting) || /^\(.*\)$/.test(waiting) || waiting.length <= 3))) flushAsDescription();
+				dishEnd = end;
+			}
 			pending.push(line);
 			return;
 		}
-		const price = match[0].replace(/[^0-9.,]/g, '').replace(',', '.');
-		const name = cleanName(line.slice(0, match.index));
-		if (name) {
+		const price = priceValue(match[0]);
+		const before = cleanName(line.slice(0, match.index));
+		if (before && index !== dishEnd) {
 			flushAsDescription();
-			ensureCategory();
-			lastItem = { id: crypto.randomUUID(), name, description: '', price };
-			category.items.push(lastItem);
+			addItem(before, [], price, true);
 			return;
 		}
+		// The price on a line of its own, or at the end of the last description
+		// line: the waiting lines are this dish, the first one its name.
+		if (before) pending.push(textBeforePrice(line));
 		if (pending.length) {
-			ensureCategory();
 			const [itemName, ...descriptionLines] = pending;
-			lastItem = { id: crypto.randomUUID(), name: cleanName(itemName), description: descriptionLines.join(' '), price };
-			category.items.push(lastItem);
 			pending = [];
+			addItem(itemName, descriptionLines, price, false);
 		} else {
 			lastItem = null;
+			lastItemInline = false;
 		}
 	});
 	flushAsDescription();
@@ -380,6 +455,86 @@ function pdfPageText(content) {
 	return [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([, row]) => row.sort((a, b) => a.x - b.x).map((item) => item.value).join(' ')).join('\n');
 }
 
+// Text recognition for photos and scanned PDFs: the menu's source language
+// (Languages tab) plus English, which many menus print next to their own.
+// Tesseract codes for every LANGUAGE_CATALOG language; the language data
+// loads from jsDelivr on first use (see vendor/README.md).
+const OCR_LANGUAGES = { de: 'deu', en: 'eng', el: 'ell', it: 'ita', es: 'spa', fr: 'fra', nl: 'nld', pt: 'por' };
+// Pages and photos are drawn about 2500px on the long side: menu print is
+// small and Tesseract needs the pixels, more only costs time.
+const OCR_TARGET_PX = 2500;
+
+function ocrScale(width, height) {
+	return Math.min(4, Math.max(1, OCR_TARGET_PX / Math.max(width, height)));
+}
+
+// Tesseract's Greek model answers with polytonic letters (ὰ, ᾶ, ἀ …) where
+// menus print modern Greek, the English one with "µ" (micro) for "μ" and,
+// in a Greek menu, with Latin look-alikes for all-caps Greek ("OPEKTIKA"),
+// which looks right but neither translates nor counts as a section. Both
+// often read the "€" behind a price as "6". A price whose cents came out as
+// letters ("8,οο") becomes 0,00 €: the dish stays in the menu and its price
+// visibly needs checking - guessing digits would give plausible wrong prices.
+function normalizeOcrText(text, greek) {
+	const latin = 'ABEZHIKMNOPTXY';
+	const greekCapitals = 'ΑΒΕΖΗΙΚΜΝΟΡΤΧΥ';
+	return (greek ? text.replace(/\b[ABEZHIKMNOPTXY]{3,}\b/g, (word) => [...word].map((letter) => greekCapitals[latin.indexOf(letter)]).join('')) : text)
+		.replace(/µ(?=[Ͱ-Ͽ])|(?<=[Ͱ-Ͽ])µ/g, 'μ')
+		.replace(/[ἀ-῿]/g, (letter) => letter.normalize('NFD').replace(/[̀͂]/g, '́').replace(/[^Ͱ-Ͽ́̈]/g, '').normalize('NFC'))
+		.replace(/(\d[.,]\d{2})\s*6$/gm, '$1 €')
+		.replace(/\s\d{1,3}[.,](?:[οoΟO]\d|\d[οoΟO]|[οoΟO]{2})\s*[€6]?$/gm, ' 0,00 €');
+}
+
+async function ocrPages(client, pageCount, drawPage) {
+	const tesseract = window.Tesseract;
+	if (typeof tesseract?.createWorker !== 'function') throw new Error(strings().ocrReaderFailed);
+	const source = OCR_LANGUAGES[client.sourceLanguage] ? client.sourceLanguage : 'de';
+	// English goes first for Greek: it reads the prices far more reliably,
+	// the Greek model still takes the Greek words.
+	const codes = source === 'el' ? ['en', 'el'] : [...new Set([source, 'en'])];
+	const labels = codes.map((code) => LANGUAGE_CATALOG.find((entry) => entry.code === code)?.label || code).join(' + ');
+	$('#importStatus').textContent = strings().ocrRunning.replace('{langs}', labels);
+	const worker = await tesseract.createWorker(codes.map((code) => OCR_LANGUAGES[code]).join('+'));
+	try {
+		let text = '';
+		for (let index = 0; index < pageCount; index += 1) {
+			const result = await worker.recognize(await drawPage(index));
+			text += `${result.data.text}\n`;
+		}
+		return normalizeOcrText(text, source === 'el');
+	} finally {
+		await worker.terminate();
+	}
+}
+
+async function photoCanvas(file) {
+	const url = URL.createObjectURL(file);
+	try {
+		const image = new Image();
+		image.src = url;
+		await image.decode();
+		const scale = ocrScale(image.naturalWidth, image.naturalHeight);
+		const canvas = document.createElement('canvas');
+		canvas.width = Math.round(image.naturalWidth * scale);
+		canvas.height = Math.round(image.naturalHeight * scale);
+		canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+		return canvas;
+	} finally {
+		URL.revokeObjectURL(url);
+	}
+}
+
+async function pdfPageCanvas(pdf, index) {
+	const page = await pdf.getPage(index + 1);
+	const base = page.getViewport({ scale: 1 });
+	const viewport = page.getViewport({ scale: ocrScale(base.width, base.height) });
+	const canvas = document.createElement('canvas');
+	canvas.width = viewport.width;
+	canvas.height = viewport.height;
+	await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+	return canvas;
+}
+
 async function importPdf() {
 	const file = $('#menuPdf').files[0];
 	if (!file) return notify(strings().choosePdfFirst);
@@ -389,32 +544,28 @@ async function importPdf() {
 	if (!confirm(strings().importReplaceConfirm.replace('{name}', client.name))) return;
 	$('#importStatus').textContent = strings().readingPdf;
 	try {
-		const pdfjs = window.pdfjsLib;
-		if (!pdfjs) throw new Error(strings().pdfReaderFailed);
-		pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-		const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+		// A photo of the menu (JPG/PNG, told apart by its first bytes) goes
+		// straight to text recognition; a PDF is read from its text layer first.
+		const head = new Uint8Array(await file.slice(0, 4).arrayBuffer());
+		const isPhoto = (head[0] === 0xff && head[1] === 0xd8) || (head[0] === 0x89 && head[1] === 0x50 && head[2] === 0x4e && head[3] === 0x47);
 		let text = '';
-		for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-			const page = await pdf.getPage(pageNumber);
-			const content = await page.getTextContent();
-			text += `${pdfPageText(content)}\n`;
-		}
-		if (!text.trim()) {
-			$('#importStatus').textContent = strings().noTextLayerOcr;
-			const tesseract = window.Tesseract;
-			if (typeof tesseract.createWorker !== 'function') throw new Error(strings().ocrReaderFailed);
-			const worker = await tesseract.createWorker('eng');
+		let pageCount = 1;
+		if (isPhoto) {
+			text = await ocrPages(client, 1, () => photoCanvas(file));
+		} else {
+			const pdfjs = window.pdfjsLib;
+			if (!pdfjs) throw new Error(strings().pdfReaderFailed);
+			pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+			const pdf = await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+			pageCount = pdf.numPages;
 			for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
 				const page = await pdf.getPage(pageNumber);
-				const viewport = page.getViewport({ scale: 1.5 });
-				const canvas = document.createElement('canvas');
-				canvas.width = viewport.width;
-				canvas.height = viewport.height;
-				await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-				const result = await worker.recognize(canvas);
-				text += `${result.data.text}\n`;
+				const content = await page.getTextContent();
+				text += `${pdfPageText(content)}\n`;
 			}
-			await worker.terminate();
+			// No text layer: a scan, photos the order page turned into a PDF, or
+			// a design exported as one big image.
+			if (!text.trim()) text = await ocrPages(client, pdf.numPages, (index) => pdfPageCanvas(pdf, index));
 		}
 		if (!text.trim()) throw new Error(strings().pdfNoText);
 		let imported = parsePdfText(text);
@@ -437,7 +588,7 @@ async function importPdf() {
 		client.categories = mergeImportedImages(client.categories, imported);
 		await saveClients();
 		render();
-		$('#importStatus').textContent = strings().pdfImported.replace('{n}', pdf.numPages) + cappedNote;
+		$('#importStatus').textContent = strings().pdfImported.replace('{n}', pageCount) + cappedNote;
 	} catch (error) {
 		$('#importStatus').textContent = strings().pdfReadFailed.replace('{error}', error.message);
 		notify(error.message);
