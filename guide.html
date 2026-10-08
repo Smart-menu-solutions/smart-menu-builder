@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="data/assets/js/frame-guard.js?v=1"></script>
+<title>Smart Menu Builder | User guide</title>
+<meta name="robots" content="noindex, nofollow">
+<script src="data/assets/js/vendor/supabase.js?v=2.117.2"></script>
+<script src="data/assets/js/auth-config.js"></script>
+<script src="data/assets/js/auth.js?v=owner-fn-1"></script>
+<script>requireAuth();</script>
+<link rel="stylesheet" href="assets/fonts/fonts-admin.css">
+<link rel="stylesheet" href="assets/css/admin.css?v=builder-ui-3">
+<meta name="theme-color" content="#262421">
+<style>
+/* Who does a step: the customer, the system, or us. */
+.guide-page{--who-c:#2563eb;--who-c-tint:#e8effd;--who-a:#5b6470;--who-a-tint:#eef0f2;--who-y:#d85d06;--who-y-tint:#fff1e4;--ok:#2f8f5b;--ok-tint:#e7f5ee;--bad:#b3261e;--bad-tint:#fdecea;max-width:1040px;min-width:0}
+.guide-page .g-intro{font-size:15px;color:var(--muted);max-width:70ch;margin:0 0 14px}
+.g-legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px}
+.who{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:20px;padding:3px 9px;margin-bottom:6px}
+.who.who-c{background:var(--who-c-tint);color:var(--who-c)}.who.who-a{background:var(--who-a-tint);color:var(--who-a)}.who.who-y{background:var(--who-y-tint);color:var(--who-y)}
+.g-section{padding:24px 26px;margin-bottom:18px;scroll-margin-top:16px}
+.g-section h2{font-size:22px;margin:0 0 10px;font-weight:600}
+.g-section .eyebrow{color:var(--orange-dark)}
+.g-lead{margin:0 0 18px;color:var(--ink);max-width:75ch}
+.g-section a{color:var(--orange-dark)}
+.g-overview-wrap{overflow-x:auto}
+.guide-overview{width:100%;min-width:720px;height:auto;display:block}
+.guide-overview text{font-size:13px;font-weight:700;fill:var(--ink)}
+.guide-overview .g-node rect{stroke-width:1.5}
+.guide-overview .who-c rect{fill:var(--who-c-tint);stroke:var(--who-c)}.guide-overview .who-a rect{fill:var(--who-a-tint);stroke:var(--who-a)}.guide-overview .who-y rect{fill:var(--who-y-tint);stroke:var(--who-y)}
+.guide-overview .bad rect{fill:var(--bad-tint);stroke:var(--bad)}
+.guide-overview .g-arrow{fill:none;stroke:var(--who-a);stroke-width:1.6}.guide-overview .g-arrow.ok{stroke:var(--ok);stroke-dasharray:5 4}.guide-overview .g-arrow.bad{stroke:var(--bad)}
+.guide-overview marker path{fill:var(--who-a)}
+.guide-overview .g-label{font-size:12px;font-weight:600}.guide-overview .g-label.ok{fill:var(--ok)}
+.g-toc ol{columns:2;margin:0;padding-left:20px;font-size:14px;line-height:1.9}
+.g-toc{padding:18px 24px;margin-bottom:18px}
+.g-toc a{color:var(--ink);text-decoration:none}.g-toc a:hover{color:var(--orange)}
+/* Flow: cards joined by arrows, wrapping on small screens. */
+.g-flow{list-style:none;margin:0 0 14px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:22px}
+.g-card{position:relative;border:1px solid var(--line);border-top:4px solid var(--who-a);border-radius:12px;padding:12px 14px;background:#fff}
+.g-card.who-c{border-top-color:var(--who-c)}.g-card.who-y{border-top-color:var(--who-y)}
+.g-card:not(:last-child)::after{content:"→";position:absolute;right:-19px;top:40%;color:var(--muted);font-weight:700}
+.g-card strong{display:block;font-size:14px;margin-bottom:4px}
+.g-card p,.g-timeline p{margin:0;font-size:13px;color:#4d4a46;line-height:1.5}
+/* Timeline: a vertical line with a coloured dot per step. */
+.g-timeline{list-style:none;margin:0 0 14px;padding:0 0 0 4px}
+.g-timeline li{display:grid;grid-template-columns:140px 1fr;gap:16px;position:relative;padding:0 0 16px 22px;border-left:2px solid var(--line)}
+.g-timeline li:last-child{border-left-color:transparent}
+.g-timeline li::before{content:"";position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--who-a)}
+.g-timeline li.who-c::before{background:var(--who-c)}.g-timeline li.who-y::before{background:var(--who-y)}
+.g-when{font-size:12px;font-weight:700;color:var(--orange-dark);text-transform:uppercase;letter-spacing:.5px;padding-top:1px}
+.g-timeline strong{display:block;font-size:14px;margin-bottom:3px}
+.g-steps{margin:0 0 14px;padding-left:22px;line-height:1.65;font-size:14px}
+.g-steps li{margin-bottom:6px;padding-left:4px}
+.g-steps li::marker{color:var(--orange-dark);font-weight:700}
+.g-decision{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.g-decision>div{border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.g-dlabel{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.8px;font-weight:700;color:var(--muted);margin-bottom:6px}
+.g-badge{display:inline-block;font-size:12px;font-weight:700;border-radius:20px;padding:3px 10px;background:var(--who-a-tint);color:var(--who-a)}
+.g-badge.ok{background:var(--ok-tint);color:var(--ok)}.g-badge.bad{background:var(--bad-tint);color:var(--bad)}
+.g-decision p{margin:8px 0 0;font-size:13px;color:#4d4a46}
+.g-code{background:#262421;color:#f3efe9;border-radius:10px;padding:14px 16px;font-size:12px;line-height:1.55;overflow:auto;margin:0 0 14px}
+.g-table-title{font-size:15px;margin:18px 0 8px}.g-table-title.warn{color:var(--bad)}
+.g-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.g-table{width:100%;border-collapse:collapse;font-size:13px}
+.g-table th{background:var(--alt);text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:8px 12px;border-bottom:1px solid var(--line)}
+.g-table td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+.g-table tr:last-child td{border-bottom:0}
+.g-table td:first-child{width:45%}
+.g-list{margin:0;padding-left:20px;line-height:1.8;font-size:14px}
+.g-qa details{border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:8px}
+.g-qa summary{cursor:pointer;font-weight:700;font-size:14px}
+.g-qa p{margin:8px 0 2px;font-size:13px;color:#4d4a46}
+.g-note{border-left:3px solid var(--orange);background:var(--tint);border-radius:0 10px 10px 0;padding:9px 13px;margin:10px 0 0;font-size:13px}
+@media(max-width:720px){
+	.guide-page{width:100%;overflow-x:hidden}
+	.g-section{padding:18px 16px}
+	.g-flow{grid-template-columns:minmax(0,1fr)}
+	.g-toc ol{columns:1}
+	.g-card:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-20px}
+	.g-timeline li{grid-template-columns:1fr;gap:2px}
+	.g-decision{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+    <a class="brand" href="admin.html"><img class="brand-logo" src="assets/images/logo-white.png" alt="" width="40" height="40"><span><span class="brand-smart">Smart</span> Menu Builder</span></a>
+    <p class="eyebrow" data-i18n="navWorkspace">Workspace</p>
+    <nav>
+        <a class="nav-link" href="admin.html#dashboard"><span>▦</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navOverview">Overview</span></a>
+        <a class="nav-link" href="admin.html#clients"><span>◉</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navClients">Clients</span></a>
+        <a class="nav-link" href="admin.html#builder"><span>✦</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navMenuBuilder">Menu builder</span></a>
+        <a class="nav-link" href="admin.html#qr"><span>⌗</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navQrCodes">QR codes</span></a>
+        <a class="nav-link" href="admin.html#activity"><span>🕐</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navActivity">Activity</span></a>
+        <a class="nav-link" href="admin.html#pictures"><span>📁</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navPictures">Pictures</span></a>
+        <a class="nav-link" href="leads.html"><span>⌕</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navLeadFinder">Lead finder</span></a>
+        <a class="nav-link active" href="guide.html"><span>📖</span> <span style="width:auto;font-size:inherit;text-align:left" data-i18n="navGuide">User guide</span></a>
+    </nav>
+</aside>
+
+<main class="main guide-page">
+    <header class="topbar"><div><p class="eyebrow" id="guideEyebrow">Anleitung</p><h1 id="guideTitle">Vom Bestellen bis zur Verlängerung</h1></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><div class="template-lang" role="group" aria-label="Language"><button class="button button-ghost template-lang-btn" type="button" data-guide-lang="de">DE</button><button class="button button-ghost template-lang-btn" type="button" data-guide-lang="en">EN</button><button class="button button-ghost template-lang-btn" type="button" data-guide-lang="el">EL</button></div><button class="button button-ghost" type="button" onclick="logout()">Log out</button></div></header>
+    <div id="guideRoot"></div>
+</main>
+
+<script src="data/assets/js/admin-strings.js?v=builder-ui-3"></script>
+<script src="data/assets/js/guide.js?v=guide-1"></script>
+</body>
+</html>

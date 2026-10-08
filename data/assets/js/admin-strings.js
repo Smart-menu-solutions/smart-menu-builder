@@ -8,7 +8,7 @@
 window.ADMIN_STRINGS = {
 	de: {
 		navWorkspace: 'Arbeitsbereich', navOverview: 'Übersicht', navClients: 'Kunden', navMenuBuilder: 'Menü-Editor',
-		navQrCodes: 'QR-Codes', navActivity: 'Aktivität', navPictures: 'Bilder', navLeadFinder: 'Lead-Finder',
+		navQrCodes: 'QR-Codes', navActivity: 'Aktivität', navPictures: 'Bilder', navLeadFinder: 'Lead-Finder', navGuide: 'Anleitung',
 		sidebarLocalWorkspace: 'Lokaler Arbeitsbereich', sidebarLocalNote: 'Ihre Kundendaten bleiben in diesem Browser.',
 
 		topbarTitle: 'Ihr Menü-Arbeitsbereich', logOut: 'Abmelden', addClient: '＋ Kunde hinzufügen',
@@ -56,7 +56,7 @@ window.ADMIN_STRINGS = {
 		cancel: 'Abbrechen', saveTemplate: 'Vorlage speichern',
 
 		deleteClient: 'Kunde löschen', previewMenu: 'Menü-Vorschau ↗', saveChanges: 'Änderungen speichern',
-		operateClient: 'Kunde verwalten', deletionGuide: 'Kunde hat ein Abo? Anleitung zum Löschen ↗', cancellationGuide: 'Kunde kündigt? Anleitung zum Kündigen ↗',
+		operateClient: 'Kunde verwalten',
 		readyToPrint: 'Druckfertig', clientQrCode: 'QR-Code des Kunden', qrLive: 'LIVE',
 		qrImageAlt: 'QR-Code für die Speisekarte des ausgewählten Kunden', downloadQr: 'QR herunterladen', copyLink: 'Link kopieren',
 		printTableCards: 'Tischkarten drucken', tableCardsTitle: 'Tischkarten – {name}', tableCardsPrint: 'Drucken / als PDF speichern',
@@ -179,7 +179,7 @@ window.ADMIN_STRINGS = {
 	},
 	en: {
 		navWorkspace: 'Workspace', navOverview: 'Overview', navClients: 'Clients', navMenuBuilder: 'Menu builder',
-		navQrCodes: 'QR codes', navActivity: 'Activity', navPictures: 'Pictures', navLeadFinder: 'Lead finder',
+		navQrCodes: 'QR codes', navActivity: 'Activity', navPictures: 'Pictures', navLeadFinder: 'Lead finder', navGuide: 'User guide',
 		sidebarLocalWorkspace: 'Local workspace', sidebarLocalNote: 'Your client data stays in this browser.',
 
 		topbarTitle: 'Your menu workspace', logOut: 'Log out', addClient: '＋ Add client',
@@ -227,7 +227,7 @@ window.ADMIN_STRINGS = {
 		cancel: 'Cancel', saveTemplate: 'Save template',
 
 		deleteClient: 'Delete client', previewMenu: 'Preview menu ↗', saveChanges: 'Save changes',
-		operateClient: 'Operate Client', deletionGuide: 'Client has a subscription? Deletion guide ↗', cancellationGuide: 'Client cancels? Cancellation guide ↗',
+		operateClient: 'Operate Client',
 		readyToPrint: 'Ready to print', clientQrCode: 'Client QR code', qrLive: 'LIVE',
 		qrImageAlt: 'QR code for the selected client\'s menu', downloadQr: 'Download QR', copyLink: 'Copy link',
 		printTableCards: 'Print table cards', tableCardsTitle: 'Table cards – {name}', tableCardsPrint: 'Print / save as PDF',
@@ -352,7 +352,7 @@ window.ADMIN_STRINGS = {
 // and not translated here yet shows in English instead of breaking the page.
 window.ADMIN_STRINGS.el = Object.assign({}, window.ADMIN_STRINGS.en, {
 	navWorkspace: 'Χώρος εργασίας', navOverview: 'Επισκόπηση', navClients: 'Πελάτες', navMenuBuilder: 'Επεξεργασία μενού',
-	navQrCodes: 'Κωδικοί QR', navActivity: 'Δραστηριότητα', navPictures: 'Εικόνες', navLeadFinder: 'Εύρεση πελατών',
+	navQrCodes: 'Κωδικοί QR', navActivity: 'Δραστηριότητα', navPictures: 'Εικόνες', navLeadFinder: 'Εύρεση πελατών', navGuide: 'Οδηγός χρήσης',
 	sidebarLocalWorkspace: 'Τοπικός χώρος εργασίας', sidebarLocalNote: 'Τα δεδομένα των πελατών σας μένουν σε αυτόν τον browser.',
 
 	topbarTitle: 'Ο χώρος εργασίας των μενού σας', logOut: 'Αποσύνδεση', addClient: '＋ Προσθήκη πελάτη',
@@ -400,7 +400,7 @@ window.ADMIN_STRINGS.el = Object.assign({}, window.ADMIN_STRINGS.en, {
 	cancel: 'Ακύρωση', saveTemplate: 'Αποθήκευση προτύπου',
 
 	deleteClient: 'Διαγραφή πελάτη', previewMenu: 'Προεπισκόπηση μενού ↗', saveChanges: 'Αποθήκευση αλλαγών',
-	operateClient: 'Διαχείριση πελάτη', deletionGuide: 'Ο πελάτης έχει συνδρομή; Οδηγός διαγραφής ↗', cancellationGuide: 'Ο πελάτης ακυρώνει; Οδηγός ακύρωσης ↗',
+	operateClient: 'Διαχείριση πελάτη',
 	readyToPrint: 'Έτοιμο για εκτύπωση', clientQrCode: 'Κωδικός QR πελάτη', qrLive: 'LIVE',
 	qrImageAlt: 'Κωδικός QR για το μενού του επιλεγμένου πελάτη', downloadQr: 'Λήψη QR', copyLink: 'Αντιγραφή συνδέσμου',
 	printTableCards: 'Εκτύπωση καρτών τραπεζιού', tableCardsTitle: 'Κάρτες τραπεζιού – {name}', tableCardsPrint: 'Εκτύπωση / αποθήκευση ως PDF',
