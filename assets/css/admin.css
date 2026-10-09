@@ -220,3 +220,5 @@
 /* Sections & dishes scroll too: the window is as tall as a section with 4
    dishes, photos and till numbers (El Greco "Vorspeisen", measured 691px). */
 #categoryEditor{max-height:691px}
+/* The left menu stays put while the page scrolls (user); phones keep the top bar. */
+@media(min-width:721px){.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto}}
