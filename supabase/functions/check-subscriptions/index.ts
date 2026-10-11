@@ -168,8 +168,8 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 		: '';
 	if (lang === 'it') return `
 		<p>Buongiorno ${escapeHtml(contactName || '')},</p>
-		<p>la vostra prova Smart Discovery per <strong>${escapeHtml(menuName)}</strong> termina domani. Ecco cosa è successo finora:</p>
-		<p style="font-size:22px"><strong>${visits}</strong> volte i vostri ospiti hanno aperto il vostro menu.</p>
+		<p>la vostra prova Smart Discovery per <strong>${escapeHtml(menuName)}</strong> termina domani. Ecco i vostri risultati finora:</p>
+		<p style="font-size:22px">Aperture del vostro menu: <strong>${visits}</strong></p>
 		${dishes ? `<p><strong>Piatti più visti</strong></p>${dishes}` : ''}
 		<p>Volete tenere il vostro menu digitale? Scegliete ora un piano: i vostri 2,99 € vengono scalati e il vostro menu resta online senza interruzioni:</p>
 		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Continua da 119 € all'anno</a></p>
@@ -179,22 +179,40 @@ function discoveryReportHtml(contactName: string, menuName: string, visits: numb
 	`;
 	return isEn ? `
 		<p>Hi ${escapeHtml(contactName || '')},</p>
-		<p>your Smart Discovery trial for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here's what happened so far:</p>
-		<p style="font-size:22px"><strong>${visits}</strong> times your guests opened your menu.</p>
+		<p>your Smart Discovery trial for <strong>${escapeHtml(menuName)}</strong> ends tomorrow. Here are your results so far:</p>
+		<p style="font-size:22px">Menu views: <strong>${visits}</strong></p>
 		${dishes ? `<p><strong>Most viewed dishes</strong></p>${dishes}` : ''}
 		<p>Want to keep your digital menu? Choose a plan now, your €2.99 is credited and your menu stays online without interruption:</p>
 		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Continue from €119 a year</a></p>
 		<p>Otherwise your menu pauses after tomorrow. You can reactivate it with the same link at any time.</p>
 		<p>Best regards</p>
 		${EMAIL_SIGNATURE}
-	` : `
+	` : discoveryReportHtmlDe(contactName, menuName, visits, topDishes, renewalUrl);
+}
+
+// German report. With 0 views the results block and the "guests already
+// found your menu" lines are left out, they would not be true.
+function discoveryReportHtmlDe(contactName: string, menuName: string, visits: number, topDishes: { label: string; count: number }[], renewalUrl: string): string {
+	const dishes = topDishes.length
+		? `<p style="margin:12px 0 4px">Beliebteste Gerichte:</p><ul style="margin:0;padding-left:20px">${topDishes.map((dish) => `<li>${escapeHtml(dish.label)} (${dish.count} ${dish.count === 1 ? 'Aufruf' : 'Aufrufe'})</li>`).join('')}</ul>`
+		: '';
+	const results = visits > 0 ? `
+		<p>In den letzten Tagen haben bereits Gäste Ihre digitale Speisekarte entdeckt:</p>
+		<div style="background:#FFF4EC;border-radius:10px;padding:16px 20px;margin:16px 0">
+			<p style="margin:0 0 10px;font-weight:bold">📊 Ihre Ergebnisse auf einen Blick</p>
+			<p style="margin:0;font-size:22px"><strong>${visits}</strong> ${visits === 1 ? 'Speisekarten-Aufruf' : 'Speisekarten-Aufrufe'}</p>
+			${dishes}
+		</div>
+		<p>Das zeigt: Interessenten interessieren sich bereits für Ihr Angebot.</p>` : '';
+	return `
 		<p>Hallo ${escapeHtml(contactName || '')},</p>
-		<p>Ihr Test mit Smart Discovery für <strong>${escapeHtml(menuName)}</strong> endet morgen. Das ist bisher passiert:</p>
-		<p style="font-size:22px"><strong>${visits}</strong>-mal haben Ihre Gäste Ihre Speisekarte geöffnet.</p>
-		${dishes ? `<p><strong>Meistgesehene Gerichte</strong></p>${dishes}` : ''}
-		<p>Möchten Sie Ihre digitale Speisekarte behalten? Wählen Sie jetzt einen Tarif, Ihre 2,99 € werden angerechnet und Ihre Karte bleibt ohne Unterbrechung online:</p>
-		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Weitermachen ab 119 € im Jahr</a></p>
-		<p>Sonst wird Ihre Karte nach morgen pausiert. Mit demselben Link können Sie sie jederzeit wieder aktivieren.</p>
+		<p>Ihre Testphase mit Smart Discovery für <strong>${escapeHtml(menuName)}</strong> endet morgen.</p>
+		${results}
+		<p>Möchten Sie Ihre digitale Speisekarte weiterhin online und für Gäste sichtbar halten? Wählen Sie einfach Ihren Tarif aus. Die bereits gezahlten 2,99 € werden selbstverständlich angerechnet.</p>
+		<p><a href="${renewalUrl}" style="display:inline-block;background:#F66A09;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Jetzt weitermachen ab 119 € pro Jahr</a></p>
+		<p>So bleibt Ihre Speisekarte ohne Unterbrechung online und weiterhin für neue Gäste erreichbar.</p>
+		<p>Sollten Sie sich aktuell noch nicht entscheiden wollen, wird Ihre Speisekarte nach Ablauf der Testphase pausiert. Über denselben Link können Sie sie jederzeit wieder aktivieren.</p>
+		<p>Vielen Dank für Ihr Vertrauen.</p>
 		<p>Mit freundlichen Grüßen</p>
 		${EMAIL_SIGNATURE}
 	`;
@@ -295,7 +313,7 @@ async function runDiscoveryPasses(today: string) {
 
 			if (customer?.email && EMAIL_PATTERN.test(customer.email)) {
 				await sendEmail(customer.email, pass.id, 'Kundenmail: Smart-Discovery-Bericht',
-					pass.lang === 'it' ? `Il vostro menu è stato aperto ${visits} volte – il vostro report Smart Discovery` : pass.lang === 'en' ? `${visits} guests opened your menu – your Smart Discovery report` : `${visits}-mal wurde Ihre Speisekarte geöffnet – Ihr Smart-Discovery-Bericht`,
+					pass.lang === 'it' ? 'Smart Discovery – La vostra prova termina a breve: informazioni sull\'upgrade e sui vostri risultati' : pass.lang === 'en' ? 'Smart Discovery – Your trial ends soon: upgrade information and your results' : 'Smart Discovery – Ihre Testphase endet bald: Informationen zum Upgrade und Ihren Ergebnissen',
 					discoveryReportHtml(customer.contact_name, menu?.name ?? '', visits, topDishes, renewalUrl, pass.lang));
 			}
 			await supabase.from('subscriptions').update({ discovery_report_sent_at: new Date().toISOString() }).eq('id', pass.id);

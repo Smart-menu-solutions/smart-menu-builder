@@ -72,7 +72,7 @@ commit;`;
 						['Kauf', 'c', 'Kunde zahlt 2,99 €', 'Automatisch: „Willkommen bei Smart Discovery“ mit Upload-Link und Statistik-Link. Du: „Neue Bestellung eingegangen“.'],
 						['Einrichtung', 'y', 'Du richtest die Karte ein', 'Bis zu 10 Gerichte. Dann im Tab <b>Zusatzmodule</b> „Speisekarte online“ einschalten und den QR-Code schicken.'],
 						['Tag 1', 'a', 'Die 7 Tage starten', 'Mit dem nächsten täglichen Lauf (früh morgens) nach dem Online-Schalten. Im Tab Zusatzmodule steht oben „Tag X von 7“.'],
-						['Tag 6', 'a', 'Bericht an den Kunden', '„…-mal geöffnet – Ihr Smart-Discovery-Bericht“ mit Aufrufen, den beliebtesten Gerichten und dem Upgrade-Link. Du: „Smart-Discovery-Bericht verschickt“.'],
+						['Tag 6', 'a', 'Bericht an den Kunden', '„Smart Discovery – Ihre Testphase endet bald: …“ mit Aufrufen, den beliebtesten Gerichten und dem Upgrade-Link. Du: „Smart-Discovery-Bericht verschickt“.'],
 						['Tag 7', 'a', 'Ohne Upgrade: offline', 'Die Karte geht offline. Kunde: „Ihr Test mit Smart Discovery ist abgelaufen“. Du: „Smart Discovery abgelaufen (kein Upgrade)“.'],
 						['Upgrade', 'c', 'Kunde wählt einen Jahrestarif', 'Über den Upgrade-Link aus dem Bericht oder „Link senden“ im Tab Zusatzmodule. Die 2,99 € werden angerechnet, die Karte bleibt bzw. kommt wieder online. Kunde: Bestellbestätigung. Du: „Upgrade von Smart Discovery“.']
 					],
@@ -200,7 +200,7 @@ commit;`;
 							rows: [
 								['Ihre Bestellung bei Smart Menu Solutions', 'Direkt nach der Zahlung eines Jahrestarifs, auch beim Upgrade von Smart Discovery'],
 								['Willkommen bei Smart Discovery', 'Direkt nach dem Kauf von Smart Discovery'],
-								['…-mal geöffnet – Ihr Smart-Discovery-Bericht', 'Tag 6 von Smart Discovery'],
+								['Smart Discovery – Ihre Testphase endet bald: Informationen zum Upgrade und Ihren Ergebnissen', 'Tag 6 von Smart Discovery'],
 								['Ihr Test mit Smart Discovery ist abgelaufen', 'Tag 7 ohne Upgrade'],
 								['Ihr Abo verlängert sich am [Datum]', '30 Tage vor der automatischen Verlängerung'],
 								['Ihre Verlängerung bei Smart Menu Solutions', 'Nach einer erfolgreichen Verlängerung'],
@@ -302,7 +302,7 @@ commit;`;
 						['Purchase', 'c', 'Customer pays €2.99', 'Automatically: “Welcome to Smart Discovery” with the upload link and the stats link. You: “Neue Bestellung eingegangen”.'],
 						['Setup', 'y', 'You set up the menu', 'Up to 10 dishes. Then switch on “Menu online” in the <b>Add-ons</b> tab and send the QR code.'],
 						['Day 1', 'a', 'The 7 days start', 'With the next daily run (early morning) after going online. The Add-ons tab shows “Day X of 7” at the top.'],
-						['Day 6', 'a', 'Report to the customer', '“… guests opened your menu – your Smart Discovery report” with views, the most popular dishes and the upgrade link. You: “Smart-Discovery-Bericht verschickt”.'],
+						['Day 6', 'a', 'Report to the customer', '“Smart Discovery – Your trial ends soon: …” with views, the most popular dishes and the upgrade link. You: “Smart-Discovery-Bericht verschickt”.'],
 						['Day 7', 'a', 'No upgrade: offline', 'The menu goes offline. Customer: “Your Smart Discovery trial has ended”. You: “Smart Discovery abgelaufen (kein Upgrade)”.'],
 						['Upgrade', 'c', 'Customer picks a yearly plan', 'Through the upgrade link in the report or “Send link” in the Add-ons tab. The €2.99 is credited, the menu stays or comes back online. Customer: order confirmation. You: “Upgrade von Smart Discovery”.']
 					],
